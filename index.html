@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0c0e13" />
+    <meta name="description" content="A polished Three.js raycast room — click the floor to guide the cube." />
+    <title>Raycast Room</title>
+  </head>
+  <body>
+    <main id="app" aria-label="Interactive 3D room">
+      <div class="grain" aria-hidden="true"></div>
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>RAYCAST ROOM</span>
+        </div>
+        <div class="status" aria-live="polite">
+          <span id="status-dot" class="status-dot"></span>
+          <span id="status-text">READY</span>
+        </div>
+      </header>
+      <div class="performance-stats" aria-label="Live geometry performance">
+        <div class="performance-stat">
+          <span>VERTICES</span>
+          <strong id="vertex-count">—</strong>
+        </div>
+        <div class="performance-stat">
+          <span>FRAME RATE</span>
+          <strong id="fps-count">— FPS</strong>
+        </div>
+      </div>
+      <section class="instructions" aria-label="Instructions">
+        <span class="eyebrow">INTERACTIVE STUDY / 01</span>
+        <h1>Point.<br /><em>Turn.</em> Move.</h1>
+        <p>Click the floor to move, click a workstation to start a task, or click the couch to run the DONE routine and sit. The robot returns home after workstation jobs.</p>
+        <div class="hint"><span class="mouse-icon" aria-hidden="true"></span> FLOOR TO MOVE · STATIONS TO WORK · COUCH TO SIT</div>
+      </section>
+      <div class="coordinates" aria-live="polite">
+        <span>TARGET</span>
+        <strong id="coordinates">X 0.00&nbsp;&nbsp; Z 0.00</strong>
+      </div>
+      <div id="work-progress" class="work-progress" hidden aria-live="polite">
+        <div class="work-progress__meta"><span id="work-label">BENCH TASK</span><strong id="work-percent">0%</strong></div>
+        <div class="work-progress__track"><span id="work-progress-fill"></span></div>
+      </div>
+      <canvas id="scene" aria-label="3D room with an articulated red bipedal robot and three workstations: a workbench, computer desk, and test bench. Click the floor to walk, click a workstation to begin a task, or click the couch to run the done routine and sit."></canvas>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

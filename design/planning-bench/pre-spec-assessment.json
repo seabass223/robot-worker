@@ -1,0 +1,420 @@
+{
+  "targetName": "Reference Planning Workbench",
+  "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+  "preSpecAssessment": {
+    "objectClass": {
+      "primaryType": "modular workshop planning bench",
+      "primaryDomain": "object",
+      "formLanguage": [
+        "low-poly industrial",
+        "rectilinear frame",
+        "color-coded tools",
+        "orthographic product visualization"
+      ],
+      "structureKind": [
+        "structural bench frame",
+        "rear pegboard assembly",
+        "hanging tool array",
+        "tabletop accessory cluster"
+      ],
+      "motionPotential": [
+        "static workstation",
+        "whole-station transform",
+        "detachable tools and bins"
+      ],
+      "materialFamilies": [
+        "walnut worktop",
+        "charcoal metal",
+        "dark pegboard",
+        "green cutting mat",
+        "painted red/blue/yellow accents",
+        "steel tools"
+      ],
+      "notes": "Paired front and right-side views provide strong depth evidence."
+    },
+    "complexity": {
+      "tier": "complex",
+      "scores": {
+        "silhouetteComplexity": 3,
+        "componentCount": 3,
+        "hierarchyDepth": 3,
+        "repetitionDensity": 3,
+        "materialLayerCount": 3,
+        "localDetailDensity": 3,
+        "occlusionRisk": 2,
+        "actionReadinessNeed": 2
+      },
+      "estimatedCounts": {
+        "macroComponents": 4,
+        "mesoComponents": 11,
+        "microFeatureGroups": 8,
+        "materialLayers": 9,
+        "repetitionSystems": 2
+      },
+      "reasoning": [
+        "Workbench identity depends on structure, 15x6 hole grid, ordered tool silhouettes, lamp, mat, and three bins.",
+        "Side view confirms board depth, four-leg frame, and storage cavity.",
+        "The existing clickable station root and approach point must remain unchanged."
+      ]
+    },
+    "specDepthDecision": {
+      "requiredDepth": "complex",
+      "minimumComponentLevels": [
+        "macro",
+        "meso",
+        "micro"
+      ],
+      "needsRepetitionSystems": true,
+      "needsMaterialLocalOverrides": true,
+      "needsMultipleReviewViews": true,
+      "needsActionReadyHierarchy": true,
+      "rationale": "Complex modular station with repeated peg holes and bins plus many detachable tool props."
+    },
+    "unknownsToResolveBeforeImplementation": [],
+    "detailInventory": {
+      "scanMethod": "grid-3x3 plus paired-view semantic analysis",
+      "targetMinDetails": 12,
+      "details": [
+        {
+          "id": "thick-top",
+          "kind": "bevel",
+          "description": "Wide warm-brown slab with darker front apron",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "worktop"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "peg-frame",
+          "kind": "contour",
+          "description": "Thick charcoal rectangle framing recessed board",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "pegboard-frame"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "square-hole-grid",
+          "kind": "hole",
+          "description": "15 by 6 square perforation array",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "peg-hole-grid"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "four-legs",
+          "kind": "contour",
+          "description": "Four inset rectangular legs",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "leg-frame"
+          },
+          "evidenceRef": "side-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "diagonal-braces",
+          "kind": "ridge",
+          "description": "Two dark under-top diagonal braces",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "diagonal-braces"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "drawer-recess",
+          "kind": "seam",
+          "description": "Left shallow storage drawer with inset face",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "drawer-storage"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "lamp-diffuser",
+          "kind": "emissive",
+          "description": "Warm white rectangular lamp face",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "task-lamp"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "mat-grid",
+          "kind": "linework",
+          "description": "Pale border and dense square grid on green mat",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "cutting-mat"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "pliers-joint",
+          "kind": "fastener",
+          "description": "Circular plier hinge with split red grips",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "pliers"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "driver-pair",
+          "kind": "contour",
+          "description": "Blue then red vertical screwdrivers",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "tool-row"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "wrench-jaws",
+          "kind": "contour",
+          "description": "Double open-ended steel wrench",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "wrench"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "knife-track",
+          "kind": "groove",
+          "description": "Yellow utility knife with dark track",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "utility-knife"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "three-bin-openings",
+          "kind": "hole",
+          "description": "Three red open-front bins with dark interiors",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "parts-bins"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "tool-order",
+          "kind": "linework",
+          "description": "Left-to-right pliers, blue driver, red driver, wrench, knife",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "tool-row"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        }
+      ]
+    },
+    "anatomy": {
+      "applies": false,
+      "styleHeads": 0.0,
+      "proportions": {
+        "headUnit": 0.0,
+        "torso": 0.0,
+        "legs": 0.0,
+        "shoulderWidth": 0.0,
+        "hipWidth": 0.0
+      },
+      "pose": {
+        "type": "unassessed",
+        "jointAngles": {}
+      },
+      "faceLandmarks": {
+        "eyeLine": 0.0,
+        "eyeSpacing": 0.0,
+        "noseBase": 0.0,
+        "mouthLine": 0.0,
+        "hairline": 0.0
+      },
+      "features": [],
+      "confidence": 0.0,
+      "note": "Only meaningful when objectClass.primaryDomain is character or hybrid. Set applies=true and fill from forge/stage1_intake/extract_landmarks.py. See grimoire/character/reconstruction.md and grimoire/character/likeness_maximization.md."
+    },
+    "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png"
+  },
+  "qualityContract": {
+    "qualityBar": "complex",
+    "definitionOfDone": [
+      "The planning bench reads at the default room camera as the reference: warm thick top, black four-leg frame and braces, tall framed 15x6 pegboard, lamp, green gridded mat, five ordered tools, drawer/storage, and three red bins while retaining station interaction."
+    ],
+    "minimumSpecDepth": {
+      "macroComponents": 4,
+      "mesoComponents": 10,
+      "microFeatureGroups": 6,
+      "materialLayers": 8,
+      "repetitionSystems": 2,
+      "reviewViewpoints": 3
+    },
+    "featureGroups": [
+      {
+        "id": "overall-silhouette",
+        "name": "Overall silhouette and proportions",
+        "required": true,
+        "qualityCriteria": [
+          "Bounding shape, dominant curves, negative spaces, and scale relationships are explicitly described."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model reads as a generic placeholder instead of the reference object",
+          "major proportions are guessed without evidence"
+        ]
+      },
+      {
+        "id": "primary-structure",
+        "name": "Primary structure and hierarchy",
+        "required": true,
+        "qualityCriteria": [
+          "Major parts, joints, seams, contact points, and parent-child relationships are named before code generation."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "large visible parts are merged into one mesh",
+          "component hierarchy is too shallow for the observed complexity"
+        ]
+      },
+      {
+        "id": "attachment-joint-correctness",
+        "name": "Attachment and joint correctness",
+        "required": true,
+        "qualityCriteria": [
+          "Every visible child appendage, branch, limb, handle, connector, tube, cable, horn, wing, leg, or hinged part has an attachment contract with parent socket, localStart/localEnd, contact type, embed/overlap, and gap tolerance."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "child part root floats away from the parent",
+          "branch/limb/tube is centered in space instead of pivoting from its root",
+          "parent-child transform mixes world and local coordinates"
+        ]
+      },
+      {
+        "id": "surface-material-response",
+        "name": "Surface material response",
+        "required": true,
+        "qualityCriteria": [
+          "Albedo zones, roughness, normal/bump/displacement intent, cavity dirt, edge wear, and local overrides are specified where visible.",
+          "Important materials define independent albedo, roughness, height/normal, and AO responses instead of reusing one texture for unrelated PBR channels.",
+          "Surface response is decomposed into macro, meso, and micro frequency bands with scale and amplitude tied to object scale."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "surface looks like flat plastic",
+          "local material variation is missing or not tied to image evidence"
+        ]
+      },
+      {
+        "id": "reference-lookdev",
+        "name": "Reference color, material, and lighting response",
+        "required": true,
+        "qualityCriteria": [
+          "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+          "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
+          "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
+          "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model has acceptable shape but reads as flat shaded or plastic",
+          "colors are a generic average instead of reference-observed local color zones",
+          "lighting is evenly ambient and cannot reproduce the source value range"
+        ]
+      }
+    ],
+    "visualDeltaChecks": [
+      "silhouette and negative-space delta",
+      "component hierarchy depth delta",
+      "repetition density and distribution delta",
+      "material albedo/roughness/normal response delta",
+      "local feature placement and scale delta"
+    ],
+    "antiShallowSpecRules": [
+      "Do not proceed to code if qualityContract.qualityBar is unassessed.",
+      "Do not proceed to code if the spec only contains a root component for a moderate or complex object.",
+      "Do not proceed to code if required featureGroups are not represented by componentTree, materials, or repetitionSystems.",
+      "Do not proceed to code if visible local features are described only in prose and not attached to components/materials/evidenceRefs.",
+      "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
+      "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
+      "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+      "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+      "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity."
+    ]
+  },
+  "authoringInstruction": "Fill observed object class, complexity reasoning, featureGroups, visualDeltaChecks, and unknowns before generating or implementing ObjectSculptSpec."
+}

@@ -1,0 +1,6907 @@
+{
+  "targetName": "Reference Planning Workbench",
+  "targetId": "reference-planning-workbench",
+  "schemaVersion": "2.0",
+  "terminologyProfile": {
+    "domain": "real-time procedural Three.js asset",
+    "geometryTerms": [
+      "silhouette",
+      "topology",
+      "primitive",
+      "bevel",
+      "chamfer",
+      "taper",
+      "bend",
+      "boolean cut",
+      "edge loop",
+      "surface normal",
+      "displacement"
+    ],
+    "materialTerms": [
+      "albedo",
+      "baseColor",
+      "roughness",
+      "metalness",
+      "normal map",
+      "bump map",
+      "ambient occlusion",
+      "cavity dirt",
+      "edge wear",
+      "clearcoat"
+    ],
+    "lightingTerms": [
+      "key light",
+      "fill light",
+      "rim light",
+      "HDRI/environment reflection",
+      "contact shadow"
+    ],
+    "descriptionRule": "Use measurable 3D graphics terms. Avoid vague words unless they are paired with concrete geometry/material/shader parameters."
+  },
+  "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+  "referenceCamera": {
+    "solved": true,
+    "projection": "paired near-orthographic front and right side",
+    "fovDegrees": 10,
+    "aspect": 2,
+    "orientation": {
+      "yaw": 0,
+      "pitch": 0,
+      "roll": 0
+    },
+    "positionHint": [
+      0,
+      2,
+      7
+    ],
+    "note": "Front and side views establish width, depth, board offset, and tool projection."
+  },
+  "suitability": "pass",
+  "scores": {
+    "object_isolation": 3,
+    "silhouette_readability": 3,
+    "depth_inference": 3,
+    "primitive_decomposition": 3,
+    "material_procedurality": 3,
+    "occlusion_risk": 2,
+    "interaction_fit": 3
+  },
+  "preSpecAssessment": {
+    "objectClass": {
+      "primaryType": "modular workshop planning bench",
+      "primaryDomain": "object",
+      "formLanguage": [
+        "low-poly industrial",
+        "rectilinear frame",
+        "color-coded tools",
+        "orthographic product visualization"
+      ],
+      "structureKind": [
+        "structural bench frame",
+        "rear pegboard assembly",
+        "hanging tool array",
+        "tabletop accessory cluster"
+      ],
+      "motionPotential": [
+        "static workstation",
+        "whole-station transform",
+        "detachable tools and bins"
+      ],
+      "materialFamilies": [
+        "walnut worktop",
+        "charcoal metal",
+        "dark pegboard",
+        "green cutting mat",
+        "painted red/blue/yellow accents",
+        "steel tools"
+      ],
+      "notes": "Paired front and right-side views provide strong depth evidence."
+    },
+    "complexity": {
+      "tier": "complex",
+      "scores": {
+        "silhouetteComplexity": 3,
+        "componentCount": 3,
+        "hierarchyDepth": 3,
+        "repetitionDensity": 3,
+        "materialLayerCount": 3,
+        "localDetailDensity": 3,
+        "occlusionRisk": 2,
+        "actionReadinessNeed": 2
+      },
+      "estimatedCounts": {
+        "macroComponents": 4,
+        "mesoComponents": 11,
+        "microFeatureGroups": 8,
+        "materialLayers": 9,
+        "repetitionSystems": 2
+      },
+      "reasoning": [
+        "Workbench identity depends on structure, 15x6 hole grid, ordered tool silhouettes, lamp, mat, and three bins.",
+        "Side view confirms board depth, four-leg frame, and storage cavity.",
+        "The existing clickable station root and approach point must remain unchanged."
+      ]
+    },
+    "specDepthDecision": {
+      "requiredDepth": "complex",
+      "minimumComponentLevels": [
+        "macro",
+        "meso",
+        "micro"
+      ],
+      "needsRepetitionSystems": true,
+      "needsMaterialLocalOverrides": true,
+      "needsMultipleReviewViews": true,
+      "needsActionReadyHierarchy": true,
+      "rationale": "Complex modular station with repeated peg holes and bins plus many detachable tool props."
+    },
+    "unknownsToResolveBeforeImplementation": [],
+    "detailInventory": {
+      "scanMethod": "grid-3x3 plus paired-view semantic analysis",
+      "targetMinDetails": 12,
+      "details": [
+        {
+          "id": "thick-top",
+          "kind": "bevel",
+          "description": "Wide warm-brown slab with darker front apron",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "worktop"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "peg-frame",
+          "kind": "contour",
+          "description": "Thick charcoal rectangle framing recessed board",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "pegboard-frame"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "square-hole-grid",
+          "kind": "hole",
+          "description": "15 by 6 square perforation array",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "peg-hole-grid"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "four-legs",
+          "kind": "contour",
+          "description": "Four inset rectangular legs",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "leg-frame"
+          },
+          "evidenceRef": "side-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "diagonal-braces",
+          "kind": "ridge",
+          "description": "Two dark under-top diagonal braces",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "diagonal-braces"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "drawer-recess",
+          "kind": "seam",
+          "description": "Left shallow storage drawer with inset face",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "drawer-storage"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "lamp-diffuser",
+          "kind": "emissive",
+          "description": "Warm white rectangular lamp face",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "task-lamp"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "mat-grid",
+          "kind": "linework",
+          "description": "Pale border and dense square grid on green mat",
+          "region": "front/side reference",
+          "scale": "meso",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "cutting-mat"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "pliers-joint",
+          "kind": "fastener",
+          "description": "Circular plier hinge with split red grips",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "pliers"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "driver-pair",
+          "kind": "contour",
+          "description": "Blue then red vertical screwdrivers",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "tool-row"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "wrench-jaws",
+          "kind": "contour",
+          "description": "Double open-ended steel wrench",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "wrench"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "knife-track",
+          "kind": "groove",
+          "description": "Yellow utility knife with dark track",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "utility-knife"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "three-bin-openings",
+          "kind": "hole",
+          "description": "Three red open-front bins with dark interiors",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "parts-bins"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        },
+        {
+          "id": "tool-order",
+          "kind": "linework",
+          "description": "Left-to-right pliers, blue driver, red driver, wrench, knife",
+          "region": "front/side reference",
+          "scale": "micro",
+          "affects": "identity",
+          "mapsTo": {
+            "type": "component.localFeatures",
+            "ref": "tool-row"
+          },
+          "evidenceRef": "front-view",
+          "confidence": 0.9
+        }
+      ]
+    },
+    "anatomy": {
+      "applies": false,
+      "styleHeads": 0.0,
+      "proportions": {
+        "headUnit": 0.0,
+        "torso": 0.0,
+        "legs": 0.0,
+        "shoulderWidth": 0.0,
+        "hipWidth": 0.0
+      },
+      "pose": {
+        "type": "unassessed",
+        "jointAngles": {}
+      },
+      "faceLandmarks": {
+        "eyeLine": 0.0,
+        "eyeSpacing": 0.0,
+        "noseBase": 0.0,
+        "mouthLine": 0.0,
+        "hairline": 0.0
+      },
+      "features": [],
+      "confidence": 0.0,
+      "note": "Only meaningful when objectClass.primaryDomain is character or hybrid. Set applies=true and fill from forge/stage1_intake/extract_landmarks.py. See grimoire/character/reconstruction.md and grimoire/character/likeness_maximization.md."
+    },
+    "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png"
+  },
+  "qualityContract": {
+    "qualityBar": "complex",
+    "definitionOfDone": [
+      "The planning bench reads at the default room camera as the reference: warm thick top, black four-leg frame and braces, tall framed 15x6 pegboard, lamp, green gridded mat, five ordered tools, drawer/storage, and three red bins while retaining station interaction."
+    ],
+    "minimumSpecDepth": {
+      "macroComponents": 4,
+      "mesoComponents": 10,
+      "microFeatureGroups": 6,
+      "materialLayers": 8,
+      "repetitionSystems": 2,
+      "reviewViewpoints": 3
+    },
+    "featureGroups": [
+      {
+        "id": "overall-silhouette",
+        "name": "Overall silhouette and proportions",
+        "required": true,
+        "qualityCriteria": [
+          "Bounding shape, dominant curves, negative spaces, and scale relationships are explicitly described."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model reads as a generic placeholder instead of the reference object",
+          "major proportions are guessed without evidence"
+        ]
+      },
+      {
+        "id": "primary-structure",
+        "name": "Primary structure and hierarchy",
+        "required": true,
+        "qualityCriteria": [
+          "Major parts, joints, seams, contact points, and parent-child relationships are named before code generation."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "large visible parts are merged into one mesh",
+          "component hierarchy is too shallow for the observed complexity"
+        ]
+      },
+      {
+        "id": "attachment-joint-correctness",
+        "name": "Attachment and joint correctness",
+        "required": true,
+        "qualityCriteria": [
+          "Every visible child appendage, branch, limb, handle, connector, tube, cable, horn, wing, leg, or hinged part has an attachment contract with parent socket, localStart/localEnd, contact type, embed/overlap, and gap tolerance."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "child part root floats away from the parent",
+          "branch/limb/tube is centered in space instead of pivoting from its root",
+          "parent-child transform mixes world and local coordinates"
+        ]
+      },
+      {
+        "id": "surface-material-response",
+        "name": "Surface material response",
+        "required": true,
+        "qualityCriteria": [
+          "Albedo zones, roughness, normal/bump/displacement intent, cavity dirt, edge wear, and local overrides are specified where visible.",
+          "Important materials define independent albedo, roughness, height/normal, and AO responses instead of reusing one texture for unrelated PBR channels.",
+          "Surface response is decomposed into macro, meso, and micro frequency bands with scale and amplitude tied to object scale."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "surface looks like flat plastic",
+          "local material variation is missing or not tied to image evidence"
+        ]
+      },
+      {
+        "id": "reference-lookdev",
+        "name": "Reference color, material, and lighting response",
+        "required": true,
+        "qualityCriteria": [
+          "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+          "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
+          "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
+          "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model has acceptable shape but reads as flat shaded or plastic",
+          "colors are a generic average instead of reference-observed local color zones",
+          "lighting is evenly ambient and cannot reproduce the source value range"
+        ]
+      }
+    ],
+    "visualDeltaChecks": [
+      "silhouette and negative-space delta",
+      "component hierarchy depth delta",
+      "repetition density and distribution delta",
+      "material albedo/roughness/normal response delta",
+      "local feature placement and scale delta"
+    ],
+    "antiShallowSpecRules": [
+      "Do not proceed to code if qualityContract.qualityBar is unassessed.",
+      "Do not proceed to code if the spec only contains a root component for a moderate or complex object.",
+      "Do not proceed to code if required featureGroups are not represented by componentTree, materials, or repetitionSystems.",
+      "Do not proceed to code if visible local features are described only in prose and not attached to components/materials/evidenceRefs.",
+      "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
+      "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
+      "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+      "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+      "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity."
+    ]
+  },
+  "qualityTargets": {
+    "targetFidelity": 0.7,
+    "mustMatch": [
+      "macro silhouette and proportions",
+      "primary material albedo/roughness response",
+      "reference-derived PBR material response at or above 0.7 confidence when source pixels are usable",
+      "most recognizable local features"
+    ],
+    "niceToHave": [
+      "micro scratches, stains, chips, and dirt masks",
+      "secondary lighting match"
+    ],
+    "fpsTarget": 60,
+    "reviewViewpoints": [
+      "front",
+      "three-quarter",
+      "side"
+    ]
+  },
+  "selfCorrectLoop": {
+    "enabled": true,
+    "visualAcceptance": {
+      "reviewer": "ai-vision",
+      "threshold": 0.7,
+      "comparisonArtifactRequired": true,
+      "layerScoresRequired": true,
+      "codePixelDiffIsAcceptanceAuthority": false,
+      "scoringRule": "AI vision must inspect a side-by-side reference/render sheet and score the current pass from 0 to 1. Pixel-diff code may assist diagnostics but cannot approve a pass.",
+      "requiredLayerScores": [
+        "silhouetteProportion",
+        "componentStructure",
+        "formDetail",
+        "materialSurface",
+        "lightingCamera"
+      ],
+      "featureReviewPolicy": {
+        "enabled": true,
+        "reviewUnit": "semantic-subsystem",
+        "maxCriticalFeaturesPerPass": 5,
+        "maxImportantFeaturesPerPass": 3,
+        "criticalDefaultThreshold": 0.8,
+        "importantAverageThreshold": 0.65,
+        "adaptiveEscalation": true,
+        "singleImagePairOnly": true,
+        "selectionRule": "Choose only the most visually salient, identity-defining, user-prioritized, or high-risk semantic systems. Group repeated parts instead of reviewing every mesh. AI vision scores every selected feature from the same full reference/render pair."
+      }
+    },
+    "reviewAfterPasses": [
+      "blockout",
+      "structural-pass",
+      "form-refinement",
+      "material-pass",
+      "surface-pass",
+      "lighting-pass",
+      "interaction-pass",
+      "optimization-pass"
+    ],
+    "allowedActions": [
+      "continue",
+      "refine-spec",
+      "refine-code",
+      "request-input",
+      "stop"
+    ],
+    "specRefineTriggers": [
+      "missing component",
+      "wrong primitive family",
+      "wrong proportions",
+      "material layer under-specified",
+      "local feature not traceable to viewEvidence",
+      "reference ambiguity discovered during implementation"
+    ],
+    "codeRefineTriggers": [
+      "spec is adequate but generated geometry/material does not match",
+      "browser render differs from reference",
+      "performance budget exceeded",
+      "lighting hides geometry or material response"
+    ],
+    "stopCriteria": [
+      "target fidelity reached or user accepts current approximation",
+      "remaining gaps require new reference images or manual art"
+    ],
+    "screenshotPolicy": {
+      "requiredForPasses": [
+        "blockout",
+        "structural-pass",
+        "form-refinement",
+        "material-pass",
+        "surface-pass",
+        "lighting-pass",
+        "interaction-pass"
+      ],
+      "preferredCapture": "in-app-browser-screenshot",
+      "fallbackCapture": "user-supplied-screenshot-path",
+      "minimumEvidence": "Each visual pass needs a reference image, rendered screenshot, side-by-side comparison sheet, AI vision score, layer scores, and critique before choosing continue.",
+      "reviewPairRule": "Compare the same camera/viewpoint whenever possible; do not judge a front reference against a random render angle.",
+      "acceptanceAuthority": "AI vision review of the comparison sheet. Code-generated pixel similarity is not sufficient evidence."
+    }
+  },
+  "featureReviewTargets": [
+    {
+      "id": "bench-silhouette",
+      "name": "Wide top, four-leg frame, and tall pegboard silhouette",
+      "tier": "critical",
+      "passIds": [
+        "blockout",
+        "structural-pass"
+      ],
+      "minimumScore": 0.8,
+      "mustPass": true,
+      "componentRefs": [
+        "structure",
+        "worktop",
+        "leg-frame",
+        "pegboard",
+        "pegboard-frame"
+      ],
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ]
+    },
+    {
+      "id": "pegboard-system",
+      "name": "Framed 15x6 pegboard hole system",
+      "tier": "critical",
+      "passIds": [
+        "structural-pass",
+        "form-refinement"
+      ],
+      "minimumScore": 0.8,
+      "mustPass": true,
+      "componentRefs": [
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid"
+      ],
+      "evidenceRefs": [
+        "front-view"
+      ]
+    },
+    {
+      "id": "tool-order",
+      "name": "Pliers, blue driver, red driver, wrench, yellow knife order",
+      "tier": "critical",
+      "passIds": [
+        "form-refinement",
+        "material-pass"
+      ],
+      "minimumScore": 0.8,
+      "mustPass": true,
+      "componentRefs": [
+        "tool-row",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife"
+      ],
+      "evidenceRefs": [
+        "front-view"
+      ]
+    },
+    {
+      "id": "lamp-mat-bins",
+      "name": "Red-white lamp, green gridded mat, and three red bins",
+      "tier": "critical",
+      "passIds": [
+        "form-refinement",
+        "material-pass",
+        "lighting-pass"
+      ],
+      "minimumScore": 0.78,
+      "mustPass": true,
+      "componentRefs": [
+        "task-lamp",
+        "lamp-diffuser",
+        "cutting-mat",
+        "mat-grid",
+        "parts-bins",
+        "bin-openings"
+      ],
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ]
+    },
+    {
+      "id": "station-integration",
+      "name": "Clickable planning-station integration and route clearance",
+      "tier": "important",
+      "passIds": [
+        "interaction-pass",
+        "optimization-pass"
+      ],
+      "minimumScore": 0.7,
+      "mustPass": false,
+      "componentRefs": [
+        "root"
+      ],
+      "evidenceRefs": [
+        "full-object"
+      ]
+    }
+  ],
+  "sculptPipeline": {
+    "passGateMode": "locked-sequential",
+    "passOrder": [
+      "blockout",
+      "structural-pass",
+      "form-refinement",
+      "material-pass",
+      "surface-pass",
+      "lighting-pass",
+      "interaction-pass",
+      "optimization-pass"
+    ],
+    "currentPass": "structural-pass",
+    "completedPasses": [
+      "blockout"
+    ],
+    "lastCompletedPass": "blockout",
+    "blockedReason": "",
+    "nextRequiredEvidence": [
+      "Macro, meso, and repeated structures meet qualityContract.minimumSpecDepth.",
+      "Parent-child relations, joints, seams, sockets, and contact points are explicit.",
+      "Every attached child appendage/connector has parentSocket, localStart/localEnd, contactType, embedDepth or overlap, and gapTolerance.",
+      "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold.",
+      "attachment contracts for child appendages/connectors",
+      "no floating child roots/joints in the browser screenshot",
+      "browser render screenshot from your agent's browser/screenshot tool",
+      "side-by-side reference/render comparison sheet for AI vision review",
+      "AI vision score at or above the visual acceptance threshold",
+      "all critical semantic feature scores from the shared image pair at or above their thresholds",
+      "self-correction review appended with action=continue before the next pass"
+    ]
+  },
+  "lookDevTargets": {
+    "qualityPriority": "reference-fidelity",
+    "materialPass": {
+      "albedoPaletteRequired": true,
+      "roughnessVariationRequired": true,
+      "normalOrBumpRequired": true,
+      "localOverridesRequired": true,
+      "minimumTextureResolution": 1024,
+      "preferredTextureResolution": 2048,
+      "independentMapChannels": [
+        "albedo",
+        "roughness",
+        "height",
+        "normal",
+        "ambient-occlusion"
+      ],
+      "requiredSurfaceFrequencyBands": [
+        "macro",
+        "meso",
+        "micro"
+      ],
+      "geometryReliefRequiredWhenSilhouetteAffected": true,
+      "referencePbrExtraction": {
+        "requiredWhenSourceImagePresent": true,
+        "targetThreshold": 0.7,
+        "stopOnLowConfidence": true,
+        "script": "forge/stage1_intake/extract_pbr_evidence.py",
+        "acceptedLimitation": "single-image extraction is reference-derived inference, not exact photogrammetry"
+      },
+      "mustAvoid": [
+        "single flat albedo per material",
+        "uniform roughness",
+        "albedo texture reused as roughness/height/normal/AO",
+        "single-frequency random noise",
+        "plastic-looking smooth bark, stone, cloth, foliage, or aged material",
+        "local color/detail described only in prose without material masks",
+        "claiming exact PBR recovery when confidence is below the target threshold"
+      ]
+    },
+    "lightingPass": {
+      "requiredTerms": [
+        "key light",
+        "fill light",
+        "rim or environment light",
+        "exposure",
+        "tone mapping",
+        "background",
+        "contact shadow"
+      ],
+      "mustAvoid": [
+        "ambient-only lighting",
+        "flat value range",
+        "missing contact shadow",
+        "reference lighting copied without separating material readability"
+      ]
+    },
+    "screenshotReview": [
+      "Compare albedo palette and local color zones.",
+      "Compare roughness/normal/bump response under light.",
+      "Compare cavity dirt, edge wear, stains, moss, scratches, or other local masks.",
+      "Compare key/fill/rim structure, exposure, tone mapping, background, and contact shadows.",
+      "Capture a neutral-light render to verify material readability without reference lighting.",
+      "Capture a grazing-light close-up to expose flat normals, uniform roughness, tiling, and plastic highlights.",
+      "Capture a reference-matched render from the same camera framing as the source."
+    ]
+  },
+  "actionReadiness": {
+    "contract": "Every macro/meso component should be generated as a stable named Object3D pivot node with a mesh child, action metadata, optional sockets, collider proxy, and destruction metadata.",
+    "defaultRigType": "action-ready-static-rig",
+    "rootMotionNode": "root",
+    "requiredComponentFields": [
+      "id",
+      "parent",
+      "transform",
+      "attachment for child appendages, connectors, limbs, tubes, handles, legs, horns, wings, branches, or cables",
+      "actionProfile.animationRole",
+      "actionProfile.pivot",
+      "actionProfile.collider",
+      "actionProfile.destruction"
+    ],
+    "transformChannels": [
+      "translate",
+      "rotate",
+      "scale",
+      "bend",
+      "twist",
+      "detach",
+      "visibility",
+      "material-state"
+    ],
+    "authoringRules": [
+      "Do not collapse independently movable parts into one mesh.",
+      "Put transforms on component pivot groups, not only on raw meshes.",
+      "For attached child parts, put the pivot at the semantic root/socket and build visible geometry from localStart to localEnd.",
+      "Represent hinge, socket, detachable, and breakable intent even when no animation is implemented yet.",
+      "Use simplified collider proxies for runtime physics instead of visual mesh colliders by default."
+    ],
+    "destructionPolicy": {
+      "defaultBreakable": false,
+      "fractureGroupNaming": "Use stable semantic names such as body-shell, left-hinge, glass-panel, branch-segment.",
+      "debrisStrategy": "Prefer detachable component groups and a small number of procedural fragments over random mesh explosion."
+    }
+  },
+  "assumptions": [
+    "Reconstruction is stylized and optimized for the room default camera.",
+    "Peg holes are shallow dark insets rather than boolean-through perforations.",
+    "Existing station collider, route endpoint, and task behavior are preserved."
+  ],
+  "coordinateFrame": {
+    "front": "camera-facing side in the reference image",
+    "up": "image up direction",
+    "scaleReference": "unit scale; adjust after first browser render"
+  },
+  "silhouette": {
+    "boundingShape": "wide 1.0 worktop, depth 0.46, work surface height 0.76, total height 1.65",
+    "aspectRatios": [
+      "top width:depth 1:0.46",
+      "pegboard width:top width 0.89:1",
+      "total height:top width 1.65:1"
+    ],
+    "symmetry": "structural frame is mostly symmetric; drawer and accessories are asymmetric",
+    "dominantCurves": [
+      "rectilinear top and frame",
+      "vertical board rectangle",
+      "angular lamp hood",
+      "sloped bin fronts"
+    ],
+    "negativeSpaces": [
+      "open center legroom",
+      "peg perforations",
+      "bin interiors",
+      "underbench storage cavity"
+    ],
+    "landmarks": [
+      "15x6 peg grid",
+      "red-white lamp",
+      "green cutting mat",
+      "ordered five tools",
+      "three red bins"
+    ]
+  },
+  "viewEvidence": [
+    {
+      "id": "front-view",
+      "view": "front",
+      "imageRegion": {
+        "x": 0,
+        "y": 0,
+        "width": 0.69,
+        "height": 1,
+        "units": "normalized"
+      },
+      "observations": [
+        "wide top",
+        "pegboard grid",
+        "tool order",
+        "lamp and mat",
+        "drawer and two braces"
+      ],
+      "confidence": 0.97
+    },
+    {
+      "id": "side-view",
+      "view": "right side",
+      "imageRegion": {
+        "x": 0.69,
+        "y": 0,
+        "width": 0.31,
+        "height": 1,
+        "units": "normalized"
+      },
+      "observations": [
+        "shallow depth",
+        "board thickness",
+        "four-leg frame",
+        "storage cavity",
+        "tool and bin projection"
+      ],
+      "confidence": 0.94
+    },
+    {
+      "id": "full-object",
+      "view": "paired",
+      "imageRegion": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1,
+        "units": "normalized"
+      },
+      "observations": [
+        "matte low-poly materials",
+        "soft top-left lighting",
+        "color-coded accessory hierarchy"
+      ],
+      "confidence": 0.96
+    }
+  ],
+  "componentTree": [
+    {
+      "id": "root",
+      "name": "Reference Planning Workbench",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "semantic modular workstation root",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": null,
+      "attachment": null,
+      "dimensions": {
+        "width": 1,
+        "height": 1.65,
+        "depth": 0.46,
+        "units": "top-width",
+        "confidence": 0.95
+      },
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "root",
+        "pivot": {
+          "mode": "center",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": null,
+      "materialLayers": [],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "station-contact",
+          "type": "socket",
+          "description": "stable floor and wall-aligned station root"
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.0,
+        "microRoughness": 0.0,
+        "bumpAmplitude": 0.0,
+        "normalPattern": "",
+        "displacementPattern": "",
+        "occlusionPattern": "",
+        "edgeWearPattern": "",
+        "notes": ""
+      },
+      "evidenceRefs": [
+        "full-object"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "structure",
+      "name": "Structural frame",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Top, four legs, rails, drawer, and braces.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "root",
+      "attachment": {
+        "parentId": "root",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 1,
+        "height": 0.78,
+        "depth": 0.46,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": null,
+      "materialLayers": [],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "structure-feature",
+          "type": "geometry",
+          "description": "Top, four legs, rails, drawer, and braces."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "pegboard",
+      "name": "Pegboard assembly",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Thick frame, inset panel, and square hole array.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "root",
+      "attachment": {
+        "parentId": "root",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.77,
+          -0.2
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.89,
+        "height": 0.78,
+        "depth": 0.07,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.77,
+          -0.2
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": null,
+      "materialLayers": [],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "pegboard-feature",
+          "type": "geometry",
+          "description": "Thick frame, inset panel, and square hole array."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "accessories",
+      "name": "Accessory assembly",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Lamp, mat, ordered tools, and bins.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "root",
+      "attachment": {
+        "parentId": "root",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.8,
+          -0.12
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.86,
+        "height": 0.65,
+        "depth": 0.18,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.8,
+          -0.12
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": null,
+      "materialLayers": [],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "accessories-feature",
+          "type": "geometry",
+          "description": "Lamp, mat, ordered tools, and bins."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "worktop",
+      "name": "Walnut worktop",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Warm slab with darker thick front apron.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "structure",
+      "attachment": {
+        "parentId": "structure",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.76,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 1,
+        "height": 0.13,
+        "depth": 0.46,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.76,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "wood",
+      "materialLayers": [
+        "wood"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "worktop-feature",
+          "type": "geometry",
+          "description": "Warm slab with darker thick front apron."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "leg-frame",
+      "name": "Four-leg frame",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Four chunky inset posts and side rails.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "structure",
+      "attachment": {
+        "parentId": "structure",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.36,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.9,
+        "height": 0.73,
+        "depth": 0.4,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.36,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "frame",
+      "materialLayers": [
+        "frame"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "leg-frame-feature",
+          "type": "geometry",
+          "description": "Four chunky inset posts and side rails."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "diagonal-braces",
+      "name": "Diagonal braces",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Mirrored under-top diagonal reinforcements.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "structure",
+      "attachment": {
+        "parentId": "structure",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.5,
+          0.16
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.78,
+        "height": 0.3,
+        "depth": 0.06,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.5,
+          0.16
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "frame",
+      "materialLayers": [
+        "frame"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "diagonal-braces-feature",
+          "type": "geometry",
+          "description": "Mirrored under-top diagonal reinforcements."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "drawer-storage",
+      "name": "Drawer and storage cavity",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Left shallow drawer with recessed face and side cavity panels.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "structure",
+      "attachment": {
+        "parentId": "structure",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          -0.25,
+          0.66,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.3,
+        "height": 0.15,
+        "depth": 0.38,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          -0.25,
+          0.66,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "frame",
+      "materialLayers": [
+        "frame"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "drawer-storage-feature",
+          "type": "geometry",
+          "description": "Left shallow drawer with recessed face and side cavity panels."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "pegboard-frame",
+      "name": "Pegboard outer frame",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Thick charcoal rails around recessed board.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "pegboard",
+      "attachment": {
+        "parentId": "pegboard",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.39,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.89,
+        "height": 0.78,
+        "depth": 0.07,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.39,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "frame",
+      "materialLayers": [
+        "frame"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "pegboard-frame-feature",
+          "type": "geometry",
+          "description": "Thick charcoal rails around recessed board."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "pegboard-panel",
+      "name": "Pegboard panel",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Dark charcoal panel inset behind frame.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "pegboard",
+      "attachment": {
+        "parentId": "pegboard",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.39,
+          0.025
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.82,
+        "height": 0.68,
+        "depth": 0.03,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.39,
+          0.025
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "board",
+      "materialLayers": [
+        "board"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "pegboard-panel-feature",
+          "type": "geometry",
+          "description": "Dark charcoal panel inset behind frame."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "peg-hole-grid",
+      "name": "Square peg holes",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "instanced-cluster",
+      "geometryDescriptor": {
+        "topologyIntent": "Fifteen columns by six rows of square dark insets.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "pegboard",
+      "attachment": {
+        "parentId": "pegboard",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.4,
+          0.045
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.76,
+        "height": 0.58,
+        "depth": 0.01,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.4,
+          0.045
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "interior",
+      "materialLayers": [
+        "interior"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "peg-hole-grid-feature",
+          "type": "geometry",
+          "description": "Fifteen columns by six rows of square dark insets."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "task-lamp",
+      "name": "Red task lamp",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Black base and stem, angular red hood, warm white face.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "accessories",
+      "attachment": {
+        "parentId": "accessories",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          -0.38,
+          0.23,
+          0.08
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.13,
+        "height": 0.43,
+        "depth": 0.12,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          -0.38,
+          0.23,
+          0.08
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "red",
+      "materialLayers": [
+        "red"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "task-lamp-feature",
+          "type": "geometry",
+          "description": "Black base and stem, angular red hood, warm white face."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "cutting-mat",
+      "name": "Green cutting mat",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "plane-card",
+      "geometryDescriptor": {
+        "topologyIntent": "Green tabletop mat with pale border and grid lines.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "accessories",
+      "attachment": {
+        "parentId": "accessories",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0.02,
+          0.015,
+          0.08
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.53,
+        "height": 0.01,
+        "depth": 0.29,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0.02,
+          0.015,
+          0.08
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "mat",
+      "materialLayers": [
+        "mat"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "cutting-mat-feature",
+          "type": "geometry",
+          "description": "Green tabletop mat with pale border and grid lines."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "tool-row",
+      "name": "Ordered hanging tool row",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Pliers, blue driver, red driver, wrench, yellow knife in order.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "accessories",
+      "attachment": {
+        "parentId": "accessories",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0.03,
+          0.42,
+          -0.02
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.52,
+        "height": 0.43,
+        "depth": 0.08,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0.03,
+          0.42,
+          -0.02
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": null,
+      "materialLayers": [],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "tool-row-feature",
+          "type": "geometry",
+          "description": "Pliers, blue driver, red driver, wrench, yellow knife in order."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "parts-bins",
+      "name": "Three red parts bins",
+      "level": "meso",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "instanced-cluster",
+      "geometryDescriptor": {
+        "topologyIntent": "Three open-front red bins with dark interiors.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "accessories",
+      "attachment": {
+        "parentId": "accessories",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0.29,
+          0.16,
+          0.03
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.27,
+        "height": 0.16,
+        "depth": 0.16,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0.29,
+          0.16,
+          0.03
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "red",
+      "materialLayers": [
+        "red"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "parts-bins-feature",
+          "type": "geometry",
+          "description": "Three open-front red bins with dark interiors."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "pliers",
+      "name": "Pliers",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "extrude",
+      "geometryDescriptor": {
+        "topologyIntent": "Steel jaws, circular hinge, split red grips.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "tool-row",
+      "attachment": {
+        "parentId": "tool-row",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          -0.21,
+          0.02,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.09,
+        "height": 0.32,
+        "depth": 0.05,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          -0.21,
+          0.02,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "steel",
+      "materialLayers": [
+        "steel"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "pliers-feature",
+          "type": "geometry",
+          "description": "Steel jaws, circular hinge, split red grips."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "blue-driver",
+      "name": "Blue screwdriver",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "cylinder",
+      "geometryDescriptor": {
+        "topologyIntent": "Faceted blue handle over steel shaft.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "tool-row",
+      "attachment": {
+        "parentId": "tool-row",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          -0.1,
+          0.02,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.06,
+        "height": 0.3,
+        "depth": 0.05,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          -0.1,
+          0.02,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "blue",
+      "materialLayers": [
+        "blue"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "blue-driver-feature",
+          "type": "geometry",
+          "description": "Faceted blue handle over steel shaft."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "red-driver",
+      "name": "Red screwdriver",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "cylinder",
+      "geometryDescriptor": {
+        "topologyIntent": "Faceted red handle over steel shaft.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "tool-row",
+      "attachment": {
+        "parentId": "tool-row",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.02,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.06,
+        "height": 0.3,
+        "depth": 0.05,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.02,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "red",
+      "materialLayers": [
+        "red"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "red-driver-feature",
+          "type": "geometry",
+          "description": "Faceted red handle over steel shaft."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "wrench",
+      "name": "Double open wrench",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "extrude",
+      "geometryDescriptor": {
+        "topologyIntent": "Large upper and smaller lower open jaws.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "tool-row",
+      "attachment": {
+        "parentId": "tool-row",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0.11,
+          0.03,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.08,
+        "height": 0.34,
+        "depth": 0.025,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0.11,
+          0.03,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "steel",
+      "materialLayers": [
+        "steel"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "wrench-feature",
+          "type": "geometry",
+          "description": "Large upper and smaller lower open jaws."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "utility-knife",
+      "name": "Yellow utility knife",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "Yellow casing, dark track, steel blade.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "tool-row",
+      "attachment": {
+        "parentId": "tool-row",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0.22,
+          0.02,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.07,
+        "height": 0.3,
+        "depth": 0.04,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0.22,
+          0.02,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "yellow",
+      "materialLayers": [
+        "yellow"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "utility-knife-feature",
+          "type": "geometry",
+          "description": "Yellow casing, dark track, steel blade."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "bin-openings",
+      "name": "Bin dark interiors",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "instanced-cluster",
+      "geometryDescriptor": {
+        "topologyIntent": "Three deep open-front cavities.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "parts-bins",
+      "attachment": {
+        "parentId": "parts-bins",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.02,
+          0.04
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.25,
+        "height": 0.1,
+        "depth": 0.06,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.02,
+          0.04
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "interior",
+      "materialLayers": [
+        "interior"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "bin-openings-feature",
+          "type": "geometry",
+          "description": "Three deep open-front cavities."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "mat-grid",
+      "name": "Cutting mat grid",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "instanced-cluster",
+      "geometryDescriptor": {
+        "topologyIntent": "Pale border, square subdivisions, and diagonal corner marks.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "cutting-mat",
+      "attachment": {
+        "parentId": "cutting-mat",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.008,
+          0
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.49,
+        "height": 0.002,
+        "depth": 0.25,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.008,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "light",
+      "materialLayers": [
+        "light"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "mat-grid-feature",
+          "type": "geometry",
+          "description": "Pale border, square subdivisions, and diagonal corner marks."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    },
+    {
+      "id": "lamp-diffuser",
+      "name": "Lamp diffuser",
+      "level": "micro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.5,
+      "primitive": "plane-card",
+      "geometryDescriptor": {
+        "topologyIntent": "Warm emissive rectangular lamp face.",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "flat/faceted normals with small bevel highlights"
+      },
+      "parent": "task-lamp",
+      "attachment": {
+        "parentId": "task-lamp",
+        "parentSocket": "structure-socket",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.34,
+          0.065
+        ],
+        "contactType": "embedded structural joint",
+        "overlap": 0.02,
+        "gapTolerance": 0.01,
+        "evidenceRefs": [
+          "front-view",
+          "side-view"
+        ]
+      },
+      "dimensions": {
+        "width": 0.1,
+        "height": 0.09,
+        "depth": 0.005,
+        "units": "top-width",
+        "confidence": 0.92
+      },
+      "transform": {
+        "position": [
+          0,
+          0.34,
+          0.065
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "actionProfile": {
+        "animationRole": "detachable-static",
+        "pivot": {
+          "mode": "semantic attachment root",
+          "localPosition": [
+            0,
+            0,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "confidence": 0.5
+        },
+        "transformChannels": {
+          "translate": true,
+          "rotate": true,
+          "scale": true,
+          "bend": false,
+          "twist": false,
+          "detach": false,
+          "visibility": true,
+          "materialState": true
+        },
+        "sockets": [
+          {
+            "id": "structure-socket",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "board-socket",
+            "position": [
+              0,
+              0.76,
+              -0.2
+            ]
+          },
+          {
+            "id": "accessory-socket",
+            "position": [
+              0,
+              0.79,
+              0
+            ]
+          }
+        ],
+        "collider": {
+          "type": "box",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "isTrigger": false,
+          "notes": "Replace with sphere/capsule/compound proxy when the object shape demands it."
+        },
+        "constraints": [],
+        "destruction": {
+          "breakable": false,
+          "fractureGroup": "root",
+          "seamRefs": [],
+          "detachableFragments": [],
+          "breakImpulse": 0.0,
+          "debrisMaterial": "base"
+        }
+      },
+      "material": "light",
+      "materialLayers": [
+        "light"
+      ],
+      "deformations": [],
+      "joints": [],
+      "seams": [],
+      "localFeatures": [
+        {
+          "id": "lamp-diffuser-feature",
+          "type": "geometry",
+          "description": "Warm emissive rectangular lamp face."
+        }
+      ],
+      "surfaceDetail": {
+        "macroRoughness": 0.12,
+        "microRoughness": 0.03,
+        "bumpAmplitude": 0.01,
+        "normalPattern": "subtle independent look-dev relief",
+        "displacementPattern": "none",
+        "occlusionPattern": "contact AO at joints and recesses",
+        "edgeWearPattern": "none",
+        "notes": "clean product visualization"
+      },
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ],
+      "details": [],
+      "fidelityTier": "blockout"
+    }
+  ],
+  "materials": [
+    {
+      "id": "wood",
+      "name": "Warm walnut",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#70472F",
+      "color": "#70472F",
+      "albedo": {
+        "dominant": "#70472F",
+        "secondary": [
+          "#8B573A",
+          "#3E2F22"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#70472F",
+          "#8B573A",
+          "#3E2F22"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.66,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.02,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "wood-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.5800000000000001,
+          "baseColor": "#3E2F22"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\wood\\wood_albedo.png",
+            "url": "wood_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\wood\\wood_roughness.png",
+            "url": "wood_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\wood\\wood_height.png",
+            "url": "wood_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\wood\\wood_normal.png",
+            "url": "wood_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\wood\\wood_ao.png",
+            "url": "wood_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "frame",
+      "name": "Near-black steel",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#17191B",
+      "color": "#17191B",
+      "albedo": {
+        "dominant": "#17191B",
+        "secondary": [
+          "#25282C",
+          "#0F1011"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#17191B",
+          "#25282C",
+          "#0F1011"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.48,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.55,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "frame-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.39999999999999997,
+          "baseColor": "#0F1011"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "board",
+      "name": "Dark pegboard",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#2B2D2E",
+      "color": "#2B2D2E",
+      "albedo": {
+        "dominant": "#2B2D2E",
+        "secondary": [
+          "#3A3D3F",
+          "#171819"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#2B2D2E",
+          "#3A3D3F",
+          "#171819"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.78,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.18,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "board-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.7000000000000001,
+          "baseColor": "#171819"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "interior",
+      "name": "Recess interior",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#0F1011",
+      "color": "#0F1011",
+      "albedo": {
+        "dominant": "#0F1011",
+        "secondary": [
+          "#171819",
+          "#080909"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#0F1011",
+          "#171819",
+          "#080909"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.95,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "interior-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.87,
+          "baseColor": "#080909"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "mat",
+      "name": "Green cutting mat",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#3B6047",
+      "color": "#3B6047",
+      "albedo": {
+        "dominant": "#3B6047",
+        "secondary": [
+          "#54775C",
+          "#233C2E"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#3B6047",
+          "#54775C",
+          "#233C2E"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.86,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "mat-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.78,
+          "baseColor": "#233C2E"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.852,
+        "estimatedFidelity": 0.852,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\mat\\mat_albedo.png",
+            "url": "mat_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\mat\\mat_roughness.png",
+            "url": "mat_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\mat\\mat_height.png",
+            "url": "mat_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\mat\\mat_normal.png",
+            "url": "mat_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\mat\\mat_ao.png",
+            "url": "mat_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "red",
+      "name": "Painted red accent",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#B43B2E",
+      "color": "#B43B2E",
+      "albedo": {
+        "dominant": "#B43B2E",
+        "secondary": [
+          "#D14C3B",
+          "#6F211B"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#B43B2E",
+          "#D14C3B",
+          "#6F211B"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.52,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.05,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "red-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.44,
+          "baseColor": "#6F211B"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "blue",
+      "name": "Blue driver grip",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#315E8A",
+      "color": "#315E8A",
+      "albedo": {
+        "dominant": "#315E8A",
+        "secondary": [
+          "#4A78A5",
+          "#1E3D5C"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#315E8A",
+          "#4A78A5",
+          "#1E3D5C"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.62,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.02,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "blue-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.54,
+          "baseColor": "#1E3D5C"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "yellow",
+      "name": "Utility-knife yellow",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#D9A72E",
+      "color": "#D9A72E",
+      "albedo": {
+        "dominant": "#D9A72E",
+        "secondary": [
+          "#F2C340",
+          "#765918"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#D9A72E",
+          "#F2C340",
+          "#765918"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.58,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.03,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "yellow-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.49999999999999994,
+          "baseColor": "#765918"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "steel",
+      "name": "Tool steel",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#8B9195",
+      "color": "#8B9195",
+      "albedo": {
+        "dominant": "#8B9195",
+        "secondary": [
+          "#B4B9BC",
+          "#4D5357"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#8B9195",
+          "#B4B9BC",
+          "#4D5357"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.4,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0.72,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "steel-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.32,
+          "baseColor": "#4D5357"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "light",
+      "name": "Warm diffuser and grid",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#F8EFDE",
+      "color": "#F8EFDE",
+      "albedo": {
+        "dominant": "#F8EFDE",
+        "secondary": [
+          "#FFF9EA",
+          "#D9D0C0"
+        ],
+        "samplingNotes": "Use image-observed local color zones, not a single averaged color."
+      },
+      "colorVariation": {
+        "palette": [
+          "#F8EFDE",
+          "#FFF9EA",
+          "#D9D0C0"
+        ],
+        "pattern": "broad face-normal response",
+        "amplitude": 0.08,
+        "heightCorrelation": 0.3
+      },
+      "textureResolution": 1024,
+      "textureProjection": {
+        "mode": "uv",
+        "repeat": [
+          2.0,
+          2.0
+        ],
+        "anisotropy": 8,
+        "texelDensityIntent": "Preserve stable world/object-scale detail; do not stretch micro detail with component scale."
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "frequency": 2.0,
+          "amplitude": 0.42,
+          "role": "broad color and height breakup"
+        },
+        {
+          "id": "meso",
+          "frequency": 12.0,
+          "amplitude": 0.22,
+          "role": "ridges, pores, grain, dents, or equivalent visible relief"
+        },
+        {
+          "id": "micro",
+          "frequency": 56.0,
+          "amplitude": 0.08,
+          "role": "highlight breakup visible under grazing light"
+        }
+      ],
+      "roughness": {
+        "base": 0.3,
+        "variation": 0.08,
+        "map": "independent-procedural-field",
+        "localResponse": "higher roughness in cavities, lower roughness on worn edges"
+      },
+      "metalness": {
+        "base": 0,
+        "variation": 0.0
+      },
+      "normal": {
+        "pattern": "independent extracted look-dev evidence",
+        "strength": 0.18,
+        "scale": 24.0,
+        "space": "tangent"
+      },
+      "bump": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "pattern": "none",
+        "amplitude": 0.0,
+        "scale": 1.0,
+        "silhouetteAffects": false
+      },
+      "ambientOcclusion": {
+        "cavityStrength": 0.35,
+        "contactShadowBias": 0.35,
+        "notes": "Darken creases, seams, intersections, and recessed local features."
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": [],
+        "chips": []
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#2F2A22"
+      },
+      "localOverrides": [
+        {
+          "id": "light-edge-response",
+          "region": "beveled edges and contact cavities",
+          "roughness": 0.21999999999999997,
+          "baseColor": "#D9D0C0"
+        }
+      ],
+      "shaderNotes": [
+        "Prefer MeshPhysicalMaterial when clearcoat, sheen, transmission, or thin-surface response is observed; otherwise use MeshStandardMaterial-compatible PBR channels.",
+        "Generate albedo, roughness, height/normal, and AO independently; never alias albedo into roughness.",
+        "Use normal/bump/displacement only when they map to observed surface relief.",
+        "Use displacement geometry when the observed relief changes the close-up silhouette; texture-only relief is insufficient there."
+      ],
+      "notes": "Reference-derived palette; runtime uses compact procedural geometry.",
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "extractor": "extract_pbr_evidence.py",
+        "method": "single-image inverse estimate",
+        "verdict": "pass",
+        "hardLimit": "requires render review",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_albedo.png",
+            "url": "metal_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_roughness.png",
+            "url": "metal_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_height.png",
+            "url": "metal_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_normal.png",
+            "url": "metal_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "path": "C:\\Users\\kyles\\threejs-raycast-room\\design\\planning-bench\\pbr\\metal\\metal_ao.png",
+            "url": "metal_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    }
+  ],
+  "repetitionSystems": [
+    {
+      "id": "peg-hole-array",
+      "type": "rectangular instanced grid",
+      "componentRefs": [
+        "peg-hole-grid"
+      ],
+      "count": 90,
+      "distribution": "15 columns by 6 rows with even spacing",
+      "variation": [
+        "none; regular reference grid"
+      ],
+      "evidenceRefs": [
+        "front-view"
+      ]
+    },
+    {
+      "id": "three-bin-array",
+      "type": "linear instanced row",
+      "componentRefs": [
+        "parts-bins",
+        "bin-openings"
+      ],
+      "count": 3,
+      "distribution": "three adjacent bins on pegboard right",
+      "variation": [
+        "small face-lighting differences"
+      ],
+      "evidenceRefs": [
+        "front-view",
+        "side-view"
+      ]
+    }
+  ],
+  "buildPasses": [
+    {
+      "id": "blockout",
+      "goal": "Match macro silhouette and proportions.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Silhouette reads correctly without materials.",
+        "Quality contract has named all required macro feature groups before code generation.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "structural-pass",
+      "goal": "Build the component hierarchy implied by the pre-spec complexity assessment.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Macro, meso, and repeated structures meet qualityContract.minimumSpecDepth.",
+        "Parent-child relations, joints, seams, sockets, and contact points are explicit.",
+        "Every attached child appendage/connector has parentSocket, localStart/localEnd, contactType, embedDepth or overlap, and gapTolerance.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "form-refinement",
+      "goal": "Refine shape, deformation, bevels, tapers, curves, asymmetry, and visible local geometry.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Important visible forms are represented in component geometryDescriptor, deformations, localFeatures, or repetitionSystems.",
+        "Endpoint-based child parts are rooted at their attachment sockets and do not visibly float away from parents.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "material-pass",
+      "goal": "Match material color, roughness, bump, and local variation.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Reference-derived albedo palette records dominant, secondary, and accent colors per visible material.",
+        "Each important material defines roughness variation and at least one normal/bump/displacement response.",
+        "Local material overrides, dirt/wear/stains/moss/chips/scratches or equivalent masks are tied to evidenceRefs.",
+        "Thin, transparent, reflective, wet, or fibrous materials document alpha/transmission/clearcoat/metalness/fiber response when relevant.",
+        "Generated preview uses procedural albedo/roughness/bump texture or vertex color variation instead of one flat color.",
+        "Generated preview uses independent PBR maps at 1024px or higher for the quality-first tier.",
+        "If source pixels are available, referencePbr extraction passed at confidence >= 0.7 or the pass is stopped/requesting better references.",
+        "Macro, meso, and micro surface frequency bands are visible at the intended review distance without obvious tiling.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "surface-pass",
+      "goal": "Add procedural surface locality such as normal/bump/displacement, AO, dirt, stains, chips, grain, moss, scratches, and wear.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Every required material feature group has local overrides or surfaceDetail tied to evidenceRefs.",
+        "A grazing-angle close-up proves that normal/height detail breaks highlights naturally and does not read as smooth plastic.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "lighting-pass",
+      "goal": "Make material and form readable under neutral turntable lighting plus optional reference lighting.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "lightingFromPhoto identifies key light direction/color/intensity, fill light, rim or environment light, and ambient color.",
+        "Exposure, tone mapping, background color/gradient, shadow softness, and contact shadow behavior are specified.",
+        "Lighting does not hide geometry/material gaps and screenshots can be compared fairly to the reference.",
+        "Neutral, grazing, and reference-matched lighting checks distinguish material errors from lighting errors.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "interaction-pass",
+      "goal": "Make the model ready for future animation, transformation, physics, or destruction.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Macro and movable meso components have stable pivot nodes.",
+        "Sockets, collider proxies, and destruction metadata are present for future runtime actions.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "optimization-pass",
+      "goal": "Protect runtime performance after visual fidelity is accepted.",
+      "componentRefs": [
+        "root",
+        "structure",
+        "pegboard",
+        "accessories",
+        "worktop",
+        "leg-frame",
+        "diagonal-braces",
+        "drawer-storage",
+        "pegboard-frame",
+        "pegboard-panel",
+        "peg-hole-grid",
+        "task-lamp",
+        "cutting-mat",
+        "tool-row",
+        "parts-bins",
+        "pliers",
+        "blue-driver",
+        "red-driver",
+        "wrench",
+        "utility-knife",
+        "bin-openings",
+        "mat-grid",
+        "lamp-diffuser"
+      ],
+      "acceptance": [
+        "Triangle count, draw calls, instancing, LOD strategy, and FPS target are documented or verified.",
+        "Repeated detail is instanced or simplified where possible without breaking silhouette/material believability."
+      ]
+    }
+  ],
+  "visualEvidence": [
+    {
+      "timestamp": "2026-07-27T21:42:50.914503+00:00",
+      "passId": "blockout",
+      "estimatedFidelity": 0.81,
+      "aiVisionScore": 0.81,
+      "visualAcceptanceThreshold": 0.7,
+      "layerScores": {
+        "silhouetteProportion": 0.87,
+        "componentStructure": 0.83,
+        "formDetail": 0.75,
+        "materialSurface": 0.78,
+        "lightingCamera": 0.74
+      },
+      "featureReviews": [
+        {
+          "id": "bench-silhouette",
+          "score": 0.88,
+          "notes": "Wide warm slab, four-leg dark frame, and tall framed pegboard remain clear at the exact integrated room camera."
+        }
+      ],
+      "referenceScreenshot": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+      "renderScreenshot": "C:/Users/kyles/AppData/Local/hermes/cache/screenshots/browser_screenshot_84d8a24a8b0b4bb1bce9274f1ffd6bae.png",
+      "comparisonImage": "C:/Users/kyles/threejs-raycast-room/design/planning-bench/qa/planning-bench-room-comparison.png",
+      "cameraView": "default room three-quarter",
+      "notes": "No visible scene collisions; station collider and approach route are preserved.",
+      "aiVisionNotes": "Bench silhouette passed at 0.87. Core pegboard-tool-mat identity remains clear at intentional room-prop scale."
+    }
+  ],
+  "reviewHistory": [
+    {
+      "timestamp": "2026-07-27T21:42:50.914503+00:00",
+      "passId": "blockout",
+      "estimatedFidelity": 0.81,
+      "aiVisionScore": 0.81,
+      "visualAcceptanceThreshold": 0.7,
+      "layerScores": {
+        "silhouetteProportion": 0.87,
+        "componentStructure": 0.83,
+        "formDetail": 0.75,
+        "materialSurface": 0.78,
+        "lightingCamera": 0.74
+      },
+      "featureReviews": [
+        {
+          "id": "bench-silhouette",
+          "score": 0.88,
+          "notes": "Wide warm slab, four-leg dark frame, and tall framed pegboard remain clear at the exact integrated room camera."
+        }
+      ],
+      "action": "continue",
+      "summary": "Integrated planning bench passes the blockout silhouette gate at the exact room camera.",
+      "matched": [
+        "warm thick worktop",
+        "four-leg dark frame and braces",
+        "tall framed pegboard",
+        "green gridded mat",
+        "red-white lamp",
+        "color-coded tool row",
+        "framed drawer",
+        "three red bins",
+        "clear approach route"
+      ],
+      "mismatches": [
+        "oblique room camera compresses lower frame",
+        "micro tool and hole detail is reduced at prop scale"
+      ],
+      "specFixes": [],
+      "codeFixes": [],
+      "evidence": [],
+      "visualEvidence": {
+        "referenceScreenshot": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_3984f498dadb.png",
+        "renderScreenshot": "C:/Users/kyles/AppData/Local/hermes/cache/screenshots/browser_screenshot_84d8a24a8b0b4bb1bce9274f1ffd6bae.png",
+        "comparisonImage": "C:/Users/kyles/threejs-raycast-room/design/planning-bench/qa/planning-bench-room-comparison.png",
+        "cameraView": "default room three-quarter",
+        "notes": "No visible scene collisions; station collider and approach route are preserved.",
+        "aiVisionNotes": "Bench silhouette passed at 0.87. Core pegboard-tool-mat identity remains clear at intentional room-prop scale."
+      }
+    }
+  ],
+  "lodPlan": [
+    {
+      "tier": "near",
+      "distance": 0,
+      "strategy": "full component tree and material layers"
+    },
+    {
+      "tier": "far",
+      "distance": 30,
+      "strategy": "merge static components and reduce local feature geometry"
+    }
+  ],
+  "performanceBudget": {
+    "qualityPriority": "reference-fidelity",
+    "targetTriangles": 250000,
+    "maxDrawCalls": 160,
+    "textureSize": 2048,
+    "fpsTarget": 30,
+    "optimizationPolicy": "Reach accepted visual fidelity first, then optimize without removing reference-critical geometry or surface layers."
+  },
+  "lightingFromPhoto": [
+    {
+      "id": "key",
+      "type": "soft directional key light",
+      "direction": "above/front-left",
+      "color": "#FFF0DD",
+      "intensity": "moderate",
+      "shadow": "soft contact shadows"
+    },
+    {
+      "id": "fill",
+      "type": "cool environment fill",
+      "color": "#7D8790",
+      "intensity": "low"
+    },
+    {
+      "id": "lamp",
+      "type": "local emissive practical",
+      "color": "#FFF4DF",
+      "intensity": "restrained",
+      "contactShadow": "AO beneath lamp, tools, bins, top, and drawer"
+    },
+    {
+      "id": "render",
+      "type": "tone mapping and background",
+      "background": "#303232",
+      "toneMapping": "ACES Filmic",
+      "exposure": 1.0
+    }
+  ],
+  "proceduralStrategy": [
+    "Keep existing Workbench root, station collider, and WORK_SPOT.",
+    "Build all visuals as local-coordinate semantic groups.",
+    "Use 90 shallow square insets for the 15x6 peg grid.",
+    "Use a CanvasTexture for cutting-mat border and grid.",
+    "Model five ordered tool silhouettes and three open-front bins as geometry.",
+    "Verify exact default camera and clickable task flow."
+  ],
+  "animationAnchors": [
+    "root pivot node supports whole-object translation, rotation, scale, and visibility changes",
+    "component pivot groups support later local transforms without rebuilding geometry"
+  ],
+  "destructionAnchors": [
+    "actionProfile.destruction.fractureGroup marks detachable or breakable component sets",
+    "component seams and sockets define plausible break points instead of random explosions"
+  ],
+  "risks": [
+    "Dense microgeometry may lose readability at room scale; exaggerate color and silhouette while preserving proportions.",
+    "Workbench faces the side wall, so screen-space tool order must be checked rather than assumed from local axes."
+  ]
+}

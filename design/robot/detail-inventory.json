@@ -1,0 +1,207 @@
+{
+  "sourceImage": "C:/Users/kyles/AppData/Local/hermes/cache/images/img_4a88df1f6948.png",
+  "zonesDir": "C:\\Users\\kyles\\threejs-raycast-room\\design\\robot\\intake",
+  "detailInventory": {
+    "scanMethod": "manual front/profile plus grid-3x3 crops",
+    "targetMinDetails": 10,
+    "details": [
+      {
+        "id": "head-shell",
+        "kind": "form",
+        "description": "Oversized beveled red monitor head, 1.25x torso width",
+        "region": "front+profile reference",
+        "scale": "macro",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "head-shell.beveled-monitor-housing"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.96
+      },
+      {
+        "id": "face-inset",
+        "kind": "form",
+        "description": "Deep black inset face screen",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "face-screen.recessed-black-glass"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.98
+      },
+      {
+        "id": "cyan-eyes",
+        "kind": "emissive",
+        "description": "Two tall cyan eye bars",
+        "region": "front+profile reference",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "face-screen.cyan-eye-pair"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.99
+      },
+      {
+        "id": "cyan-mouth",
+        "kind": "emissive",
+        "description": "Short centered cyan mouth bar",
+        "region": "front+profile reference",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "face-screen.cyan-mouth"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.99
+      },
+      {
+        "id": "head-disks",
+        "kind": "joint",
+        "description": "Dark faceted circular side modules at eye line",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "head.side-faceted-disks"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.95
+      },
+      {
+        "id": "antenna",
+        "kind": "form",
+        "description": "Centered dark stem with red faceted cap",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "head.antenna-stack"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.97
+      },
+      {
+        "id": "chest-slot",
+        "kind": "marking",
+        "description": "Pale horizontal chest slot",
+        "region": "front+profile reference",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "torso.chest-slot"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.93
+      },
+      {
+        "id": "shoulder-hubs",
+        "kind": "joint",
+        "description": "Dark polygon shoulder drums",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "animation",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "arms.shoulder-hubs"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.95
+      },
+      {
+        "id": "arm-armor",
+        "kind": "form",
+        "description": "Diagonal red beveled forearm armor",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "arms.red-armor-shells"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.9
+      },
+      {
+        "id": "claws",
+        "kind": "form",
+        "description": "Dark C-shaped two-prong grippers",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "hands.claw-pincers"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.94
+      },
+      {
+        "id": "segmented-legs",
+        "kind": "joint",
+        "description": "Short charcoal legs with faceted knees",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "animation",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "legs.segmented-mechanics"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.9
+      },
+      {
+        "id": "red-feet",
+        "kind": "form",
+        "description": "Broad low red shoes with deep profile",
+        "region": "front+profile reference",
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "feet.beveled-block-shoes"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.96
+      },
+      {
+        "id": "red-shell-response",
+        "kind": "material",
+        "description": "Bright red semi-gloss shell with dark bevel shading",
+        "region": "front+profile reference",
+        "scale": "material",
+        "affects": "lookdev",
+        "mapsTo": {
+          "type": "material.localOverrides",
+          "ref": "red-shell.clearcoat-edge-response"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.88
+      },
+      {
+        "id": "charcoal-response",
+        "kind": "material",
+        "description": "Matte near-black faceted mechanics",
+        "region": "front+profile reference",
+        "scale": "material",
+        "affects": "lookdev",
+        "mapsTo": {
+          "type": "material.localOverrides",
+          "ref": "charcoal-mechanics.rough-faceted"
+        },
+        "evidenceRef": "img_4a88df1f6948.png",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "authoringInstruction": "Completed from front/profile inspection; all details map to planned features."
+}
