@@ -135,7 +135,7 @@ test('left-wall stairwell reaches an elevated door', async ({ page }) => {
   expect(Math.abs(workbench.z)).toBeLessThan(2);
 });
 
-test('clicking the elevated door makes alternating feet plant on every stair tread', async ({ page }) => {
+test('clicking the elevated door alternates feet on every tread going up and down', async ({ page }) => {
   test.slow();
   const errors = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -170,6 +170,35 @@ test('clicking the elevated door makes alternating feet plant on every stair tre
   }
   expect(state.position.y).toBeGreaterThan(state.architecture.staircase.topElevation);
   expect(state.phase).toBe('door-idle');
+  expect(climb.stepDuration).toBeLessThan(0.56);
+
+  const returnDoorPoint = await page.evaluate(() => window.__ROOM__.doorScreen());
+  await page.mouse.click(returnDoorPoint.x, returnDoorPoint.y);
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().stairClimb.doorHits),
+    { timeout: 4000 }
+  ).toBe(2);
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().stairClimb.descentCompleted),
+    { timeout: 25000 }
+  ).toBeTruthy();
+
+  const returned = await page.evaluate(() => window.__ROOM__.snapshot());
+  const descent = returned.stairClimb;
+  expect(descent.statesPlayed).toEqual(expect.arrayContaining(['stair-descend', 'floor-return']));
+  expect(descent.descentPlants).toHaveLength(returned.architecture.staircase.steps);
+  expect(descent.descentPlants.map(plant => plant.step)).toEqual(
+    Array.from({ length: returned.architecture.staircase.steps }, (_, index) => returned.architecture.staircase.steps - index)
+  );
+  expect(descent.descentPlants.map(plant => plant.foot)).toEqual(
+    Array.from({ length: returned.architecture.staircase.steps }, (_, index) => index % 2 === 0 ? 'right' : 'left')
+  );
+  for (const plant of descent.descentPlants) {
+    expect(plant.targetY).toBeCloseTo(plant.treadTop, 3);
+    expect(plant.contactError).toBeLessThan(0.08);
+  }
+  expect(returned.position.y).toBeCloseTo(0, 3);
+  expect(returned.phase).toBe('idle');
   expect(errors).toEqual([]);
 });
 

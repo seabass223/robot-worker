@@ -1467,19 +1467,22 @@ const wrapAngle = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const easeOutBack = t => 1 + 1.35 * (t - 1) ** 3 + 0.35 * (t - 1) ** 2;
 const ROBOT_WALK_SPEED = 3.1;
 const ROBOT_STRIDE_DISTANCE = 1.22;
-const STAIR_STEP_DURATION = 0.56;
+const STAIR_STEP_DURATION = 0.46;
 const STAIR_FOOT_CLEARANCE = 0.24;
 const ROBOT_SOLE_OFFSET = 0.015;
 const stairClimbState = {
   doorHits: 0,
   active: false,
   completed: false,
+  descentCompleted: false,
+  direction: 'up',
   moveIndex: -1,
   stepProgress: 0,
   contacts: { left: null, right: null },
   moves: [],
   swingTarget: null,
   plants: [],
+  descentPlants: [],
   statesPlayed: new Set(),
   maxContactError: 0
 };
@@ -1615,13 +1618,23 @@ function stairRootForContacts(contacts) {
 function prepareStairMove(index) {
   if (index >= stairClimbState.moves.length) {
     stairClimbState.active = false;
-    stairClimbState.completed = true;
     stairClimbState.stepProgress = 1;
-    stairClimbState.statesPlayed.add('upper-landing');
-    motion.phase = 'door-idle';
     motion.journey = null;
+    motion.stairMove = null;
     marker.visible = false;
-    setStatus('AT DOOR');
+
+    if (stairClimbState.direction === 'down') {
+      stairClimbState.descentCompleted = true;
+      stairClimbState.statesPlayed.add('floor-return');
+      motion.phase = 'idle';
+      contactShadow.visible = true;
+      setStatus('READY');
+    } else {
+      stairClimbState.completed = true;
+      stairClimbState.statesPlayed.add('upper-landing');
+      motion.phase = 'door-idle';
+      setStatus('AT DOOR');
+    }
     return;
   }
 
@@ -1641,9 +1654,15 @@ function prepareStairMove(index) {
   };
   motion.startedAt = clock.elapsedTime;
   motion.duration = move.step ? STAIR_STEP_DURATION : STAIR_STEP_DURATION * 1.1;
-  motion.phase = 'stair-climbing';
-  stairClimbState.statesPlayed.add('stair-climb');
-  setStatus(move.step ? `CLIMBING ${move.step}/${STAIR_STEPS}` : 'UPPER LANDING', true);
+  const descending = stairClimbState.direction === 'down';
+  motion.phase = descending ? 'stair-descending' : 'stair-climbing';
+  stairClimbState.statesPlayed.add(descending ? 'stair-descend' : 'stair-climb');
+  if (move.step) {
+    const ordinal = descending ? STAIR_STEPS - move.step + 1 : move.step;
+    setStatus(`${descending ? 'DESCENDING' : 'CLIMBING'} ${ordinal}/${STAIR_STEPS}`, true);
+  } else {
+    setStatus(descending ? 'LOWER LANDING' : 'UPPER LANDING', true);
+  }
 }
 
 function startStairClimb() {
@@ -1651,9 +1670,12 @@ function startStairClimb() {
   const initialX = STAIR_BOTTOM_POINT.x + STAIR_RUN * 0.9;
   stairClimbState.active = true;
   stairClimbState.completed = false;
+  stairClimbState.descentCompleted = false;
+  stairClimbState.direction = 'up';
   stairClimbState.moveIndex = -1;
   stairClimbState.stepProgress = 0;
   stairClimbState.plants = [];
+  stairClimbState.descentPlants = [];
   stairClimbState.maxContactError = 0;
   stairClimbState.statesPlayed.add('stair-climb');
   stairClimbState.contacts = {
@@ -1701,9 +1723,83 @@ function startStairClimb() {
   prepareStairMove(0);
 }
 
+function startStairDescent() {
+  const footOffset = 0.2;
+  const initialX = STAIR_BOTTOM_POINT.x + STAIR_RUN * 0.9;
+  stairClimbState.active = true;
+  stairClimbState.direction = 'down';
+  stairClimbState.descentCompleted = false;
+  stairClimbState.moveIndex = -1;
+  stairClimbState.stepProgress = 0;
+  stairClimbState.descentPlants = [];
+  stairClimbState.maxContactError = 0;
+  stairClimbState.statesPlayed.add('stair-descend');
+
+  const ascentLeft = cloneStairContact(stairClimbState.contacts.left);
+  const ascentRight = cloneStairContact(stairClimbState.contacts.right);
+  stairClimbState.contacts = {
+    left: { ...ascentRight, foot: 'left' },
+    right: { ...ascentLeft, foot: 'right' }
+  };
+  const contacts = {
+    left: cloneStairContact(stairClimbState.contacts.left),
+    right: cloneStairContact(stairClimbState.contacts.right)
+  };
+  stairClimbState.moves = [...stairTreads].reverse().map((tread, index) => {
+    const foot = index % 2 === 0 ? 'right' : 'left';
+    const from = cloneStairContact(contacts[foot]);
+    const to = stairContact(
+      foot,
+      tread.center.x,
+      tread.top,
+      STAIR_TOP_POINT.z + (foot === 'left' ? footOffset : -footOffset),
+      tread.step
+    );
+    contacts[foot] = cloneStairContact(to);
+    return { foot, from, to, step: tread.step };
+  });
+
+  for (const foot of ['left', 'right']) {
+    const from = cloneStairContact(contacts[foot]);
+    const to = stairContact(
+      foot,
+      initialX,
+      0,
+      STAIR_TOP_POINT.z + (foot === 'left' ? footOffset : -footOffset)
+    );
+    contacts[foot] = cloneStairContact(to);
+    stairClimbState.moves.push({ foot, from, to, step: null });
+  }
+
+  cubeRig.rotation.y = Math.PI / 2;
+  contactShadow.visible = false;
+  prepareStairMove(0);
+}
+
+function startStairTurnaround() {
+  motion.journey = {
+    kind: 'stairs-turnaround',
+    targetX: cubeRig.position.x,
+    targetZ: cubeRig.position.z,
+    targetY: cubeRig.position.y,
+    finalYaw: Math.PI / 2,
+    onArrive: startStairDescent
+  };
+  target.set(cubeRig.position.x, 0, cubeRig.position.z);
+  motion.targetYaw = Math.PI / 2;
+  motion.phase = 'turning';
+  motion.startedAt = clock.elapsedTime;
+  marker.visible = false;
+  setStatus('TURNING DOWN', true);
+}
+
 function startDoorRoutine() {
-  if (stairClimbState.active || motion.phase === 'door-idle') return;
+  if (stairClimbState.active) return;
   stairClimbState.doorHits += 1;
+  if (motion.phase === 'door-idle') {
+    startStairTurnaround();
+    return;
+  }
   stairClimbState.completed = false;
   stairClimbState.statesPlayed = new Set(['approach']);
   task.active = false;
@@ -1972,7 +2068,8 @@ function stairFootContactWorld(leg, target = new THREE.Vector3()) {
 
 function applyStairClimbPose() {
   const activeMove = motion.stairMove;
-  const movingFoot = motion.phase === 'stair-climbing' ? activeMove?.foot : null;
+  const stairMotionActive = motion.phase === 'stair-climbing' || motion.phase === 'stair-descending';
+  const movingFoot = stairMotionActive ? activeMove?.foot : null;
   const leftTarget = movingFoot === 'left' ? stairClimbState.swingTarget : stairClimbState.contacts.left;
   const rightTarget = movingFoot === 'right' ? stairClimbState.swingTarget : stairClimbState.contacts.right;
   if (!leftTarget || !rightTarget) return;
@@ -1995,15 +2092,20 @@ function applyStairClimbPose() {
     const actual = stairFootContactWorld(leg, stairActualContact);
     const error = actual.distanceTo(new THREE.Vector3(contact.x, contact.y, contact.z));
     stairClimbState.maxContactError = Math.max(stairClimbState.maxContactError, error);
-    const event = stairClimbState.plants.find(plant => plant.step === contact.step && plant.foot === foot);
+    const plantEvents = stairClimbState.direction === 'down'
+      ? stairClimbState.descentPlants
+      : stairClimbState.plants;
+    const event = plantEvents.find(plant => plant.step === contact.step && plant.foot === foot);
     if (event) event.contactError = event.contactError == null ? error : Math.min(event.contactError, error);
   }
 }
 
 function updateRobotAnimation(now) {
   resetRobotJoints();
-  if (motion.phase === 'stair-climbing' || motion.phase === 'door-idle') {
-    robotAnimationState = motion.phase === 'stair-climbing' ? 'stair-climb' : 'idle';
+  if (motion.phase === 'stair-climbing' || motion.phase === 'stair-descending' || motion.phase === 'door-idle') {
+    robotAnimationState = motion.phase === 'stair-descending'
+      ? 'stair-descend'
+      : motion.phase === 'stair-climbing' ? 'stair-climb' : 'idle';
     applyStairClimbPose();
   } else if (motion.phase === 'moving') {
     robotAnimationState = 'walk';
@@ -2073,7 +2175,10 @@ function updateStairClimbing(now) {
     cubeRig.position.copy(move.rootTo);
     stairClimbState.contacts[move.foot] = cloneStairContact(move.to);
     if (move.step) {
-      stairClimbState.plants.push({
+      const plantEvents = stairClimbState.direction === 'down'
+        ? stairClimbState.descentPlants
+        : stairClimbState.plants;
+      plantEvents.push({
         step: move.step,
         foot: move.foot,
         targetY: move.to.y,
@@ -2092,7 +2197,7 @@ function updateMotion(now) {
     marker.scale.setScalar(s);
   }
 
-  if (motion.phase === 'stair-climbing') {
+  if (motion.phase === 'stair-climbing' || motion.phase === 'stair-descending') {
     updateStairClimbing(now);
   } else if (motion.phase === 'standing') {
     robotStandFrames += 1;
@@ -2271,13 +2376,19 @@ window.__ROOM__ = {
       doorHits: stairClimbState.doorHits,
       active: stairClimbState.active,
       completed: stairClimbState.completed,
+      descentCompleted: stairClimbState.descentCompleted,
+      direction: stairClimbState.direction,
       moveIndex: stairClimbState.moveIndex,
       stepProgress: stairClimbState.stepProgress,
-      movingFoot: motion.phase === 'stair-climbing' ? motion.stairMove?.foot || null : null,
+      movingFoot: (motion.phase === 'stair-climbing' || motion.phase === 'stair-descending')
+        ? motion.stairMove?.foot || null
+        : null,
       plants: stairClimbState.plants.map(plant => ({ ...plant })),
+      descentPlants: stairClimbState.descentPlants.map(plant => ({ ...plant })),
       statesPlayed: [...stairClimbState.statesPlayed],
       maxContactError: stairClimbState.maxContactError,
-      footClearance: STAIR_FOOT_CLEARANCE
+      footClearance: STAIR_FOOT_CLEARANCE,
+      stepDuration: STAIR_STEP_DURATION
     },
     robot: {
       name: cube.name,
