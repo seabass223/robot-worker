@@ -378,6 +378,7 @@ const railMat = new THREE.MeshStandardMaterial({ color: 0x53395d, roughness: 0.4
 const doorMat = new THREE.MeshStandardMaterial({ color: 0x421719, roughness: 0.55, metalness: 0.42 });
 const doorInsetMat = new THREE.MeshStandardMaterial({ color: 0xa83934, roughness: 0.5, metalness: 0.18 });
 
+const stairTreads = [];
 for (let i = 0; i < STAIR_STEPS; i++) {
   const height = STAIR_RISE * (i + 1);
   const center = STAIR_BOTTOM_POINT.clone().addScaledVector(STAIR_DIRECTION, i * STAIR_RUN);
@@ -385,6 +386,7 @@ for (let i = 0; i < STAIR_STEPS; i++) {
   riser.rotation.y = stairYaw;
   const tread = box([1.54, 0.07, STAIR_RUN + 0.06], stairTreadMat, [center.x, height + 0.035, center.z], stairwell, `StairTread${i + 1}`);
   tread.rotation.y = stairYaw;
+  stairTreads.push({ step: i + 1, center: center.clone(), top: height + 0.07, mesh: tread });
 }
 
 const LANDING_DEPTH = 0.65;
@@ -411,8 +413,17 @@ for (let i = 1; i < railPoints.length; i++) {
 const doorBottom = STAIR_TOP;
 const doorHeight = 2.24;
 const doorZ = 6.12;
-box([0.13, doorHeight, 1.16], doorMat, [-6.91, doorBottom + doorHeight / 2, doorZ], stairwell, 'ElevatedDoor');
+const elevatedDoor = box([0.13, doorHeight, 1.16], doorMat, [-6.91, doorBottom + doorHeight / 2, doorZ], stairwell, 'ElevatedDoor');
 box([0.025, doorHeight - 0.3, 0.88], doorInsetMat, [-6.83, doorBottom + doorHeight / 2, doorZ], stairwell, 'DoorInset');
+const doorCollider = box(
+  [0.32, doorHeight + 0.24, 1.5],
+  new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  [-6.72, doorBottom + doorHeight / 2, doorZ],
+  stairwell,
+  'ElevatedDoorCollider'
+);
+doorCollider.castShadow = false;
+doorCollider.receiveShadow = false;
 box([0.16, doorHeight + 0.22, 0.12], railMat, [-6.84, doorBottom + doorHeight / 2, doorZ - 0.65], stairwell, 'DoorFrameA');
 box([0.16, doorHeight + 0.22, 0.12], railMat, [-6.84, doorBottom + doorHeight / 2, doorZ + 0.65], stairwell, 'DoorFrameB');
 box([0.16, 0.12, 1.42], railMat, [-6.84, doorBottom + doorHeight + 0.05, doorZ], stairwell, 'DoorFrameTop');
@@ -1352,8 +1363,8 @@ function createRobotLeg(side, label) {
   robotCylinder(`${label}KneeHub`, 0.11, 0.16, robotDarkMaterial, [0, 0, 0], knee, [0, 0, Math.PI / 2], 8);
   robotBox(`${label}Shin`, [0.16, 0.18, 0.17], robotDarkMaterial, [0, -0.12, 0], knee, 0.035);
   const ankle = pivot(`${label}AnkleJoint`, [0, -0.25, 0], knee);
-  robotBox(`${label}Foot`, [0.3, 0.18, 0.43], robotRedMaterial, [0, -0.035, 0.1], ankle, 0.06);
-  return { hip, knee, ankle };
+  const foot = robotBox(`${label}Foot`, [0.3, 0.18, 0.43], robotRedMaterial, [0, -0.035, 0.1], ankle, 0.06);
+  return { hip, knee, ankle, foot };
 }
 
 const leftArm = createRobotArm(-1, 'Left');
@@ -1456,6 +1467,24 @@ const wrapAngle = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const easeOutBack = t => 1 + 1.35 * (t - 1) ** 3 + 0.35 * (t - 1) ** 2;
 const ROBOT_WALK_SPEED = 3.1;
 const ROBOT_STRIDE_DISTANCE = 1.22;
+const STAIR_STEP_DURATION = 0.56;
+const STAIR_FOOT_CLEARANCE = 0.24;
+const ROBOT_SOLE_OFFSET = 0.015;
+const stairClimbState = {
+  doorHits: 0,
+  active: false,
+  completed: false,
+  moveIndex: -1,
+  stepProgress: 0,
+  contacts: { left: null, right: null },
+  moves: [],
+  swingTarget: null,
+  plants: [],
+  statesPlayed: new Set(),
+  maxContactError: 0
+};
+const stairIkTarget = new THREE.Vector3();
+const stairActualContact = new THREE.Vector3();
 
 function setStatus(label, busy = false) {
   statusText.textContent = label;
@@ -1565,6 +1594,131 @@ function completeJourney() {
     motion.phase = 'idle';
     setStatus('READY');
   }
+}
+
+function stairContact(foot, x, y, z, step = null, landing = false) {
+  return { foot, x, y, z, step, landing };
+}
+
+function cloneStairContact(contact) {
+  return contact ? { ...contact } : null;
+}
+
+function stairRootForContacts(contacts) {
+  return new THREE.Vector3(
+    (contacts.left.x + contacts.right.x) * 0.5,
+    Math.max(0, Math.min(contacts.left.y, contacts.right.y) - ROBOT_SOLE_OFFSET),
+    (contacts.left.z + contacts.right.z) * 0.5
+  );
+}
+
+function prepareStairMove(index) {
+  if (index >= stairClimbState.moves.length) {
+    stairClimbState.active = false;
+    stairClimbState.completed = true;
+    stairClimbState.stepProgress = 1;
+    stairClimbState.statesPlayed.add('upper-landing');
+    motion.phase = 'door-idle';
+    motion.journey = null;
+    marker.visible = false;
+    setStatus('AT DOOR');
+    return;
+  }
+
+  const move = stairClimbState.moves[index];
+  const nextContacts = {
+    left: cloneStairContact(stairClimbState.contacts.left),
+    right: cloneStairContact(stairClimbState.contacts.right)
+  };
+  nextContacts[move.foot] = cloneStairContact(move.to);
+  stairClimbState.moveIndex = index;
+  stairClimbState.stepProgress = 0;
+  stairClimbState.swingTarget = cloneStairContact(move.from);
+  motion.stairMove = {
+    ...move,
+    rootFrom: cubeRig.position.clone(),
+    rootTo: stairRootForContacts(nextContacts)
+  };
+  motion.startedAt = clock.elapsedTime;
+  motion.duration = move.step ? STAIR_STEP_DURATION : STAIR_STEP_DURATION * 1.1;
+  motion.phase = 'stair-climbing';
+  stairClimbState.statesPlayed.add('stair-climb');
+  setStatus(move.step ? `CLIMBING ${move.step}/${STAIR_STEPS}` : 'UPPER LANDING', true);
+}
+
+function startStairClimb() {
+  const footOffset = 0.2;
+  const initialX = STAIR_BOTTOM_POINT.x + STAIR_RUN * 0.9;
+  stairClimbState.active = true;
+  stairClimbState.completed = false;
+  stairClimbState.moveIndex = -1;
+  stairClimbState.stepProgress = 0;
+  stairClimbState.plants = [];
+  stairClimbState.maxContactError = 0;
+  stairClimbState.statesPlayed.add('stair-climb');
+  stairClimbState.contacts = {
+    left: stairContact('left', initialX, 0, STAIR_TOP_POINT.z - footOffset),
+    right: stairContact('right', initialX, 0, STAIR_TOP_POINT.z + footOffset)
+  };
+
+  const contacts = {
+    left: cloneStairContact(stairClimbState.contacts.left),
+    right: cloneStairContact(stairClimbState.contacts.right)
+  };
+  stairClimbState.moves = stairTreads.map((tread, index) => {
+    const foot = index % 2 === 0 ? 'left' : 'right';
+    const from = cloneStairContact(contacts[foot]);
+    const to = stairContact(
+      foot,
+      tread.center.x,
+      tread.top,
+      STAIR_TOP_POINT.z + (foot === 'left' ? -footOffset : footOffset),
+      tread.step
+    );
+    contacts[foot] = cloneStairContact(to);
+    return { foot, from, to, step: tread.step };
+  });
+
+  const landingTop = landingCenter.y + 0.04;
+  const landingX = landingCenter.x + 0.18;
+  for (const foot of ['right', 'left']) {
+    const from = cloneStairContact(contacts[foot]);
+    const to = stairContact(
+      foot,
+      landingX,
+      landingTop,
+      STAIR_TOP_POINT.z + (foot === 'left' ? -footOffset : footOffset),
+      null,
+      true
+    );
+    contacts[foot] = cloneStairContact(to);
+    stairClimbState.moves.push({ foot, from, to, step: null });
+  }
+
+  cubeRig.position.set(initialX, 0, STAIR_TOP_POINT.z);
+  cubeRig.rotation.y = -Math.PI / 2;
+  contactShadow.visible = false;
+  prepareStairMove(0);
+}
+
+function startDoorRoutine() {
+  if (stairClimbState.active || motion.phase === 'door-idle') return;
+  stairClimbState.doorHits += 1;
+  stairClimbState.completed = false;
+  stairClimbState.statesPlayed = new Set(['approach']);
+  task.active = false;
+  task.station = null;
+  task.progress = 0;
+  workProgress.hidden = true;
+  marker.visible = false;
+  const approachX = STAIR_BOTTOM_POINT.x + STAIR_RUN * 0.9;
+  beginMove(approachX, STAIR_TOP_POINT.z, {
+    kind: 'stairs-approach',
+    showMarker: false,
+    finalYaw: -Math.PI / 2,
+    onArrive: startStairClimb
+  });
+  setStatus('STAIR APPROACH', true);
 }
 
 function startStationTask(station) {
@@ -1679,6 +1833,10 @@ function getHitCouch() {
   return raycaster.intersectObject(couchCollider, false).length > 0;
 }
 
+function getHitDoor() {
+  return raycaster.intersectObject(doorCollider, false).length > 0;
+}
+
 function startCouchRoutine() {
   couchHits += 1;
   routeNetworkEvent({ phase: 'done', id: `couch-click-${couchHits}` });
@@ -1698,6 +1856,10 @@ function onPointerDown(event) {
     startStationTask(station);
     return;
   }
+  if (getHitDoor()) {
+    startDoorRoutine();
+    return;
+  }
   if (getHitCouch()) {
     startCouchRoutine();
     return;
@@ -1712,7 +1874,7 @@ function onPointerDown(event) {
 
 function onPointerMove(event) {
   updatePointer(event);
-  canvas.style.cursor = (getHitStation() || getHitCouch()) ? 'pointer' : 'crosshair';
+  canvas.style.cursor = (getHitStation() || getHitDoor() || getHitCouch()) ? 'pointer' : 'crosshair';
 }
 canvas.addEventListener('pointerdown', onPointerDown);
 canvas.addEventListener('pointermove', onPointerMove);
@@ -1729,7 +1891,7 @@ function resize() {
   } else {
     camera.fov = 39;
     camera.position.set(9.6, 8.4, 13.2);
-    camera.lookAt(1.25, 0.75, -0.7);
+    camera.lookAt(-1.8, 0.75, -0.7);
   }
   camera.updateProjectionMatrix();
 }
@@ -1767,9 +1929,83 @@ function applySeatedPose(amount) {
   head.rotation.x = -0.04 * amount;
 }
 
+function applyStairLegIK(leg, contact) {
+  cubeRig.updateMatrixWorld(true);
+  stairIkTarget.set(contact.x, contact.y, contact.z);
+  cubeRig.worldToLocal(stairIkTarget);
+
+  const upperLength = 0.27;
+  const lowerLength = 0.25;
+  let forward = stairIkTarget.z - 0.1;
+  let down = 0.66 - (stairIkTarget.y + 0.125);
+  const minReach = Math.abs(upperLength - lowerLength) + 0.002;
+  const maxReach = upperLength + lowerLength - 0.002;
+  const rawReach = Math.hypot(forward, down);
+  const reach = THREE.MathUtils.clamp(rawReach, minReach, maxReach);
+  if (rawReach > 0.0001 && reach !== rawReach) {
+    const scale = reach / rawReach;
+    forward *= scale;
+    down *= scale;
+  }
+
+  const kneeAngle = Math.acos(THREE.MathUtils.clamp(
+    (reach * reach - upperLength * upperLength - lowerLength * lowerLength) / (2 * upperLength * lowerLength),
+    -1,
+    1
+  ));
+  const targetAngle = Math.atan2(forward, down);
+  const correction = Math.atan2(
+    lowerLength * Math.sin(kneeAngle),
+    upperLength + lowerLength * Math.cos(kneeAngle)
+  );
+  const hipAngle = -targetAngle - correction;
+
+  leg.hip.rotation.x = hipAngle;
+  leg.knee.rotation.x = kneeAngle;
+  leg.ankle.rotation.x = -(hipAngle + kneeAngle);
+}
+
+function stairFootContactWorld(leg, target = new THREE.Vector3()) {
+  cubeRig.updateMatrixWorld(true);
+  return leg.foot.localToWorld(target.set(0, -0.09, 0));
+}
+
+function applyStairClimbPose() {
+  const activeMove = motion.stairMove;
+  const movingFoot = motion.phase === 'stair-climbing' ? activeMove?.foot : null;
+  const leftTarget = movingFoot === 'left' ? stairClimbState.swingTarget : stairClimbState.contacts.left;
+  const rightTarget = movingFoot === 'right' ? stairClimbState.swingTarget : stairClimbState.contacts.right;
+  if (!leftTarget || !rightTarget) return;
+
+  applyStairLegIK(leftLeg, leftTarget);
+  applyStairLegIK(rightLeg, rightTarget);
+  const swingDirection = movingFoot === 'left' ? 1 : movingFoot === 'right' ? -1 : 0;
+  leftArm.shoulder.rotation.x = -0.24 - swingDirection * 0.24;
+  rightArm.shoulder.rotation.x = -0.24 + swingDirection * 0.24;
+  leftArm.elbow.rotation.x = -0.24;
+  rightArm.elbow.rotation.x = -0.24;
+  torso.rotation.x = -0.07;
+  head.rotation.x = 0.045;
+
+  cubeRig.updateMatrixWorld(true);
+  for (const [foot, leg] of [['left', leftLeg], ['right', rightLeg]]) {
+    if (foot === movingFoot) continue;
+    const contact = stairClimbState.contacts[foot];
+    if (!contact?.step) continue;
+    const actual = stairFootContactWorld(leg, stairActualContact);
+    const error = actual.distanceTo(new THREE.Vector3(contact.x, contact.y, contact.z));
+    stairClimbState.maxContactError = Math.max(stairClimbState.maxContactError, error);
+    const event = stairClimbState.plants.find(plant => plant.step === contact.step && plant.foot === foot);
+    if (event) event.contactError = event.contactError == null ? error : Math.min(event.contactError, error);
+  }
+}
+
 function updateRobotAnimation(now) {
   resetRobotJoints();
-  if (motion.phase === 'moving') {
+  if (motion.phase === 'stair-climbing' || motion.phase === 'door-idle') {
+    robotAnimationState = motion.phase === 'stair-climbing' ? 'stair-climb' : 'idle';
+    applyStairClimbPose();
+  } else if (motion.phase === 'moving') {
     robotAnimationState = 'walk';
     const walkPhase = ((now - motion.startedAt) * ROBOT_WALK_SPEED / ROBOT_STRIDE_DISTANCE) * Math.PI * 2;
     const stride = Math.sin(walkPhase);
@@ -1816,6 +2052,39 @@ function updateRobotAnimation(now) {
   robotMaxHipSwing = Math.max(robotMaxHipSwing, Math.abs(leftLeg.hip.rotation.x), Math.abs(rightLeg.hip.rotation.x));
 }
 
+function updateStairClimbing(now) {
+  const move = motion.stairMove;
+  if (!move) return;
+  const raw = Math.min((now - motion.startedAt) / motion.duration, 1);
+  const eased = raw * raw * (3 - 2 * raw);
+  stairClimbState.stepProgress = raw;
+  cubeRig.position.lerpVectors(move.rootFrom, move.rootTo, eased);
+
+  stairClimbState.swingTarget = stairContact(
+    move.foot,
+    THREE.MathUtils.lerp(move.from.x, move.to.x, eased),
+    THREE.MathUtils.lerp(move.from.y, move.to.y, eased) + Math.sin(raw * Math.PI) * STAIR_FOOT_CLEARANCE,
+    THREE.MathUtils.lerp(move.from.z, move.to.z, eased),
+    move.to.step,
+    move.to.landing
+  );
+
+  if (raw >= 1) {
+    cubeRig.position.copy(move.rootTo);
+    stairClimbState.contacts[move.foot] = cloneStairContact(move.to);
+    if (move.step) {
+      stairClimbState.plants.push({
+        step: move.step,
+        foot: move.foot,
+        targetY: move.to.y,
+        treadTop: stairTreads[move.step - 1].top,
+        contactError: null
+      });
+    }
+    prepareStairMove(stairClimbState.moveIndex + 1);
+  }
+}
+
 function updateMotion(now) {
   marker.rotation.y += 0.008;
   if (marker.visible && marker.scale.x < 0.999) {
@@ -1823,7 +2092,9 @@ function updateMotion(now) {
     marker.scale.setScalar(s);
   }
 
-  if (motion.phase === 'standing') {
+  if (motion.phase === 'stair-climbing') {
+    updateStairClimbing(now);
+  } else if (motion.phase === 'standing') {
     robotStandFrames += 1;
     const rawStand = Math.min((now - robotStandStartedAt) / 0.72, 1);
     const easedStand = rawStand * rawStand * (3 - 2 * rawStand);
@@ -1957,6 +2228,15 @@ function couchScreen() {
   };
 }
 
+function doorScreen() {
+  const point = new THREE.Vector3(0, 0, 0);
+  elevatedDoor.localToWorld(point).project(camera);
+  return {
+    x: (point.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-point.y * 0.5 + 0.5) * window.innerHeight
+  };
+}
+
 const stationById = id => stations.find(station => station.id === id);
 
 window.__ROOM__ = {
@@ -1970,10 +2250,12 @@ window.__ROOM__ = {
   deskScreen: () => stationScreen(stationById('desk')),
   testBenchScreen: () => stationScreen(stationById('testbench')),
   couchScreen,
+  doorScreen,
+  climbStairs: startDoorRoutine,
   snapshot: () => ({
     phase: motion.phase,
     status: statusText.textContent,
-    position: { x: cubeRig.position.x, z: cubeRig.position.z },
+    position: { x: cubeRig.position.x, y: cubeRig.position.y, z: cubeRig.position.z },
     target: { x: target.x, z: target.z },
     yaw: cubeRig.rotation.y,
     targetHits: motion.targetHits,
@@ -1985,6 +2267,18 @@ window.__ROOM__ = {
     activeStation: task.station?.id || null,
     cubePoseY: cube.position.y,
     couchHits,
+    stairClimb: {
+      doorHits: stairClimbState.doorHits,
+      active: stairClimbState.active,
+      completed: stairClimbState.completed,
+      moveIndex: stairClimbState.moveIndex,
+      stepProgress: stairClimbState.stepProgress,
+      movingFoot: motion.phase === 'stair-climbing' ? motion.stairMove?.foot || null : null,
+      plants: stairClimbState.plants.map(plant => ({ ...plant })),
+      statesPlayed: [...stairClimbState.statesPlayed],
+      maxContactError: stairClimbState.maxContactError,
+      footClearance: STAIR_FOOT_CLEARANCE
+    },
     robot: {
       name: cube.name,
       articulated: true,

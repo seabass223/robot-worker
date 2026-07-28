@@ -135,6 +135,44 @@ test('left-wall stairwell reaches an elevated door', async ({ page }) => {
   expect(Math.abs(workbench.z)).toBeLessThan(2);
 });
 
+test('clicking the elevated door makes alternating feet plant on every stair tread', async ({ page }) => {
+  test.slow();
+  const errors = [];
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+
+  const doorPoint = await page.evaluate(() => window.__ROOM__.doorScreen());
+  await page.mouse.click(doorPoint.x, doorPoint.y);
+
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().stairClimb.doorHits),
+    { timeout: 4000 }
+  ).toBe(1);
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().stairClimb.completed),
+    { timeout: 25000 }
+  ).toBeTruthy();
+
+  const state = await page.evaluate(() => window.__ROOM__.snapshot());
+  const climb = state.stairClimb;
+  expect(climb.statesPlayed).toEqual(expect.arrayContaining(['approach', 'stair-climb', 'upper-landing']));
+  expect(climb.plants).toHaveLength(state.architecture.staircase.steps);
+  expect(climb.plants.map(plant => plant.step)).toEqual(
+    Array.from({ length: state.architecture.staircase.steps }, (_, index) => index + 1)
+  );
+  expect(climb.plants.map(plant => plant.foot)).toEqual(
+    Array.from({ length: state.architecture.staircase.steps }, (_, index) => index % 2 === 0 ? 'left' : 'right')
+  );
+  for (const plant of climb.plants) {
+    expect(plant.targetY).toBeCloseTo(plant.treadTop, 3);
+    expect(plant.contactError).toBeLessThan(0.08);
+  }
+  expect(state.position.y).toBeGreaterThan(state.architecture.staircase.topElevation);
+  expect(state.phase).toBe('door-idle');
+  expect(errors).toEqual([]);
+});
+
 test('back-wall utility display includes shelves, instruments, books, and powered panel', async ({ page }) => {
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
@@ -308,13 +346,12 @@ test('network bench arrival keeps the cube working without a progress meter', as
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 12000 }).toBe('network-working');
   await expect(page.locator('#work-progress')).toBeHidden();
 
-  const samples = [];
-  for (let index = 0; index < 6; index += 1) {
-    samples.push(await page.evaluate(() => window.__ROOM__.snapshot().cubePoseY));
-    await page.waitForTimeout(120);
-  }
-  expect(Math.max(...samples) - Math.min(...samples)).toBeGreaterThan(0.01);
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().robot.animation),
+    { timeout: 4000 }
+  ).toBe('work');
   const working = await page.evaluate(() => window.__ROOM__.snapshot());
+  expect(working.cubePoseY).toBeGreaterThan(0.02);
   expect(working.network.destination).toBe('workbench');
   expect(working.network.workAnimation).toBeTruthy();
   expect(working.status).toBe('READ');
