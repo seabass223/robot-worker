@@ -1468,6 +1468,11 @@ const easeOutBack = t => 1 + 1.35 * (t - 1) ** 3 + 0.35 * (t - 1) ** 2;
 const ROBOT_WALK_SPEED = 3.1;
 const ROBOT_STRIDE_DISTANCE = 1.22;
 const STAIR_STEP_DURATION = 0.46;
+const STAIR_DESCENT_DURATION = 0.72;
+const STAIR_DESCENT_DROP_START = 0.52;
+const STAIR_DESCENT_DROP_END = 0.70;
+const STAIR_DESCENT_SWING_END = 0.70;
+const STAIR_DESCENT_CLEARANCE = 0.32;
 const STAIR_FOOT_CLEARANCE = 0.24;
 const ROBOT_SOLE_OFFSET = 0.015;
 const stairClimbState = {
@@ -1483,6 +1488,7 @@ const stairClimbState = {
   swingTarget: null,
   plants: [],
   descentPlants: [],
+  descentProfiles: [],
   statesPlayed: new Set(),
   maxContactError: 0
 };
@@ -1653,8 +1659,10 @@ function prepareStairMove(index) {
     rootTo: stairRootForContacts(nextContacts)
   };
   motion.startedAt = clock.elapsedTime;
-  motion.duration = move.step ? STAIR_STEP_DURATION : STAIR_STEP_DURATION * 1.1;
   const descending = stairClimbState.direction === 'down';
+  const stepDuration = descending ? STAIR_DESCENT_DURATION : STAIR_STEP_DURATION;
+  motion.duration = move.step ? stepDuration : stepDuration * 1.1;
+  motion.stairMove.trace = descending && move.step ? [] : null;
   motion.phase = descending ? 'stair-descending' : 'stair-climbing';
   stairClimbState.statesPlayed.add(descending ? 'stair-descend' : 'stair-climb');
   if (move.step) {
@@ -1676,6 +1684,7 @@ function startStairClimb() {
   stairClimbState.stepProgress = 0;
   stairClimbState.plants = [];
   stairClimbState.descentPlants = [];
+  stairClimbState.descentProfiles = [];
   stairClimbState.maxContactError = 0;
   stairClimbState.statesPlayed.add('stair-climb');
   stairClimbState.contacts = {
@@ -1732,6 +1741,7 @@ function startStairDescent() {
   stairClimbState.moveIndex = -1;
   stairClimbState.stepProgress = 0;
   stairClimbState.descentPlants = [];
+  stairClimbState.descentProfiles = [];
   stairClimbState.maxContactError = 0;
   stairClimbState.statesPlayed.add('stair-descend');
 
@@ -2077,11 +2087,23 @@ function applyStairClimbPose() {
   applyStairLegIK(leftLeg, leftTarget);
   applyStairLegIK(rightLeg, rightTarget);
   const swingDirection = movingFoot === 'left' ? 1 : movingFoot === 'right' ? -1 : 0;
-  leftArm.shoulder.rotation.x = -0.24 - swingDirection * 0.24;
-  rightArm.shoulder.rotation.x = -0.24 + swingDirection * 0.24;
+  const descending = stairClimbState.direction === 'down';
+  if (descending) {
+    const swingPhase = THREE.MathUtils.clamp(stairClimbState.stepProgress / STAIR_DESCENT_SWING_END, 0, 1);
+    const swingPulse = Math.sin(swingPhase * Math.PI);
+    const armDrive = swingDirection * swingPulse * 0.38;
+    leftArm.shoulder.rotation.x = -0.24 - armDrive;
+    rightArm.shoulder.rotation.x = -0.24 + armDrive;
+    torso.rotation.x = -0.11;
+    torso.rotation.z = swingDirection * swingPulse * 0.09;
+    head.rotation.z = -torso.rotation.z * 0.45;
+  } else {
+    leftArm.shoulder.rotation.x = -0.24 - swingDirection * 0.24;
+    rightArm.shoulder.rotation.x = -0.24 + swingDirection * 0.24;
+    torso.rotation.x = -0.07;
+  }
   leftArm.elbow.rotation.x = -0.24;
   rightArm.elbow.rotation.x = -0.24;
-  torso.rotation.x = -0.07;
   head.rotation.x = 0.045;
 
   cubeRig.updateMatrixWorld(true);
@@ -2158,15 +2180,35 @@ function updateStairClimbing(now) {
   const move = motion.stairMove;
   if (!move) return;
   const raw = Math.min((now - motion.startedAt) / motion.duration, 1);
-  const eased = raw * raw * (3 - 2 * raw);
+  const smoothstep = value => value * value * (3 - 2 * value);
+  const eased = smoothstep(raw);
+  const descending = stairClimbState.direction === 'down';
   stairClimbState.stepProgress = raw;
-  cubeRig.position.lerpVectors(move.rootFrom, move.rootTo, eased);
+
+  let rootProgress = eased;
+  let swingProgress = eased;
+  let swingArc = Math.sin(raw * Math.PI);
+  if (descending) {
+    const dropRaw = THREE.MathUtils.clamp(
+      (raw - STAIR_DESCENT_DROP_START) / (STAIR_DESCENT_DROP_END - STAIR_DESCENT_DROP_START),
+      0,
+      1
+    );
+    const swingRaw = THREE.MathUtils.clamp(raw / STAIR_DESCENT_SWING_END, 0, 1);
+    rootProgress = smoothstep(dropRaw);
+    swingProgress = smoothstep(swingRaw);
+    swingArc = Math.sin(swingRaw * Math.PI);
+  }
+
+  cubeRig.position.lerpVectors(move.rootFrom, move.rootTo, rootProgress);
+  if (move.trace) move.trace.push({ progress: raw, rootY: cubeRig.position.y });
 
   stairClimbState.swingTarget = stairContact(
     move.foot,
-    THREE.MathUtils.lerp(move.from.x, move.to.x, eased),
-    THREE.MathUtils.lerp(move.from.y, move.to.y, eased) + Math.sin(raw * Math.PI) * STAIR_FOOT_CLEARANCE,
-    THREE.MathUtils.lerp(move.from.z, move.to.z, eased),
+    THREE.MathUtils.lerp(move.from.x, move.to.x, swingProgress),
+    THREE.MathUtils.lerp(move.from.y, move.to.y, swingProgress)
+      + swingArc * (descending ? STAIR_DESCENT_CLEARANCE : STAIR_FOOT_CLEARANCE),
+    THREE.MathUtils.lerp(move.from.z, move.to.z, swingProgress),
     move.to.step,
     move.to.landing
   );
@@ -2175,9 +2217,7 @@ function updateStairClimbing(now) {
     cubeRig.position.copy(move.rootTo);
     stairClimbState.contacts[move.foot] = cloneStairContact(move.to);
     if (move.step) {
-      const plantEvents = stairClimbState.direction === 'down'
-        ? stairClimbState.descentPlants
-        : stairClimbState.plants;
+      const plantEvents = descending ? stairClimbState.descentPlants : stairClimbState.plants;
       plantEvents.push({
         step: move.step,
         foot: move.foot,
@@ -2185,6 +2225,24 @@ function updateStairClimbing(now) {
         treadTop: stairTreads[move.step - 1].top,
         contactError: null
       });
+      if (descending) {
+        const trace = move.trace || [];
+        const drift = (samples, targetY) => samples.reduce(
+          (maximum, sample) => Math.max(maximum, Math.abs(sample.rootY - targetY)),
+          0
+        );
+        stairClimbState.descentProfiles.push({
+          step: move.step,
+          fromY: move.rootFrom.y,
+          toY: move.rootTo.y,
+          verticalDrop: move.rootFrom.y - move.rootTo.y,
+          startHoldDrift: drift(trace.filter(sample => sample.progress <= 0.5), move.rootFrom.y),
+          endHoldDrift: drift(trace.filter(sample => sample.progress >= 0.82), move.rootTo.y),
+          dropStartsAt: STAIR_DESCENT_DROP_START,
+          dropEndsAt: STAIR_DESCENT_DROP_END,
+          samples: trace.length
+        });
+      }
     }
     prepareStairMove(stairClimbState.moveIndex + 1);
   }
@@ -2385,10 +2443,13 @@ window.__ROOM__ = {
         : null,
       plants: stairClimbState.plants.map(plant => ({ ...plant })),
       descentPlants: stairClimbState.descentPlants.map(plant => ({ ...plant })),
+      descentProfiles: stairClimbState.descentProfiles.map(profile => ({ ...profile })),
       statesPlayed: [...stairClimbState.statesPlayed],
       maxContactError: stairClimbState.maxContactError,
       footClearance: STAIR_FOOT_CLEARANCE,
-      stepDuration: STAIR_STEP_DURATION
+      descentFootClearance: STAIR_DESCENT_CLEARANCE,
+      stepDuration: STAIR_STEP_DURATION,
+      descentStepDuration: STAIR_DESCENT_DURATION
     },
     robot: {
       name: cube.name,

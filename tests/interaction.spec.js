@@ -197,6 +197,17 @@ test('clicking the elevated door alternates feet on every tread going up and dow
     expect(plant.targetY).toBeCloseTo(plant.treadTop, 3);
     expect(plant.contactError).toBeLessThan(0.08);
   }
+  expect(descent.descentProfiles).toHaveLength(returned.architecture.staircase.steps);
+  expect(descent.descentProfiles.map(profile => profile.step)).toEqual(
+    Array.from({ length: returned.architecture.staircase.steps }, (_, index) => returned.architecture.staircase.steps - index)
+  );
+  for (const profile of descent.descentProfiles.slice(1)) {
+    expect(profile.verticalDrop).toBeCloseTo(0.27, 2);
+    expect(profile.startHoldDrift).toBeLessThan(0.01);
+    expect(profile.endHoldDrift).toBeLessThan(0.01);
+    expect(profile.dropStartsAt).toBeGreaterThanOrEqual(0.5);
+    expect(profile.dropEndsAt).toBeLessThanOrEqual(0.82);
+  }
   expect(returned.position.y).toBeCloseTo(0, 3);
   expect(returned.phase).toBe('idle');
   expect(errors).toEqual([]);
