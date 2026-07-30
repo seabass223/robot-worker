@@ -16,15 +16,7 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block
 .performance-stat { display: grid; gap: 5px; }
 .performance-stat span { color: #716e68; font-size: 8px; line-height: 1; letter-spacing: .15em; }
 .performance-stat strong { color: #d2cdc4; font-size: 10px; line-height: 1; letter-spacing: .06em; font-weight: 500; font-variant-numeric: tabular-nums; }
-.instructions { position: absolute; z-index: 5; left: clamp(28px, 4vw, 58px); top: auto; bottom: 54px; width: min(330px, 30vw); transform: none; pointer-events: none; }
-.eyebrow { display: block; margin-bottom: 20px; color: #f14835; font: 500 10px/1 DM Mono, monospace; letter-spacing: .16em; }
-h1 { margin: 0; font-size: clamp(38px, 4.4vw, 64px); line-height: .88; letter-spacing: -.065em; font-weight: 600; }
-h1 em { color: #f14835; font-style: normal; }
-.instructions p { max-width: 295px; margin: 28px 0 24px; color: #aaa69e; font-size: 13px; line-height: 1.7; }
-.hint { display: flex; align-items: center; gap: 10px; color: #d7d2c9; font: 500 10px/1 DM Mono, monospace; letter-spacing: .13em; }
-.mouse-icon { width: 15px; height: 21px; border: 1px solid #76736d; border-radius: 8px; position: relative; }
-.mouse-icon::after { content: ''; position: absolute; width: 1px; height: 5px; background: #f14835; left: 6px; top: 4px; animation: scroll 1.5s ease-in-out infinite; }
-@keyframes scroll { 0%,100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(4px); opacity: .3; } }
+
 .coordinates { position: absolute; z-index: 5; right: 34px; bottom: 28px; display: grid; gap: 6px; text-align: right; pointer-events: none; font-family: DM Mono, monospace; }
 .coordinates span { color: #716e68; font-size: 9px; letter-spacing: .16em; }
 .coordinates strong { color: #b6b1a8; font-size: 10px; letter-spacing: .08em; font-weight: 400; }
@@ -37,11 +29,5 @@ h1 em { color: #f14835; font-style: normal; }
 @media (max-width: 700px) {
   .topbar { padding: 20px; }
   .performance-stats { top: 50px; right: 20px; gap: 14px; }
-  .instructions { left: 22px; top: auto; bottom: 54px; width: calc(100% - 44px); transform: none; }
-  .instructions p { display: none; }
-  .eyebrow { margin-bottom: 12px; }
-  h1 { font-size: clamp(38px, 13vw, 58px); }
-  .hint { margin-top: 16px; }
   .coordinates { right: 20px; bottom: 18px; }
 }
-@media (prefers-reduced-motion: reduce) { .mouse-icon::after { animation: none; } }

@@ -1,0 +1,1 @@
+Canonical source approved by the user: reuse the earlier accepted software-workstation front and side references as a second procedural interpretation. Source files copied from design/software-station/reference/front.png and side.png. The three new non-FAL generation attempts in this directory were rejected by strict paired-view validation and are not geometry evidence.

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import './style.css';
 
 const canvas = document.querySelector('#scene');
@@ -12,6 +13,7 @@ const workPercent = document.querySelector('#work-percent');
 const workProgressFill = document.querySelector('#work-progress-fill');
 const vertexCountText = document.querySelector('#vertex-count');
 const fpsCountText = document.querySelector('#fps-count');
+const drawCallCountText = document.querySelector('#draw-call-count');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0d12);
@@ -259,12 +261,9 @@ function createFacetedLeafGeometry(height, width, thickness, bendX, bendZ) {
   const baseCenterIndex = positions.length / 3;
   positions.push(0, 0, 0);
 
-  const indices = [];
-  const groups = [];
+  const indicesByMaterial = [[], [], []];
   const addTriangle = (a, b, c, materialIndex) => {
-    const start = indices.length;
-    indices.push(a, b, c);
-    groups.push({ start, count: 3, materialIndex });
+    indicesByMaterial[materialIndex].push(a, b, c);
   };
   for (let ring = 0; ring < ringProfile.length - 1; ring++) {
     for (let side = 0; side < 4; side++) {
@@ -283,6 +282,15 @@ function createFacetedLeafGeometry(height, width, thickness, bendX, bendZ) {
     addTriangle(baseCenterIndex, (side + 1) % 4, side, 2);
   }
 
+  const indices = [];
+  const groups = [];
+  for (let materialIndex = 0; materialIndex < indicesByMaterial.length; materialIndex++) {
+    const materialIndices = indicesByMaterial[materialIndex];
+    if (!materialIndices.length) continue;
+    const start = indices.length;
+    indices.push(...materialIndices);
+    groups.push({ start, count: materialIndices.length, materialIndex });
+  }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setIndex(indices);
@@ -716,16 +724,44 @@ desk.name = 'ComputerDesk';
 desk.position.set(6.18, 0, -1.3);
 scene.add(desk);
 const deskTopMat = new THREE.MeshStandardMaterial({ color: 0x806b56, roughness: 0.48, metalness: 0.03 });
+const deskEdgeMat = new THREE.MeshStandardMaterial({ color: 0x563d2d, roughness: 0.56, metalness: 0.02 });
 const deskFrameMat = new THREE.MeshStandardMaterial({ color: 0x1d2024, roughness: 0.35, metalness: 0.72 });
+const deskElectronicsMat = new THREE.MeshStandardMaterial({ color: 0x24282d, roughness: 0.42, metalness: 0.35 });
+const deskConeMat = new THREE.MeshStandardMaterial({ color: 0x587b89, roughness: 0.5, metalness: 0.2 });
+const deskCopperMat = new THREE.MeshStandardMaterial({ color: 0xc96f32, roughness: 0.36, metalness: 0.42 });
+const deskCyanMat = new THREE.MeshStandardMaterial({ color: 0x55d9f5, roughness: 0.25, emissive: 0x1689a4, emissiveIntensity: 1.25 });
+const deskCeramicMat = new THREE.MeshStandardMaterial({ color: 0xe4ddd0, roughness: 0.62, metalness: 0 });
 const reviewScreenBackingMat = new THREE.MeshStandardMaterial({ color: 0x081018, roughness: 0.18, metalness: 0.15, emissive: 0x0d3349, emissiveIntensity: 0.85 });
 const keyMat = new THREE.MeshStandardMaterial({ color: 0x2b2e33, roughness: 0.5, metalness: 0.35 });
-box([1.25, 0.15, 3.5], deskTopMat, [0, 1.28, 0], desk, 'DeskTop');
-box([0.1, 1.2, 0.1], deskFrameMat, [-0.42, 0.62, -1.4], desk);
-box([0.1, 1.2, 0.1], deskFrameMat, [0.42, 0.62, -1.4], desk);
-box([0.1, 1.2, 0.1], deskFrameMat, [-0.42, 0.62, 1.4], desk);
-box([0.1, 1.2, 0.1], deskFrameMat, [0.42, 0.62, 1.4], desk);
-const monitor = box([0.14, 0.9, 1.45], deskFrameMat, [0.23, 2.02, -0.32], desk, 'ComputerMonitor');
-const monitorScreen = box([0.018, 0.72, 1.25], reviewScreenBackingMat, [0.151, 2.02, -0.32], desk, 'MonitorScreen');
+
+const softwareStationStructure = new THREE.Group();
+softwareStationStructure.name = 'SoftwareStationStructure';
+desk.add(softwareStationStructure);
+const softwareStationDisplay = new THREE.Group();
+softwareStationDisplay.name = 'SoftwareStationDisplay';
+desk.add(softwareStationDisplay);
+const softwareStationAccessories = new THREE.Group();
+softwareStationAccessories.name = 'SoftwareStationAccessories';
+desk.add(softwareStationAccessories);
+const softwareStationUnderDesk = new THREE.Group();
+softwareStationUnderDesk.name = 'SoftwareStationUnderDesk';
+desk.add(softwareStationUnderDesk);
+
+box([1.25, 0.15, 3.5], deskTopMat, [0, 1.28, 0], softwareStationStructure, 'DeskTop');
+box([0.08, 0.17, 3.54], deskEdgeMat, [-0.59, 1.275, 0], softwareStationStructure, 'WalnutFrontEdge');
+for (const z of [-1.4, 1.4]) {
+  rodBetween(new THREE.Vector3(-0.38, 1.2, z), new THREE.Vector3(-0.54, 0.05, z), 0.058, deskFrameMat, softwareStationStructure, `TrestleFront${z}`);
+  rodBetween(new THREE.Vector3(0.34, 1.2, z), new THREE.Vector3(0.52, 0.05, z), 0.058, deskFrameMat, softwareStationStructure, `TrestleRear${z}`);
+  rodBetween(new THREE.Vector3(-0.48, 0.2, z), new THREE.Vector3(0.45, 1.1, z), 0.034, deskFrameMat, softwareStationStructure, `TrestleBrace${z}`);
+}
+box([0.1, 0.1, 2.62], deskFrameMat, [0.14, 0.17, 0], softwareStationStructure, 'DeskLowerStretcher');
+box([0.1, 0.1, 2.9], deskFrameMat, [0.38, 1.13, 0], softwareStationStructure, 'RearCableRail');
+
+for (const z of [-1.18, 1.18]) box([0.08, 1.16, 0.08], deskFrameMat, [0.38, 2.03, z], softwareStationDisplay, 'OverheadFramePost');
+box([0.08, 0.08, 2.44], deskFrameMat, [0.38, 2.61, 0], softwareStationDisplay, 'OverheadFrameTopRail');
+box([0.08, 0.07, 2.44], deskFrameMat, [0.38, 1.48, 0], softwareStationDisplay, 'OverheadFrameLowerRail');
+const monitor = box([0.14, 0.9, 1.45], deskFrameMat, [0.23, 2.02, -0.22], softwareStationDisplay, 'ComputerMonitor');
+const monitorScreen = box([0.018, 0.72, 1.25], reviewScreenBackingMat, [0.151, 2.02, -0.22], softwareStationDisplay, 'MonitorScreen');
 monitorScreen.castShadow = false;
 
 const reviewMonitorCanvas = document.createElement('canvas');
@@ -746,10 +782,10 @@ const reviewMonitorDisplay = new THREE.Mesh(
   reviewMonitorMaterial
 );
 reviewMonitorDisplay.name = 'ReviewMonitorDisplayPlane';
-reviewMonitorDisplay.position.set(0.14, 2.02, -0.32);
+reviewMonitorDisplay.position.set(0.14, 2.02, -0.22);
 reviewMonitorDisplay.rotation.y = -Math.PI / 2;
 reviewMonitorDisplay.castShadow = false;
-desk.add(reviewMonitorDisplay);
+softwareStationDisplay.add(reviewMonitorDisplay);
 
 const reviewMonitorState = {
   type: 'CanvasTexture',
@@ -841,22 +877,129 @@ function updateReviewMonitor(now, force = false) {
   reviewMonitorTexture.needsUpdate = true;
 }
 updateReviewMonitor(0, true);
-box([0.08, 0.48, 0.1], deskFrameMat, [0.18, 1.53, -0.32], desk, 'MonitorStand');
-box([0.36, 0.05, 0.58], deskFrameMat, [0.05, 1.36, -0.32], desk, 'MonitorBase');
-const keyboard = box([0.48, 0.055, 1.15], keyMat, [-0.32, 1.39, -0.24], desk, 'Keyboard');
+box([0.08, 0.48, 0.1], deskFrameMat, [0.18, 1.53, -0.22], softwareStationDisplay, 'MonitorStand');
+box([0.36, 0.05, 0.58], deskFrameMat, [0.05, 1.36, -0.22], softwareStationDisplay, 'MonitorBase');
+box([0.54, 0.018, 1.75], keyMat, [-0.31, 1.369, -0.18], softwareStationAccessories, 'DeskMat');
+const keyboard = box([0.48, 0.055, 1.15], keyMat, [-0.39, 1.405, -0.28], softwareStationAccessories, 'Keyboard');
 keyboard.rotation.z = 0.015;
 for (let row = 0; row < 4; row++) {
   for (let col = 0; col < 9; col++) {
-    box([0.075, 0.016, 0.075], deskFrameMat, [-0.55 + row * 0.105, 1.428, -0.56 + col * 0.08], desk);
+    box([0.075, 0.016, 0.075], deskFrameMat, [-0.62 + row * 0.105, 1.444, -0.6 + col * 0.08], softwareStationAccessories, `DeskKey${row}-${col}`);
   }
 }
+const deskMouse = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 7), deskElectronicsMat);
+deskMouse.name = 'DeskMouse';
+deskMouse.scale.set(0.46, 0.18, 0.7);
+deskMouse.position.set(-0.44, 1.405, 0.52);
+deskMouse.castShadow = true;
+softwareStationAccessories.add(deskMouse);
+
+function addDeskSpeaker(name, z, height, width) {
+  const speaker = new THREE.Group();
+  speaker.name = name;
+  softwareStationAccessories.add(speaker);
+  box([0.22, height, width], deskElectronicsMat, [0, 1.34 + height / 2, z], speaker, `${name}Cabinet`);
+  for (const [offsetY, radius] of [[height * 0.22, width * 0.15], [-height * 0.12, width * 0.28]]) {
+    const driver = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.025, 16), deskConeMat);
+    driver.name = `${name}Driver`;
+    driver.rotation.z = Math.PI / 2;
+    driver.position.set(-0.125, 1.34 + height / 2 + offsetY, z);
+    driver.castShadow = true;
+    speaker.add(driver);
+  }
+  return speaker;
+}
+const leftDeskSpeaker = addDeskSpeaker('LeftDeskSpeaker', -1.03, 0.34, 0.27);
+const rightDeskSpeaker = addDeskSpeaker('RightDeskSpeaker', 0.62, 0.5, 0.32);
+
+const deskFan = new THREE.Group();
+deskFan.name = 'DeskFan';
+softwareStationAccessories.add(deskFan);
+const fanCenter = new THREE.Vector3(-0.3, 1.82, -1.31);
+const fanRing = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.018, 8, 24), deskCeramicMat);
+fanRing.rotation.y = Math.PI / 2;
+fanRing.position.copy(fanCenter);
+fanRing.castShadow = true;
+deskFan.add(fanRing);
+for (let i = 0; i < 12; i++) {
+  const angle = i / 12 * Math.PI * 2;
+  const start = fanCenter.clone().add(new THREE.Vector3(0, Math.sin(angle) * 0.045, Math.cos(angle) * 0.045));
+  const end = fanCenter.clone().add(new THREE.Vector3(0, Math.sin(angle + 0.25) * 0.17, Math.cos(angle + 0.25) * 0.17));
+  rodBetween(start, end, 0.014, deskFrameMat, deskFan, `DeskFanBlade${i + 1}`);
+}
+const fanHub = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 12), deskElectronicsMat);
+fanHub.rotation.z = Math.PI / 2;
+fanHub.position.copy(fanCenter);
+deskFan.add(fanHub);
+rodBetween(new THREE.Vector3(-0.24, 1.39, -1.31), new THREE.Vector3(-0.29, 1.62, -1.31), 0.022, deskFrameMat, deskFan, 'DeskFanStand');
+
+const taskLamp = new THREE.Group();
+taskLamp.name = 'SoftwareTaskLamp';
+softwareStationAccessories.add(taskLamp);
+rodBetween(new THREE.Vector3(0.02, 1.36, -1.48), new THREE.Vector3(0.03, 1.92, -1.48), 0.025, deskFrameMat, taskLamp, 'LampPost');
+rodBetween(new THREE.Vector3(0.03, 1.92, -1.48), new THREE.Vector3(-0.2, 2.18, -1.25), 0.028, deskCopperMat, taskLamp, 'LampArm');
+const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.2, 10, 1, true), deskCopperMat);
+lampShade.name = 'LampShade';
+lampShade.rotation.z = Math.PI / 2.5;
+lampShade.position.set(-0.24, 2.15, -1.2);
+lampShade.castShadow = true;
+taskLamp.add(lampShade);
+
+const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.15, 12), deskCeramicMat);
+mug.name = 'SoftwareDeskMug';
+mug.position.set(-0.15, 1.43, -0.82);
+mug.castShadow = true;
+softwareStationAccessories.add(mug);
+
+box([0.68, 0.62, 0.52], deskElectronicsMat, [0.12, 0.86, -1.05], softwareStationUnderDesk, 'DeskDrawerCabinet');
+for (let i = 0; i < 2; i++) {
+  box([0.035, 0.23, 0.45], keyMat, [-0.235, 0.99 - i * 0.27, -1.05], softwareStationUnderDesk, `DeskDrawer${i + 1}`);
+  box([0.025, 0.025, 0.18], deskCeramicMat, [-0.26, 0.99 - i * 0.27, -1.05], softwareStationUnderDesk, `DeskDrawerPull${i + 1}`);
+}
+box([0.72, 0.82, 0.56], deskElectronicsMat, [0.12, 0.61, 1.05], softwareStationUnderDesk, 'SoftwarePcTower');
+for (let i = 0; i < 2; i++) {
+  const fan = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 8, 20), deskCyanMat);
+  fan.name = `SoftwarePcCoolingFan${i + 1}`;
+  fan.rotation.y = Math.PI / 2;
+  fan.position.set(-0.255, 0.47 + i * 0.29, 1.05);
+  fan.castShadow = false;
+  softwareStationUnderDesk.add(fan);
+}
+box([0.17, 0.11, 1.8], deskFrameMat, [0.42, 1.08, 0.08], softwareStationUnderDesk, 'UnderDeskCableTray');
+box([0.07, 0.05, 1.22], deskElectronicsMat, [0.35, 0.98, -0.08], softwareStationUnderDesk, 'DeskPowerStrip');
+for (let i = 0; i < 3; i++) box([0.018, 0.018, 0.018], deskCyanMat, [0.31, 0.94, -0.34 + i * 0.22], softwareStationUnderDesk, `PowerStripLight${i + 1}`);
+rodBetween(new THREE.Vector3(0.36, 1.02, 0.74), new THREE.Vector3(0.31, 0.85, 1.02), 0.018, deskFrameMat, softwareStationUnderDesk, 'BundledPcCable');
+
+for (let i = 0; i < 2; i++) box([0.2, 0.055, 0.28], deskElectronicsMat, [0.05, 1.4 + i * 0.06, 0.9], softwareStationAccessories, `ExternalDrive${i + 1}`);
+for (let i = 0; i < 2; i++) box([0.018, 0.018, 0.018], deskCyanMat, [-0.055, 1.4 + i * 0.06, 0.79], softwareStationAccessories, `ExternalDriveLight${i + 1}`);
+rodBetween(new THREE.Vector3(0.08, 1.36, 0.82), new THREE.Vector3(0.08, 1.82, 0.82), 0.02, deskFrameMat, softwareStationAccessories, 'HeadphoneStand');
+const headphoneBand = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 18, Math.PI), deskFrameMat);
+headphoneBand.name = 'DeskHeadphones';
+headphoneBand.rotation.y = Math.PI / 2;
+headphoneBand.position.set(0.02, 1.78, 0.82);
+softwareStationAccessories.add(headphoneBand);
+
 const deskPlant = createFacetedTerracottaPlant('DeskFacetedTerracottaPlant', 0.46);
-deskPlant.position.set(-0.24, 1.355, 1.14);
+deskPlant.position.set(-0.24, 1.355, 1.38);
 deskPlant.rotation.y = -0.18;
-desk.add(deskPlant);
+softwareStationAccessories.add(deskPlant);
 const deskGlow = new THREE.PointLight(0x5dc9ff, 5.5, 2.6, 2);
-deskGlow.position.set(-0.1, 2.0, -0.3);
-desk.add(deskGlow);
+deskGlow.position.set(-0.1, 2.0, -0.22);
+softwareStationDisplay.add(deskGlow);
+
+const softwareStationRuntime = {
+  model: 'generated-software-station-v1',
+  monitor: { animated: reviewMonitorState.animated, preserved: reviewMonitorDisplay.parent === softwareStationDisplay },
+  overheadFrame: true,
+  speakerCount: 2,
+  deskFanBlades: 12,
+  keyboardKeys: 36,
+  drawers: 2,
+  pcCoolingFans: 2,
+  hasDeskMat: true,
+  hasTaskLamp: true,
+  hasCableManagement: true
+};
 const deskCollider = box(
   [1.45, 2.65, 3.75],
   new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
@@ -867,6 +1010,7 @@ const deskCollider = box(
 deskCollider.castShadow = false;
 deskCollider.receiveShadow = false;
 const DESK_SPOT = new THREE.Vector3(4.88, 0, -1.3);
+const COUCH_SPOT = new THREE.Vector3(4.0, 0, 4.95);
 
 // Camera-near lounge: a charcoal left-chaise sectional facing a low walnut table.
 const lounge = new THREE.Group();
@@ -917,9 +1061,13 @@ for (const [x, z] of [[-1.92, 0.31], [1.92, 0.31], [-1.92, -0.32], [1.92, -0.32]
   box([0.16, 0.12, 0.16], loungeFootMat, [x, 0.06, z], lounge, 'SectionalFoot');
 }
 
+const COFFEE_TABLE_ORIGINAL_X = 0.15;
+const COFFEE_TABLE_LOCAL_X = 1.2;
+const COFFEE_TABLE_WIDTH = 2.5;
+const COFFEE_TABLE_DEPTH = 1.24;
 const coffeeTable = new THREE.Group();
 coffeeTable.name = 'CoffeeTable';
-coffeeTable.position.set(0.15, 0, -2.45);
+coffeeTable.position.set(COFFEE_TABLE_LOCAL_X, 0, -2.45);
 lounge.add(coffeeTable);
 box([2.45, 0.18, 1.2], tableWoodMat, [0, 0.46, 0], coffeeTable, 'CoffeeTableTop');
 box([2.5, 0.08, 1.24], tableEdgeMat, [0, 0.39, 0], coffeeTable, 'CoffeeTableEdge');
@@ -952,6 +1100,120 @@ loungeMagazines.push(magazineTop);
 const coverGraphic = box([0.34, 0.012, 0.2], new THREE.MeshStandardMaterial({ color: 0x263846, roughness: 0.7 }), [0.68, 0.693, 0.08], coffeeTable, 'MagazineCoverGraphic');
 coverGraphic.rotation.y = -0.1;
 box([0.3, 0.012, 0.035], new THREE.MeshBasicMaterial({ color: 0xf0f2f2 }), [0.64, 0.7, -0.08], coffeeTable, 'MagazineTitle').rotation.y = -0.1;
+
+// Sculptural mid-century floor lamp tucked behind the sectional's right arm.
+const loungeFloorLamp = new THREE.Group();
+loungeFloorLamp.name = 'LoungeArchedFloorLamp';
+loungeFloorLamp.position.set(2.45, 0, 0.53);
+lounge.add(loungeFloorLamp);
+const loungeLampBrassMat = new THREE.MeshStandardMaterial({ color: 0xa77336, roughness: 0.3, metalness: 0.82 });
+const loungeLampDarkBrassMat = new THREE.MeshStandardMaterial({ color: 0x4a3422, roughness: 0.42, metalness: 0.74 });
+const loungeLampBaseMat = new THREE.MeshStandardMaterial({ color: 0x24282b, roughness: 0.48, metalness: 0.64 });
+const loungeLampShadeMat = new THREE.MeshStandardMaterial({
+  color: 0xd9aa70,
+  emissive: 0x6a2f12,
+  emissiveIntensity: 0.72,
+  roughness: 0.74,
+  metalness: 0,
+  side: THREE.DoubleSide,
+  transparent: true,
+  opacity: 0.94
+});
+const loungeLampDiffuserMat = new THREE.MeshStandardMaterial({
+  color: 0xffe1af,
+  emissive: 0xffb45d,
+  emissiveIntensity: 2.4,
+  roughness: 0.5,
+  side: THREE.DoubleSide
+});
+const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.37, 0.12, 24), loungeLampBaseMat);
+lampBase.name = 'LoungeLampWeightedBase';
+lampBase.position.y = 0.06;
+lampBase.castShadow = true;
+lampBase.receiveShadow = true;
+loungeFloorLamp.add(lampBase);
+const lampBaseRing = new THREE.Mesh(new THREE.CylinderGeometry(0.255, 0.285, 0.055, 24), loungeLampBrassMat);
+lampBaseRing.name = 'LoungeLampBaseBrassRing';
+lampBaseRing.position.y = 0.145;
+lampBaseRing.castShadow = true;
+loungeFloorLamp.add(lampBaseRing);
+rodBetween(new THREE.Vector3(0, 0.16, 0), new THREE.Vector3(0, 1.57, 0), 0.035, loungeLampDarkBrassMat, loungeFloorLamp, 'LoungeLampLowerStem');
+for (const y of [0.58, 1.12]) {
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.085, 16), loungeLampBrassMat);
+  collar.name = `LoungeLampStemCollar${y}`;
+  collar.position.y = y;
+  collar.castShadow = true;
+  loungeFloorLamp.add(collar);
+}
+const loungeLampArcPoints = [
+  new THREE.Vector3(0, 1.57, 0),
+  new THREE.Vector3(-0.06, 2.0, -0.05),
+  new THREE.Vector3(-0.28, 2.34, -0.24),
+  new THREE.Vector3(-0.62, 2.58, -0.52),
+  new THREE.Vector3(-1.0, 2.66, -0.78)
+];
+for (let i = 1; i < loungeLampArcPoints.length; i++) {
+  rodBetween(loungeLampArcPoints[i - 1], loungeLampArcPoints[i], 0.04, loungeLampBrassMat, loungeFloorLamp, `LoungeLampArc${i}`);
+  const joint = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), loungeLampBrassMat);
+  joint.name = `LoungeLampArcJoint${i}`;
+  joint.position.copy(loungeLampArcPoints[i]);
+  joint.castShadow = true;
+  loungeFloorLamp.add(joint);
+}
+rodBetween(new THREE.Vector3(-1.0, 2.66, -0.78), new THREE.Vector3(-1.0, 2.605, -0.78), 0.045, loungeLampDarkBrassMat, loungeFloorLamp, 'LoungeLampShadeDrop');
+const loungeLampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.44, 0.43, 24, 1, true), loungeLampShadeMat);
+loungeLampShade.name = 'LoungeLampLinenShade';
+loungeLampShade.position.set(-1.0, 2.39, -0.78);
+loungeLampShade.castShadow = true;
+loungeFloorLamp.add(loungeLampShade);
+const loungeLampShadeTop = new THREE.Mesh(new THREE.TorusGeometry(0.265, 0.018, 8, 24), loungeLampBrassMat);
+loungeLampShadeTop.name = 'LoungeLampShadeTopRing';
+loungeLampShadeTop.rotation.x = Math.PI / 2;
+loungeLampShadeTop.position.set(-1.0, 2.605, -0.78);
+loungeFloorLamp.add(loungeLampShadeTop);
+const loungeLampShadeBottom = new THREE.Mesh(new THREE.TorusGeometry(0.435, 0.018, 8, 24), loungeLampBrassMat);
+loungeLampShadeBottom.name = 'LoungeLampShadeBottomRing';
+loungeLampShadeBottom.rotation.x = Math.PI / 2;
+loungeLampShadeBottom.position.set(-1.0, 2.175, -0.78);
+loungeFloorLamp.add(loungeLampShadeBottom);
+const loungeLampDiffuser = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.025, 24), loungeLampDiffuserMat);
+loungeLampDiffuser.name = 'LoungeLampWarmDiffuser';
+loungeLampDiffuser.position.set(-1.0, 2.17, -0.78);
+loungeFloorLamp.add(loungeLampDiffuser);
+const loungeLampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), loungeLampDiffuserMat);
+loungeLampBulb.name = 'LoungeLampBulb';
+loungeLampBulb.position.set(-1.0, 2.29, -0.78);
+loungeFloorLamp.add(loungeLampBulb);
+rodBetween(new THREE.Vector3(-0.73, 2.56, -0.58), new THREE.Vector3(-0.73, 2.08, -0.58), 0.009, loungeLampDarkBrassMat, loungeFloorLamp, 'LoungeLampPullChain');
+const loungeLampPull = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), loungeLampBrassMat);
+loungeLampPull.name = 'LoungeLampPullBead';
+loungeLampPull.position.set(-0.73, 2.04, -0.58);
+loungeFloorLamp.add(loungeLampPull);
+const loungeLampLight = new THREE.PointLight(0xffb45f, 12, 4.2, 2);
+loungeLampLight.name = 'LoungeLampWarmPointLight';
+loungeLampLight.position.set(-1.0, 2.1, -0.78);
+loungeFloorLamp.add(loungeLampLight);
+const loungeLampWorldPosition = {
+  x: lounge.position.x + loungeFloorLamp.position.x,
+  z: lounge.position.z + loungeFloorLamp.position.z
+};
+const loungeFloorLampRuntime = {
+  model: 'mid-century-arched-floor-lamp-v1',
+  corner: 'front-right-by-couch',
+  style: 'aged-brass-and-warm-linen',
+  position: { ...loungeLampWorldPosition },
+  hasWeightedBase: lampBase.parent === loungeFloorLamp,
+  hasArchedStem: loungeLampArcPoints.length >= 4,
+  hasLinenShade: loungeLampShade.parent === loungeFloorLamp,
+  hasDiffuser: loungeLampDiffuser.parent === loungeFloorLamp,
+  warmPointLight: loungeLampLight.parent === loungeFloorLamp,
+  colliderFree: true,
+  clearOfCouchPath: loungeLampWorldPosition.x > COUCH_SPOT.x + 2
+    && loungeLampWorldPosition.z > COUCH_SPOT.z + 1,
+  insideRoomBounds: loungeLampWorldPosition.x + 0.37 < 7
+    && loungeLampWorldPosition.z + 0.37 < 7,
+  parts: loungeFloorLamp.children.filter(child => child.isMesh).length
+};
 
 // Precision test bench on the back wall, with inspection and lab equipment.
 const testBench = new THREE.Group();
@@ -1035,6 +1297,814 @@ const testBenchCollider = box(
 testBenchCollider.castShadow = false;
 testBenchCollider.receiveShadow = false;
 const TEST_BENCH_SPOT = new THREE.Vector3(1.6, 0, -4.82);
+
+// The generated developer workstation belongs to the back-wall review station.
+// Preserve the TestBench interaction root/collider, replace only its visuals, and
+// rotate the right-wall-authored local coordinates so the station faces into the room.
+for (const child of [...testBench.children]) {
+  if (child !== testBenchCollider) testBench.remove(child);
+}
+const reviewStationVisual = new THREE.Group();
+reviewStationVisual.name = 'GeneratedReviewStationVisual';
+reviewStationVisual.rotation.y = Math.PI / 2;
+reviewStationVisual.add(softwareStationStructure, softwareStationDisplay, softwareStationAccessories, softwareStationUnderDesk);
+testBench.add(reviewStationVisual);
+
+// Second interpretation of the approved workstation reference for the right-wall
+// software station. The ComputerDesk root, DeskCollider, DESK_SPOT and plant API stay stable.
+const softwareStationV2Visual = new THREE.Group();
+softwareStationV2Visual.name = 'SoftwareStationV2Visual';
+desk.add(softwareStationV2Visual);
+const softwareV2Structure = new THREE.Group();
+softwareV2Structure.name = 'SoftwareV2Structure';
+const softwareV2Displays = new THREE.Group();
+softwareV2Displays.name = 'SoftwareV2Displays';
+const softwareV2InputDeck = new THREE.Group();
+softwareV2InputDeck.name = 'SoftwareV2InputDeck';
+const softwareV2Accessories = new THREE.Group();
+softwareV2Accessories.name = 'SoftwareV2Accessories';
+const softwareV2UnderDesk = new THREE.Group();
+softwareV2UnderDesk.name = 'SoftwareV2UnderDesk';
+softwareStationV2Visual.add(softwareV2Structure, softwareV2Displays, softwareV2InputDeck, softwareV2Accessories, softwareV2UnderDesk);
+
+const softwareAmberMat = new THREE.MeshStandardMaterial({ color: 0xe5a33c, roughness: 0.34, metalness: 0.28, emissive: 0x7d430c, emissiveIntensity: 0.55 });
+const softwareGraphiteMat = new THREE.MeshStandardMaterial({ color: 0x252a30, roughness: 0.38, metalness: 0.56 });
+const softwareSilverMat = new THREE.MeshStandardMaterial({ color: 0xaeb8bf, roughness: 0.3, metalness: 0.72 });
+box([1.25, 0.09, 3.5], deskTopMat, [0, 1.28, 0], softwareV2Structure, 'SoftwareV2DeskTop');
+box([0.025, 0.025, 3.36], softwareAmberMat, [-0.626, 1.275, 0], softwareV2Structure, 'SoftwareV2AmberFrontStripe');
+for (const z of [-1.42, 1.42]) {
+  rodBetween(new THREE.Vector3(-0.38, 1.2, z), new THREE.Vector3(-0.54, 0.05, z), 0.06, deskFrameMat, softwareV2Structure, `SoftwareV2FrontLeg${z}`);
+  rodBetween(new THREE.Vector3(0.34, 1.2, z), new THREE.Vector3(0.52, 0.05, z), 0.06, deskFrameMat, softwareV2Structure, `SoftwareV2RearLeg${z}`);
+}
+box([0.1, 0.1, 2.72], deskFrameMat, [0.18, 0.18, 0], softwareV2Structure, 'SoftwareV2LowStretcher');
+for (const z of [-1.4, 1.4]) box([0.05, 1.2, 0.05], deskFrameMat, [0.43, 1.96, z], softwareV2Structure, 'SoftwareV2EquipmentRailPost');
+box([0.24, 0.065, 2.88], softwareGraphiteMat, [0.36, 2.55, 0], softwareV2Structure, 'SoftwareV2EquipmentShelf');
+box([0.025, 0.02, 2.65], softwareAmberMat, [0.225, 2.505, 0], softwareV2Structure, 'SoftwareV2ShelfTaskLight');
+for (let i = 0; i < 5; i++) box([0.02, 0.012, 0.13], softwareAmberMat, [0.205, 2.485, -0.96 + i * 0.48], softwareV2Structure, `SoftwareV2TaskLightSegment${i + 1}`);
+
+function makeSoftwareV2ScreenTexture(mode) {
+  const canvas = document.createElement('canvas');
+  canvas.width = mode === 'primary' ? 512 : 240;
+  canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#061017';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = mode === 'primary' ? '#51d9f5' : '#f2a63a';
+  if (mode === 'primary') {
+    for (let row = 0; row < 13; row++) {
+      const y = 28 + row * 21;
+      const indent = (row % 4) * 12;
+      ctx.globalAlpha = 0.35 + (row % 3) * 0.16;
+      ctx.fillRect(24 + indent, y, 120 + ((row * 29) % 220), 5);
+      ctx.fillRect(385, y, 70 + ((row * 13) % 34), 5);
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#1989aa';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(360, 22, 126, 276);
+  } else {
+    ctx.globalAlpha = 0.85;
+    for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = i % 2 ? '#50d9ef' : '#f2a63a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(120, 52 + i * 54, 12 + i * 2, 0, Math.PI * 2);
+      ctx.stroke();
+      if (i < 4) {
+        ctx.beginPath();
+        ctx.moveTo(120, 68 + i * 54);
+        ctx.lineTo(120, 88 + i * 54);
+        ctx.stroke();
+      }
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+box([0.14, 0.92, 1.52], softwareGraphiteMat, [0.23, 2.02, -0.38], softwareV2Displays, 'SoftwareV2PrimaryMonitor');
+const softwarePrimaryScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 0.72), new THREE.MeshBasicMaterial({ map: makeSoftwareV2ScreenTexture('primary'), toneMapped: false }));
+softwarePrimaryScreen.name = 'SoftwareV2PrimaryCodeScreen';
+softwarePrimaryScreen.position.set(0.151, 2.02, -0.38);
+softwarePrimaryScreen.rotation.y = -Math.PI / 2;
+softwareV2Displays.add(softwarePrimaryScreen);
+box([0.12, 0.7, 0.46], softwareGraphiteMat, [0.23, 1.93, 0.72], softwareV2Displays, 'SoftwareV2VerticalMonitor');
+const softwareSecondaryScreen = new THREE.Mesh(new THREE.PlaneGeometry(0.37, 0.56), new THREE.MeshBasicMaterial({ map: makeSoftwareV2ScreenTexture('secondary'), toneMapped: false }));
+softwareSecondaryScreen.name = 'SoftwareV2VerticalStatusScreen';
+softwareSecondaryScreen.position.set(0.16, 1.93, 0.72);
+softwareSecondaryScreen.rotation.y = -Math.PI / 2;
+softwareV2Displays.add(softwareSecondaryScreen);
+box([0.08, 0.48, 0.1], deskFrameMat, [0.2, 1.52, -0.38], softwareV2Displays, 'SoftwareV2MonitorStand');
+box([0.28, 0.055, 1.72], deskFrameMat, [0.07, 1.36, -0.12], softwareV2Displays, 'SoftwareV2MonitorBridge');
+
+box([0.5, 0.025, 2.0], softwareGraphiteMat, [-0.34, 1.375, -0.1], softwareV2InputDeck, 'SoftwareV2DeskMat');
+box([0.38, 0.05, 1.05], keyMat, [-0.42, 1.41, -0.38], softwareV2InputDeck, 'SoftwareV2KeyboardBase');
+for (let row = 0; row < 4; row++) {
+  for (let col = 0; col < 9; col++) {
+    const keyMaterial = (row + col) % 7 === 0 ? softwareAmberMat : ((row + col) % 5 === 0 ? deskCyanMat : deskFrameMat);
+    box([0.07, 0.018, 0.075], keyMaterial, [-0.62 + row * 0.11, 1.449, -0.7 + col * 0.08], softwareV2InputDeck, `SoftwareV2Key${row}-${col}`);
+  }
+}
+box([0.23, 0.04, 0.18], deskElectronicsMat, [-0.43, 1.42, 0.46], softwareV2InputDeck, 'SoftwareV2Mouse');
+box([0.25, 0.045, 0.32], softwareGraphiteMat, [-0.43, 1.42, 0.88], softwareV2InputDeck, 'SoftwareV2MacroPad');
+for (let i = 0; i < 6; i++) box([0.055, 0.018, 0.055], i === 0 ? softwareAmberMat : deskCyanMat, [-0.56 + (i % 2) * 0.1, 1.453, 0.79 + Math.floor(i / 2) * 0.09], softwareV2InputDeck, `SoftwareV2MacroKey${i + 1}`);
+
+const softwareFan = new THREE.Group();
+softwareFan.name = 'SoftwareV2RadialFan';
+softwareV2Accessories.add(softwareFan);
+const softwareFanRing = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.026, 10, 32), softwareSilverMat);
+softwareFanRing.rotation.y = Math.PI / 2;
+softwareFanRing.position.set(-0.16, 1.82, -1.24);
+softwareFan.add(softwareFanRing);
+for (let i = 0; i < 10; i++) {
+  const a = i / 10 * Math.PI * 2;
+  rodBetween(new THREE.Vector3(-0.16, 1.82, -1.24), new THREE.Vector3(-0.16, 1.82 + Math.cos(a) * 0.125, -1.24 + Math.sin(a) * 0.125), 0.01, deskFrameMat, softwareFan, `SoftwareV2FanBlade${i + 1}`);
+}
+const softwareFanHub = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 12), softwareAmberMat);
+softwareFanHub.rotation.z = Math.PI / 2;
+softwareFanHub.position.set(-0.16, 1.82, -1.24);
+softwareFan.add(softwareFanHub);
+rodBetween(new THREE.Vector3(0.12, 1.36, -0.92), new THREE.Vector3(-0.12, 1.68, -0.96), 0.025, deskCopperMat, softwareV2Accessories, 'SoftwareV2LampLowerArm');
+rodBetween(new THREE.Vector3(-0.12, 1.68, -0.96), new THREE.Vector3(-0.22, 2.18, -0.92), 0.025, deskCopperMat, softwareV2Accessories, 'SoftwareV2LampUpperArm');
+const softwareLampShade = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.22, 10, 1, true), softwareAmberMat);
+softwareLampShade.rotation.z = -Math.PI / 2;
+softwareLampShade.position.set(-0.32, 2.19, -0.92);
+softwareV2Accessories.add(softwareLampShade);
+box([0.42, 0.68, 0.12], softwareSilverMat, [-0.18, 1.72, 1.02], softwareV2Accessories, 'SoftwareV2VerticalLaptopDock');
+for (let i = 0; i < 4; i++) box([0.035, 0.32, 0.035], deskFrameMat, [-0.41, 1.68, 0.88 + i * 0.09], softwareV2Accessories, `SoftwareV2LaptopDockFin${i + 1}`);
+box([0.25, 0.54, 0.34], softwareGraphiteMat, [-0.24, 1.72, 1.1], softwareV2Accessories, 'SoftwareV2SpeakerBody');
+for (const y of [1.6, 1.84]) {
+  const driver = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.025, 18), deskCyanMat);
+  driver.name = 'SoftwareV2SpeakerDriver';
+  driver.rotation.z = Math.PI / 2;
+  driver.position.set(-0.38, y, 1.1);
+  softwareV2Accessories.add(driver);
+}
+
+deskPlant.position.set(-0.24, 1.355, 1.52);
+deskPlant.rotation.y = -0.18;
+softwareV2Accessories.add(deskPlant);
+const reviewStationPlant = createFacetedTerracottaPlant('ReviewStationFacetedTerracottaPlant', 0.46);
+reviewStationPlant.position.set(-0.24, 1.355, 1.38);
+reviewStationPlant.rotation.y = -0.18;
+softwareStationAccessories.add(reviewStationPlant);
+
+box([0.58, 0.56, 0.46], softwareGraphiteMat, [0.3, 0.96, -1.22], softwareV2UnderDesk, 'SoftwareV2DrawerCabinet');
+for (let i = 0; i < 2; i++) {
+  box([0.025, 0.21, 0.4], deskElectronicsMat, [-0.002, 0.84 + i * 0.235, -1.22], softwareV2UnderDesk, `SoftwareV2Drawer${i + 1}`);
+  box([0.03, 0.03, 0.18], softwareAmberMat, [-0.02, 0.84 + i * 0.235, -1.22], softwareV2UnderDesk, `SoftwareV2DrawerPull${i + 1}`);
+}
+box([0.58, 0.72, 0.48], softwareGraphiteMat, [0.28, 0.62, 1.22], softwareV2UnderDesk, 'SoftwareV2PcTower');
+box([0.025, 0.48, 0.34], new THREE.MeshPhysicalMaterial({ color: 0x25303a, transparent: true, opacity: 0.48, roughness: 0.12, metalness: 0.22 }), [-0.023, 0.64, 1.22], softwareV2UnderDesk, 'SoftwareV2PcWindow');
+const towerFan = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.03, 10, 24), deskCyanMat);
+towerFan.name = 'SoftwareV2TowerHexFan';
+towerFan.rotation.y = Math.PI / 2;
+towerFan.position.set(-0.055, 0.64, 1.22);
+softwareV2UnderDesk.add(towerFan);
+box([0.018, 0.22, 0.035], softwareAmberMat, [-0.065, 0.68, 1.41], softwareV2UnderDesk, 'SoftwareV2TowerStatusStrip');
+box([0.16, 0.11, 2.45], deskFrameMat, [0.42, 1.09, 0], softwareV2UnderDesk, 'SoftwareV2CableRaceway');
+box([0.07, 0.05, 1.32], deskElectronicsMat, [0.35, 0.99, -0.18], softwareV2UnderDesk, 'SoftwareV2PowerStrip');
+rodBetween(new THREE.Vector3(0.36, 1.04, 0.72), new THREE.Vector3(0.28, 0.96, 1.0), 0.018, deskFrameMat, softwareV2UnderDesk, 'SoftwareV2TowerCable');
+rodBetween(new THREE.Vector3(0.36, 1.04, -0.42), new THREE.Vector3(0.18, 1.44, -0.3), 0.018, deskFrameMat, softwareV2UnderDesk, 'SoftwareV2MonitorCable');
+const softwareDeskGlow = new THREE.PointLight(0x48cde8, 4.0, 2.5, 2);
+softwareDeskGlow.position.set(-0.15, 2.05, -0.15);
+softwareV2Displays.add(softwareDeskGlow);
+
+const softwareStationV2Runtime = {
+  model: 'software-command-station-v2',
+  screens: { count: 2, primary: 'cyan-code', secondary: 'vertical-status' },
+  splayedLegs: 4,
+  equipmentRail: true,
+  keyboardKeys: 36,
+  fanBlades: 10,
+  drawers: 2,
+  towerFans: 1,
+  hasCableManagement: true,
+  plantPreserved: deskPlant.parent === softwareV2Accessories
+};
+
+// Large HTML-canvas-backed LED matrix mounted in the back-wall mid band. Drawing
+// is isolated from transport so incoming SSE data only mutates normalized state.
+const LED_MATRIX_WIDTH = 1024;
+const LED_MATRIX_HEIGHT = 360;
+const LED_MATRIX_COLUMNS = 160;
+const LED_MATRIX_ROWS = 36;
+const LED_MATRIX_PHYSICAL_WIDTH = 4.4;
+const LED_MATRIX_PHYSICAL_HEIGHT = 1.55;
+const ledMatrixCanvas = document.createElement('canvas');
+ledMatrixCanvas.width = LED_MATRIX_WIDTH;
+ledMatrixCanvas.height = LED_MATRIX_HEIGHT;
+ledMatrixCanvas.id = 'wall-led-matrix-canvas';
+ledMatrixCanvas.dataset.displaySurface = 'sse-led-matrix';
+const ledMatrixContentCanvas = document.createElement('canvas');
+ledMatrixContentCanvas.width = LED_MATRIX_WIDTH;
+ledMatrixContentCanvas.height = LED_MATRIX_HEIGHT;
+const ledMatrixContext = ledMatrixCanvas.getContext('2d', { alpha: false });
+const ledMatrixContentContext = ledMatrixContentCanvas.getContext('2d', { willReadFrequently: true });
+const ledMatrixState = {
+  type: 'CanvasTexture',
+  canvasElement: ledMatrixCanvas instanceof HTMLCanvasElement,
+  mode: 'led-dot-matrix',
+  width: LED_MATRIX_WIDTH,
+  height: LED_MATRIX_HEIGHT,
+  columns: LED_MATRIX_COLUMNS,
+  rows: LED_MATRIX_ROWS,
+  physicalWidth: LED_MATRIX_PHYSICAL_WIDTH,
+  physicalHeight: LED_MATRIX_PHYSICAL_HEIGHT,
+  wall: 'back',
+  sseCapable: true,
+  endpoint: null,
+  source: 'fallback',
+  title: 'RAYCAST ROOM',
+  lines: ['SYSTEM MATRIX ONLINE', 'AWAITING SSE DATA'],
+  status: 'LOCAL FALLBACK',
+  accent: '#59f3ff',
+  messages: 0,
+  updates: 0,
+  lastEventId: null,
+  lastReceivedAt: null
+};
+const ledMatrixActivityState = {
+  active: false,
+  schemaVersion: null,
+  eventId: null,
+  ticketId: null,
+  phase: null,
+  phaseState: null,
+  eventType: null,
+  summary: null,
+  timestampUtc: null,
+  timestampMs: null,
+  durationSeconds: 0,
+  metadata: null
+};
+
+function fitMatrixText(context, text, maxWidth, startSize, weight = 700) {
+  let size = startSize;
+  do {
+    context.font = `${weight} ${size}px "Courier New", monospace`;
+    size -= 2;
+  } while (size > 16 && context.measureText(text).width > maxWidth);
+}
+
+function normalizeLedDisplay(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (typeof value.title !== 'string' || !value.title.trim() || value.title.length > 40) return null;
+  if (!Array.isArray(value.lines) || value.lines.length < 1 || value.lines.length > 4) return null;
+  if (value.lines.some(line => typeof line !== 'string' || !line.trim() || line.length > 80)) return null;
+  return {
+    title: value.title.trim(),
+    lines: value.lines.map(line => line.trim()),
+    status: typeof value.status === 'string' && value.status.length <= 32 ? value.status.trim() : 'LIVE',
+    accent: typeof value.accent === 'string' && /^#[0-9a-f]{6}$/i.test(value.accent)
+      ? value.accent.toLowerCase()
+      : '#59f3ff'
+  };
+}
+
+function normalizeActivityStream(value) {
+  const info = value?.info;
+  const timestampMs = Date.parse(value?.timestampUtc);
+  if (value?.schemaVersion !== 1 || typeof value.eventId !== 'string' || !value.eventId.trim()) return null;
+  if (!Number.isFinite(timestampMs) || !info || typeof info !== 'object' || Array.isArray(info)) return null;
+  for (const key of ['ticketId', 'phase', 'phaseState', 'eventType', 'summary']) {
+    if (typeof info[key] !== 'string' || !info[key].trim()) return null;
+  }
+  return {
+    schemaVersion: 1,
+    eventId: value.eventId,
+    ticketId: info.ticketId,
+    phase: info.phase,
+    phaseState: info.phaseState,
+    eventType: info.eventType,
+    summary: info.summary,
+    timestampUtc: value.timestampUtc,
+    timestampMs,
+    durationSeconds: Math.max(0, Math.floor((Date.now() - timestampMs) / 1000)),
+    metadata: info.metadata
+  };
+}
+
+const LED_MATRIX_BITMAP_FONT = {
+  A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110',
+  E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101',
+  I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111',
+  M: '101111111101101', N: '101111111111101', O: '010101101101010', P: '110101110100100',
+  Q: '010101101111011', R: '110101110101101', S: '011100010001110', T: '111010010010010',
+  U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101',
+  Y: '101101010010010', Z: '111001010100111',
+  0: '111101101101111', 1: '010110010010111', 2: '110001111100111', 3: '110001111001110',
+  4: '101101111001001', 5: '111100110001110', 6: '011100111101111', 7: '111001010010010',
+  8: '111101111101111', 9: '111101111001110',
+  ':': '000010000010000', ';': '000010000010100', '-': '000000111000000', '.': '000000000000010',
+  '/': '001001010100100', ' ': '000000000000000'
+};
+
+function drawLedBitmapText(context, text, startColumn, startRow) {
+  const cellWidth = LED_MATRIX_WIDTH / LED_MATRIX_COLUMNS;
+  const cellHeight = LED_MATRIX_HEIGHT / LED_MATRIX_ROWS;
+  let column = startColumn;
+  for (const character of text.toUpperCase()) {
+    const glyph = LED_MATRIX_BITMAP_FONT[character] || LED_MATRIX_BITMAP_FONT[' '];
+    if (column + 3 > LED_MATRIX_COLUMNS) break;
+    for (let row = 0; row < 5; row += 1) {
+      for (let glyphColumn = 0; glyphColumn < 3; glyphColumn += 1) {
+        if (glyph[row * 3 + glyphColumn] !== '1') continue;
+        context.fillRect(
+          (column + glyphColumn) * cellWidth,
+          (startRow + row) * cellHeight,
+          cellWidth,
+          cellHeight
+        );
+      }
+    }
+    column += 4;
+  }
+}
+
+function drawActivityStreamContent(context) {
+  const activity = ledMatrixActivityState;
+  const timestampToSeconds = new Date(activity.timestampMs).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const rows = [
+    `ticketId: ${activity.ticketId}`,
+    `phase: ${activity.phase}`,
+    `summary: ${activity.summary}`,
+    `timestampUtc: ${timestampToSeconds}`,
+    `duration: ${activity.durationSeconds}s`
+  ];
+  context.fillStyle = '#ffffff';
+  rows.forEach((line, index) => drawLedBitmapText(context, line, 2, 1 + index * 7));
+}
+
+const ledMatrixTexture = new THREE.CanvasTexture(ledMatrixCanvas);
+ledMatrixTexture.name = 'WallLedMatrixCanvasTexture';
+ledMatrixTexture.colorSpace = THREE.SRGBColorSpace;
+ledMatrixTexture.minFilter = THREE.LinearFilter;
+ledMatrixTexture.magFilter = THREE.NearestFilter;
+
+function renderLedMatrix() {
+  const content = ledMatrixContentContext;
+  content.fillStyle = '#000000';
+  content.fillRect(0, 0, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
+  if (ledMatrixState.source === 'activityStream' && ledMatrixActivityState.active) {
+    drawActivityStreamContent(content);
+  } else {
+    content.textBaseline = 'middle';
+  content.textAlign = 'left';
+  content.fillStyle = '#ffffff';
+  fitMatrixText(content, ledMatrixState.title, 850, 54, 800);
+  content.fillText(ledMatrixState.title, 72, 56);
+  content.fillRect(72, 88, 880, 4);
+
+  const lineGap = ledMatrixState.lines.length === 4 ? 49 : 58;
+  const lineStart = ledMatrixState.lines.length === 4 ? 122 : 132;
+  ledMatrixState.lines.forEach((line, index) => {
+    fitMatrixText(content, line, 880, 36, 700);
+    content.fillText(line, 72, lineStart + index * lineGap);
+  });
+  fitMatrixText(content, ledMatrixState.status, 500, 24, 700);
+  content.fillText(ledMatrixState.status, 72, 328);
+    content.fillRect(762, 318, 190, 8);
+  }
+
+  const pixels = content.getImageData(0, 0, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT).data;
+  const context = ledMatrixContext;
+  const background = context.createLinearGradient(0, 0, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
+  background.addColorStop(0, '#03090c');
+  background.addColorStop(0.55, '#061116');
+  background.addColorStop(1, '#020608');
+  context.fillStyle = background;
+  context.fillRect(0, 0, LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT);
+
+  const cellWidth = LED_MATRIX_WIDTH / LED_MATRIX_COLUMNS;
+  const cellHeight = LED_MATRIX_HEIGHT / LED_MATRIX_ROWS;
+  const radius = Math.min(cellWidth, cellHeight) * 0.32;
+  const bitmapActivityMode = ledMatrixState.source === 'activityStream' && ledMatrixActivityState.active;
+  for (let row = 0; row < LED_MATRIX_ROWS; row += 1) {
+    for (let column = 0; column < LED_MATRIX_COLUMNS; column += 1) {
+      const x = Math.round((column + 0.5) * cellWidth);
+      const y = Math.round((row + 0.5) * cellHeight);
+      let lit = 0;
+      for (const [dx, dy] of [[0, 0], [-4, 0], [4, 0], [0, -4], [0, 4]]) {
+        const sampleX = Math.max(0, Math.min(LED_MATRIX_WIDTH - 1, x + dx));
+        const sampleY = Math.max(0, Math.min(LED_MATRIX_HEIGHT - 1, y + dy));
+        const offset = (sampleY * LED_MATRIX_WIDTH + sampleX) * 4;
+        lit = Math.max(lit, pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+      }
+      if (bitmapActivityMode) {
+        context.shadowBlur = 0;
+        context.globalAlpha = lit > 30 ? 0.94 : 0.08;
+        context.fillStyle = lit > 30 ? ledMatrixState.accent : '#17313a';
+        context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+        continue;
+      }
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      if (lit > 30) {
+        context.shadowColor = ledMatrixState.accent;
+        context.shadowBlur = 10;
+        context.globalAlpha = 0.68 + lit / 850;
+        context.fillStyle = ledMatrixState.accent;
+      } else {
+        context.shadowBlur = 0;
+        context.globalAlpha = 0.16;
+        context.fillStyle = '#17313a';
+      }
+      context.fill();
+    }
+  }
+  context.globalAlpha = 1;
+  context.shadowBlur = 0;
+  ledMatrixTexture.needsUpdate = true;
+  ledMatrixState.updates += 1;
+}
+
+const ledMatrixScreenMaterial = new THREE.MeshBasicMaterial({ map: ledMatrixTexture, color: 0xffffff, toneMapped: false });
+const ledMatrixFrameMaterial = new THREE.MeshStandardMaterial({ color: 0x15191d, roughness: 0.3, metalness: 0.82 });
+const ledMatrixTrimMaterial = new THREE.MeshStandardMaterial({ color: 0x364149, roughness: 0.38, metalness: 0.74 });
+const ledMatrixAssembly = new THREE.Group();
+ledMatrixAssembly.name = 'WallLedMatrix';
+ledMatrixAssembly.position.set(2.15, 3.65, -6.82);
+scene.add(ledMatrixAssembly);
+box([4.72, 1.86, 0.15], ledMatrixFrameMaterial, [0, 0, -0.02], ledMatrixAssembly, 'LedMatrixBackplate');
+box([4.62, 0.09, 0.13], ledMatrixTrimMaterial, [0, 0.86, 0.07], ledMatrixAssembly, 'LedMatrixTopTrim');
+box([4.62, 0.09, 0.13], ledMatrixTrimMaterial, [0, -0.86, 0.07], ledMatrixAssembly, 'LedMatrixBottomTrim');
+box([0.09, 1.64, 0.13], ledMatrixTrimMaterial, [-2.27, 0, 0.07], ledMatrixAssembly, 'LedMatrixLeftTrim');
+box([0.09, 1.64, 0.13], ledMatrixTrimMaterial, [2.27, 0, 0.07], ledMatrixAssembly, 'LedMatrixRightTrim');
+const ledMatrixScreen = new THREE.Mesh(new THREE.PlaneGeometry(LED_MATRIX_PHYSICAL_WIDTH, LED_MATRIX_PHYSICAL_HEIGHT), ledMatrixScreenMaterial);
+ledMatrixScreen.name = 'LedMatrixCanvasDisplay';
+ledMatrixScreen.position.z = 0.075;
+ledMatrixScreen.castShadow = false;
+ledMatrixAssembly.add(ledMatrixScreen);
+for (const [x, y] of [[-2.28, -0.87], [-2.28, 0.87], [2.28, -0.87], [2.28, 0.87]]) {
+  const fastener = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.04, 12), ledMatrixTrimMaterial);
+  fastener.rotation.x = Math.PI / 2;
+  fastener.position.set(x, y, 0.14);
+  fastener.castShadow = true;
+  ledMatrixAssembly.add(fastener);
+}
+box([0.08, 0.72, 0.08], ledMatrixTrimMaterial, [2.14, -1.25, -0.02], ledMatrixAssembly, 'LedMatrixLowerConduit');
+const ledMatrixGlow = new THREE.PointLight(0x59f3ff, 7, 3.8, 2);
+ledMatrixGlow.position.set(0, -0.12, 0.72);
+ledMatrixAssembly.add(ledMatrixGlow);
+renderLedMatrix();
+
+function renderActivityStreamMatrix() {
+  const activity = ledMatrixActivityState;
+  Object.assign(ledMatrixState, {
+    source: 'activityStream',
+    title: `ticketId: ${activity.ticketId}`,
+    lines: [
+      `phase: ${activity.phase}`,
+      `summary: ${activity.summary}`,
+      `timestampUtc: ${activity.timestampUtc}`,
+      `duration: ${activity.durationSeconds}s`
+    ],
+    status: `${activity.eventType} / ${activity.phaseState}`,
+    accent: '#59f3ff'
+  });
+  ledMatrixGlow.color.set(ledMatrixState.accent);
+  renderLedMatrix();
+}
+
+function routeActivityStreamEvent(event) {
+  const activity = normalizeActivityStream(event?.activityStream);
+  if (!activity) return false;
+  Object.assign(ledMatrixActivityState, activity, { active: true });
+  Object.assign(ledMatrixState, {
+    messages: ledMatrixState.messages + 1,
+    lastEventId: event.id || activity.eventId,
+    lastReceivedAt: event.receivedAt || null
+  });
+  renderActivityStreamMatrix();
+  return true;
+}
+
+function updateActivityStreamDuration() {
+  if (!ledMatrixActivityState.active) return;
+  const durationSeconds = Math.max(0, Math.floor((Date.now() - ledMatrixActivityState.timestampMs) / 1000));
+  if (durationSeconds === ledMatrixActivityState.durationSeconds) return;
+  ledMatrixActivityState.durationSeconds = durationSeconds;
+  renderActivityStreamMatrix();
+}
+window.setInterval(updateActivityStreamDuration, 250);
+
+function routeLedMatrixEvent(event) {
+  const display = normalizeLedDisplay(event?.display);
+  if (!display) return false;
+  ledMatrixActivityState.active = false;
+  Object.assign(ledMatrixState, display, {
+    source: 'sse',
+    messages: ledMatrixState.messages + 1,
+    lastEventId: event.id || null,
+    lastReceivedAt: event.receivedAt || null
+  });
+  ledMatrixGlow.color.set(display.accent);
+  renderLedMatrix();
+  return true;
+}
+
+const ledMatrixRuntime = {
+  model: 'wall-led-matrix-v1',
+  wall: 'back',
+  sizable: LED_MATRIX_PHYSICAL_WIDTH >= 4,
+  colliderFree: true,
+  position: { x: ledMatrixAssembly.position.x, y: ledMatrixAssembly.position.y, z: ledMatrixAssembly.position.z },
+  physicalWidth: LED_MATRIX_PHYSICAL_WIDTH,
+  physicalHeight: LED_MATRIX_PHYSICAL_HEIGHT,
+  canvasBacked: true,
+  transport: 'POST /event -> room-event SSE'
+};
+
+// Deep-set panoramic window with a deterministic canvas skyline and animated rain.
+const CITY_WINDOW_WIDTH = 1024;
+const CITY_WINDOW_HEIGHT = 288;
+const CITY_WINDOW_PHYSICAL_WIDTH = 5.2;
+const CITY_WINDOW_PHYSICAL_HEIGHT = 1.45;
+const CITY_WINDOW_OUTER_WIDTH = 5.6;
+const CITY_WINDOW_OUTER_HEIGHT = 1.8;
+const CITY_WINDOW_RAIN_STREAKS = 120;
+const cityWindowCanvas = document.createElement('canvas');
+cityWindowCanvas.width = CITY_WINDOW_WIDTH;
+cityWindowCanvas.height = CITY_WINDOW_HEIGHT;
+cityWindowCanvas.id = 'rainy-city-window-canvas';
+cityWindowCanvas.dataset.displaySurface = 'rainy-night-city-window';
+const cityWindowContext = cityWindowCanvas.getContext('2d', { alpha: false });
+const citySkylineCanvas = document.createElement('canvas');
+citySkylineCanvas.width = CITY_WINDOW_WIDTH;
+citySkylineCanvas.height = CITY_WINDOW_HEIGHT;
+const citySkylineContext = citySkylineCanvas.getContext('2d', { alpha: false });
+let citySeed = 0x36c0ffee;
+const cityRandom = () => {
+  citySeed = (Math.imul(citySeed, 1664525) + 1013904223) >>> 0;
+  return citySeed / 0x100000000;
+};
+
+function drawNightSkylineBase() {
+  citySeed = 0x36c0ffee;
+  const context = citySkylineContext;
+  const sky = context.createLinearGradient(0, 0, 0, CITY_WINDOW_HEIGHT);
+  sky.addColorStop(0, '#020713');
+  sky.addColorStop(0.48, '#06182a');
+  sky.addColorStop(1, '#07111c');
+  context.fillStyle = sky;
+  context.fillRect(0, 0, CITY_WINDOW_WIDTH, CITY_WINDOW_HEIGHT);
+
+  const horizonGlow = context.createRadialGradient(690, 168, 8, 690, 168, 390);
+  horizonGlow.addColorStop(0, 'rgba(17, 118, 170, .26)');
+  horizonGlow.addColorStop(0.45, 'rgba(6, 58, 94, .14)');
+  horizonGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  context.fillStyle = horizonGlow;
+  context.fillRect(0, 0, CITY_WINDOW_WIDTH, CITY_WINDOW_HEIGHT);
+
+  // Tall middle-distance anchors keep the city dense and readable through wet glass.
+  const heroBuildings = [
+    { x: 34, width: 82, top: 66, color: '#07182a', edge: '#0b668f', antenna: 24 },
+    { x: 142, width: 108, top: 98, color: '#081526', edge: '#0d4d72', antenna: 0 },
+    { x: 282, width: 74, top: 42, color: '#061426', edge: '#1084aa', antenna: 36 },
+    { x: 386, width: 128, top: 84, color: '#071321', edge: '#0b5c85', antenna: 18 },
+    { x: 548, width: 88, top: 54, color: '#061729', edge: '#1693b7', antenna: 30 },
+    { x: 674, width: 118, top: 76, color: '#07131f', edge: '#0c668d', antenna: 0 },
+    { x: 824, width: 72, top: 34, color: '#061526', edge: '#1280a7', antenna: 42 },
+    { x: 918, width: 94, top: 92, color: '#07121f', edge: '#0e557d', antenna: 16 }
+  ];
+  heroBuildings.forEach((building, buildingIndex) => {
+    const height = 260 - building.top;
+    const facade = context.createLinearGradient(building.x, 0, building.x + building.width, 0);
+    facade.addColorStop(0, building.color);
+    facade.addColorStop(0.78, '#040c16');
+    facade.addColorStop(1, '#020811');
+    context.fillStyle = facade;
+    context.fillRect(building.x, building.top, building.width, height);
+    context.fillStyle = building.edge;
+    context.globalAlpha = 0.5;
+    context.fillRect(building.x + 5, building.top + 8, 2, height * 0.8);
+    context.globalAlpha = 1;
+    if (building.antenna) {
+      context.fillStyle = '#0b2d46';
+      context.fillRect(building.x + building.width * 0.52, building.top - building.antenna, 3, building.antenna);
+      context.fillStyle = buildingIndex % 2 ? '#f04b54' : '#26bfe7';
+      context.fillRect(building.x + building.width * 0.52, building.top - building.antenna - 2, 3, 3);
+    }
+    const columns = Math.max(3, Math.floor(building.width / 14));
+    const rows = Math.floor(height / 14);
+    for (let column = 0; column < columns; column++) {
+      for (let row = 0; row < rows; row++) {
+        const lightCode = (column * 17 + row * 29 + buildingIndex * 11) % 13;
+        if (lightCode > 4) continue;
+        const warm = lightCode === 0 && (row + buildingIndex) % 4 === 0;
+        context.fillStyle = warm ? 'rgba(239, 68, 69, .58)' : lightCode < 3 ? 'rgba(36, 178, 218, .64)' : 'rgba(15, 97, 143, .55)';
+        context.fillRect(building.x + 9 + column * 13, building.top + 13 + row * 14, lightCode === 4 ? 5 : 3, 5 + (row % 2) * 3);
+      }
+    }
+  });
+
+  // Distant aerial traffic and haze add depth without making the skyline loud.
+  context.lineCap = 'round';
+  for (let i = 0; i < 12; i++) {
+    const y = 74 + cityRandom() * 142;
+    const x = cityRandom() * 890;
+    context.strokeStyle = i % 4 === 0 ? 'rgba(238, 58, 73, .24)' : 'rgba(27, 155, 202, .2)';
+    context.lineWidth = 1 + cityRandom();
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + 18 + cityRandom() * 70, y - 1 - cityRandom() * 3);
+    context.stroke();
+  }
+
+  for (let i = 0; i < 26; i++) {
+    const x = cityRandom() * CITY_WINDOW_WIDTH;
+    const y = 16 + cityRandom() * 126;
+    context.fillStyle = `rgba(76, 175, 220, ${0.08 + cityRandom() * 0.16})`;
+    context.fillRect(x, y, 1 + cityRandom() * 2, 1 + cityRandom() * 2);
+  }
+
+  const layers = [
+    { baseline: 245, minWidth: 38, maxWidth: 92, minHeight: 52, maxHeight: 138, color: '#081526', window: '#17648c', chance: 0.18, alpha: 0.48 },
+    { baseline: 270, minWidth: 46, maxWidth: 116, minHeight: 76, maxHeight: 196, color: '#06111d', window: '#1598c4', chance: 0.23, alpha: 0.72 },
+    { baseline: 294, minWidth: 58, maxWidth: 132, minHeight: 64, maxHeight: 168, color: '#030912', window: '#17b8df', chance: 0.13, alpha: 0.88 }
+  ];
+  layers.forEach((layer, layerIndex) => {
+    let x = -30 - cityRandom() * 70;
+    while (x < CITY_WINDOW_WIDTH + 40) {
+      const width = layer.minWidth + cityRandom() * (layer.maxWidth - layer.minWidth);
+      const height = layer.minHeight + cityRandom() * (layer.maxHeight - layer.minHeight);
+      const top = layer.baseline - height;
+      context.globalAlpha = layer.alpha;
+      context.fillStyle = layer.color;
+      context.fillRect(Math.round(x), Math.round(top), Math.ceil(width), Math.ceil(height));
+      if (cityRandom() > 0.64) context.fillRect(Math.round(x + width * 0.42), Math.round(top - 12 - cityRandom() * 22), Math.max(3, width * 0.08), 18 + cityRandom() * 26);
+      context.globalAlpha = 1;
+      const columns = Math.max(2, Math.floor(width / 13));
+      const rows = Math.max(3, Math.floor(height / 15));
+      for (let column = 0; column < columns; column++) {
+        for (let row = 0; row < rows; row++) {
+          if (cityRandom() > layer.chance) continue;
+          const warm = cityRandom() > 0.92;
+          context.fillStyle = warm ? `rgba(255, 92, 55, ${0.34 + cityRandom() * 0.4})` : layer.window;
+          context.globalAlpha = warm ? 1 : 0.34 + cityRandom() * 0.55;
+          context.fillRect(Math.round(x + 7 + column * 12), Math.round(top + 10 + row * 14), 3 + layerIndex, 5 + cityRandom() * 6);
+        }
+      }
+      context.globalAlpha = 1;
+      if (cityRandom() > 0.7) {
+        context.fillStyle = layerIndex === 1 ? 'rgba(15, 187, 235, .68)' : 'rgba(12, 99, 151, .52)';
+        context.fillRect(Math.round(x + width * (0.18 + cityRandom() * 0.62)), Math.round(top + 9), 2 + layerIndex, Math.max(20, height * 0.72));
+      }
+      x += width * (0.68 + cityRandom() * 0.23);
+    }
+  });
+
+  context.globalAlpha = 1;
+  context.fillStyle = 'rgba(4, 18, 29, .92)';
+  context.fillRect(648, 83, 116, 42);
+  context.strokeStyle = 'rgba(35, 202, 245, .7)';
+  context.lineWidth = 2;
+  context.strokeRect(650, 85, 112, 38);
+  context.fillStyle = '#4edcff';
+  context.font = '700 26px monospace';
+  context.fillText('36C', 677, 114);
+  context.shadowColor = '#ff304c';
+  context.shadowBlur = 12;
+  context.fillStyle = 'rgba(235, 44, 71, .85)';
+  for (let i = 0; i < 5; i++) context.fillRect(840 + i * 23, 132 + (i % 2) * 7, 15, 5 + (i % 3) * 7);
+  context.shadowBlur = 0;
+
+  const streetGlow = context.createLinearGradient(0, 224, 0, 288);
+  streetGlow.addColorStop(0, 'rgba(5, 42, 66, 0)');
+  streetGlow.addColorStop(1, 'rgba(4, 73, 102, .3)');
+  context.fillStyle = streetGlow;
+  context.fillRect(0, 214, CITY_WINDOW_WIDTH, 74);
+  for (let i = 0; i < 18; i++) {
+    context.fillStyle = cityRandom() > 0.5 ? 'rgba(9, 172, 222, .35)' : 'rgba(255, 67, 49, .28)';
+    context.fillRect(cityRandom() * CITY_WINDOW_WIDTH, 248 + cityRandom() * 30, 12 + cityRandom() * 48, 2);
+  }
+}
+
+drawNightSkylineBase();
+const cityRainDrops = Array.from({ length: CITY_WINDOW_RAIN_STREAKS }, () => ({
+  x: cityRandom() * CITY_WINDOW_WIDTH,
+  y: cityRandom() * CITY_WINDOW_HEIGHT,
+  length: 14 + cityRandom() * 64,
+  speed: 34 + cityRandom() * 92,
+  drift: -2 + cityRandom() * 5,
+  alpha: 0.08 + cityRandom() * 0.25,
+  width: 0.6 + cityRandom() * 1.8
+}));
+const cityWindowState = {
+  type: 'CanvasTexture',
+  canvasElement: cityWindowCanvas instanceof HTMLCanvasElement,
+  animated: true,
+  mode: 'rainy-night-city',
+  width: CITY_WINDOW_WIDTH,
+  height: CITY_WINDOW_HEIGHT,
+  skylineLayers: 3,
+  rainStreaks: CITY_WINDOW_RAIN_STREAKS,
+  updates: 0,
+  lastFrameAt: -Infinity,
+  phase: 0
+};
+const cityWindowTexture = new THREE.CanvasTexture(cityWindowCanvas);
+cityWindowTexture.name = 'RainyNightCityCanvasTexture';
+cityWindowTexture.colorSpace = THREE.SRGBColorSpace;
+cityWindowTexture.minFilter = THREE.LinearFilter;
+cityWindowTexture.magFilter = THREE.LinearFilter;
+
+function updateRainyCityWindow(now, force = false) {
+  if (!force && now - cityWindowState.lastFrameAt < 1 / 5) return;
+  cityWindowState.lastFrameAt = now;
+  cityWindowState.phase = now;
+  const context = cityWindowContext;
+  context.drawImage(citySkylineCanvas, 0, 0);
+  const glassTint = context.createLinearGradient(0, 0, CITY_WINDOW_WIDTH, CITY_WINDOW_HEIGHT);
+  glassTint.addColorStop(0, 'rgba(2, 18, 31, .16)');
+  glassTint.addColorStop(0.55, 'rgba(6, 48, 72, .06)');
+  glassTint.addColorStop(1, 'rgba(1, 8, 16, .24)');
+  context.fillStyle = glassTint;
+  context.fillRect(0, 0, CITY_WINDOW_WIDTH, CITY_WINDOW_HEIGHT);
+  context.lineCap = 'round';
+  const rainOpacities = [0.1, 0.16, 0.22, 0.3];
+  rainOpacities.forEach((opacity, bucket) => {
+    context.strokeStyle = `rgba(118, 207, 238, ${opacity})`;
+    context.lineWidth = 0.8 + bucket * 0.42;
+    context.beginPath();
+    cityRainDrops.forEach((drop, index) => {
+      if (index % rainOpacities.length !== bucket) return;
+      const y = (drop.y + now * drop.speed + index * 1.7) % (CITY_WINDOW_HEIGHT + drop.length) - drop.length;
+      const x = (drop.x + now * drop.drift + CITY_WINDOW_WIDTH) % CITY_WINDOW_WIDTH;
+      context.moveTo(x, y);
+      context.lineTo(x + 2.5, y + drop.length);
+    });
+    context.stroke();
+  });
+  for (let i = 0; i < 18; i++) {
+    const drop = cityRainDrops[i * 5];
+    const y = (drop.y * 1.7 + now * drop.speed * 0.22) % CITY_WINDOW_HEIGHT;
+    context.fillStyle = `rgba(164, 226, 248, ${drop.alpha * 0.45})`;
+    context.beginPath();
+    context.ellipse(drop.x, y, 1.5 + drop.width, 3 + drop.width * 2.4, 0.08, 0, Math.PI * 2);
+    context.fill();
+  }
+  const vignette = context.createRadialGradient(CITY_WINDOW_WIDTH * 0.52, CITY_WINDOW_HEIGHT * 0.48, 80, CITY_WINDOW_WIDTH * 0.52, CITY_WINDOW_HEIGHT * 0.48, 590);
+  vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vignette.addColorStop(1, 'rgba(0, 2, 8, .46)');
+  context.fillStyle = vignette;
+  context.fillRect(0, 0, CITY_WINDOW_WIDTH, CITY_WINDOW_HEIGHT);
+  cityWindowTexture.needsUpdate = true;
+  cityWindowState.updates += 1;
+}
+
+const cityWindowAssembly = new THREE.Group();
+cityWindowAssembly.name = 'RainyCityWindow';
+cityWindowAssembly.position.set(2.15, 5.65, -6.82);
+scene.add(cityWindowAssembly);
+const cityWindowFrameMat = new THREE.MeshStandardMaterial({ color: 0x07121d, roughness: 0.36, metalness: 0.76, emissive: 0x031a32, emissiveIntensity: 0.24 });
+const cityWindowRecessMat = new THREE.MeshStandardMaterial({ color: 0x03070c, roughness: 0.84, metalness: 0.18 });
+const cityWindowSillMat = new THREE.MeshStandardMaterial({ color: 0x0a1012, roughness: 0.58, metalness: 0.38 });
+const cityWindowCyanMat = new THREE.MeshBasicMaterial({ color: 0x168fc5, transparent: true, opacity: 0.62, toneMapped: false });
+box([CITY_WINDOW_OUTER_WIDTH, CITY_WINDOW_OUTER_HEIGHT, 0.2], cityWindowRecessMat, [0, 0, -0.04], cityWindowAssembly, 'CityWindowRecessBack');
+const cityWindowView = new THREE.Mesh(new THREE.PlaneGeometry(CITY_WINDOW_PHYSICAL_WIDTH, CITY_WINDOW_PHYSICAL_HEIGHT), new THREE.MeshBasicMaterial({ map: cityWindowTexture, color: 0xffffff, toneMapped: false }));
+cityWindowView.name = 'CityWindowAnimatedSkyline';
+cityWindowView.position.z = 0.075;
+cityWindowView.castShadow = false;
+cityWindowAssembly.add(cityWindowView);
+const cityWindowGlass = new THREE.Mesh(new THREE.PlaneGeometry(CITY_WINDOW_PHYSICAL_WIDTH, CITY_WINDOW_PHYSICAL_HEIGHT), new THREE.MeshPhysicalMaterial({ color: 0x164763, transparent: true, opacity: 0.13, roughness: 0.16, metalness: 0.05, transmission: 0.08, side: THREE.DoubleSide }));
+cityWindowGlass.name = 'CityWindowWetGlass';
+cityWindowGlass.position.z = 0.095;
+cityWindowAssembly.add(cityWindowGlass);
+box([5.5, 0.16, 0.19], cityWindowFrameMat, [0, 0.82, 0.08], cityWindowAssembly, 'CityWindowTopFrame');
+box([5.5, 0.16, 0.19], cityWindowFrameMat, [0, -0.82, 0.08], cityWindowAssembly, 'CityWindowBottomFrame');
+box([0.16, 1.5, 0.19], cityWindowFrameMat, [-2.68, 0, 0.08], cityWindowAssembly, 'CityWindowLeftFrame');
+box([0.16, 1.5, 0.19], cityWindowFrameMat, [2.68, 0, 0.08], cityWindowAssembly, 'CityWindowRightFrame');
+for (const [index, x] of [[1, -1.3], [2, 0.73]]) box([0.09, 1.45, 0.16], cityWindowFrameMat, [x, 0, 0.12], cityWindowAssembly, `CityWindowMullion${index}`);
+box([5.72, 0.14, 0.38], cityWindowSillMat, [0, -0.84, 0.16], cityWindowAssembly, 'CityWindowSill');
+box([5.18, 0.025, 0.04], cityWindowCyanMat, [0, -0.735, 0.14], cityWindowAssembly, 'CityWindowLowerBlueEdge');
+box([0.025, 1.42, 0.04], cityWindowCyanMat, [-2.575, 0, 0.14], cityWindowAssembly, 'CityWindowLeftBlueEdge');
+const cityWindowGlow = new THREE.PointLight(0x1a8fca, 4.2, 4.0, 2);
+cityWindowGlow.name = 'CityWindowCoolInteriorGlow';
+cityWindowGlow.position.set(0, -0.28, 0.82);
+cityWindowAssembly.add(cityWindowGlow);
+updateRainyCityWindow(0, true);
+const cityWindowBottom = cityWindowAssembly.position.y - CITY_WINDOW_OUTER_HEIGHT / 2;
+const ledMatrixTop = ledMatrixAssembly.position.y + 1.86 / 2;
+const cityWindowRuntime = {
+  model: 'recessed-rainy-city-window-v1',
+  wall: 'back',
+  position: { x: cityWindowAssembly.position.x, y: cityWindowAssembly.position.y, z: cityWindowAssembly.position.z },
+  physicalWidth: CITY_WINDOW_PHYSICAL_WIDTH,
+  physicalHeight: CITY_WINDOW_PHYSICAL_HEIGHT,
+  panes: 3,
+  mullions: 2,
+  recessed: true,
+  wetGlass: cityWindowGlass.parent === cityWindowAssembly,
+  colliderFree: true,
+  aboveLedMatrix: cityWindowBottom > ledMatrixTop,
+  verticalGapAboveMatrix: cityWindowBottom - ledMatrixTop,
+  ceilingClearance: 7 - (cityWindowAssembly.position.y + CITY_WINDOW_OUTER_HEIGHT / 2),
+  canvasBacked: true
+};
 
 // Back-wall utility shelves: tools, books, and a live-looking oscilloscope.
 const backWallUtilities = new THREE.Group();
@@ -1216,7 +2286,9 @@ box([0.72, 0.28, 0.34], utilityAccentMat, [1.05, 4.68, 0.15], backWallUtilities,
 // High-voltage panel with a dedicated conduit rising into the ceiling.
 const electricalPanel = new THREE.Group();
 electricalPanel.name = 'ElectricalPanel';
-electricalPanel.position.set(-1.25, 0, -6.83);
+const ELECTRICAL_PANEL_Z = 3.85;
+electricalPanel.position.set(-6.83, 0, ELECTRICAL_PANEL_Z);
+electricalPanel.rotation.y = Math.PI / 2;
 scene.add(electricalPanel);
 const panelMat = new THREE.MeshStandardMaterial({ color: 0x4b5256, roughness: 0.5, metalness: 0.58 });
 const panelEdgeMat = new THREE.MeshStandardMaterial({ color: 0x22272b, roughness: 0.38, metalness: 0.78 });
@@ -1259,13 +2331,55 @@ for (const y of [5.52, 6.2, 6.75]) {
 }
 box([0.34, 0.24, 0.25], panelEdgeMat, [0.28, 6.78, 0], electricalPanel, 'ConduitCeilingBox');
 
+const electricalPanelHalfWidth = 1.15 / 2;
+const electricalPanelRightEdgeZ = ELECTRICAL_PANEL_Z + electricalPanelHalfWidth;
+const doorRoomViewRightEdgeZ = doorZ - 0.65;
+const stairRoomViewRightEdgeZ = STAIR_TOP_POINT.z + railOffset.z;
+const electricalPanelRuntime = {
+  wall: 'left',
+  side: 'room-view-right-of-stairs-and-door',
+  position: {
+    x: electricalPanel.position.x,
+    y: electricalPanel.position.y,
+    z: electricalPanel.position.z
+  },
+  rotationY: electricalPanel.rotation.y,
+  rotatedToWall: Math.abs(electricalPanel.rotation.y - Math.PI / 2) < 0.001,
+  conduitAttached: electricalPanel.getObjectByName('CeilingConduit')?.parent === electricalPanel,
+  conduitTop,
+  entirelyRightOfDoor: electricalPanelRightEdgeZ < doorRoomViewRightEdgeZ,
+  entirelyRightOfStairs: electricalPanelRightEdgeZ < stairRoomViewRightEdgeZ,
+  doorClearance: doorRoomViewRightEdgeZ - electricalPanelRightEdgeZ,
+  stairClearance: stairRoomViewRightEdgeZ - electricalPanelRightEdgeZ
+};
+
 const stations = [
   { id: 'workbench', label: 'BENCH', group: workbench, collider: workbenchCollider, spot: WORK_SPOT, finalYaw: -Math.PI / 2, hits: 0 },
   { id: 'desk', label: 'DESK', group: desk, collider: deskCollider, spot: DESK_SPOT, finalYaw: Math.PI / 2, hits: 0 },
   { id: 'testbench', label: 'TEST BENCH', group: testBench, collider: testBenchCollider, spot: TEST_BENCH_SPOT, finalYaw: Math.PI, hits: 0 }
 ];
 const HOME = new THREE.Vector3(0, 0, 0);
-const COUCH_SPOT = new THREE.Vector3(4.0, 0, 4.95);
+const coffeeTableWorldCenter = {
+  x: lounge.position.x + coffeeTable.position.x,
+  z: lounge.position.z + coffeeTable.position.z
+};
+const coffeeTablePathFacingZ = coffeeTableWorldCenter.z + COFFEE_TABLE_DEPTH / 2;
+const couchPathXAtTable = HOME.x + (COUCH_SPOT.x - HOME.x)
+  * ((coffeeTablePathFacingZ - HOME.z) / (COUCH_SPOT.z - HOME.z));
+const coffeeTableApproachSideClearance = coffeeTableWorldCenter.x - COFFEE_TABLE_WIDTH / 2 - couchPathXAtTable;
+const coffeeTableRuntime = {
+  movedAsAssembly: loungePlants.every(plant => plant.parent === coffeeTable)
+    && loungeMagazines.every(magazine => magazine.parent === coffeeTable),
+  direction: 'room-right-positive-x',
+  shiftRight: coffeeTable.position.x - COFFEE_TABLE_ORIGINAL_X,
+  localPosition: { x: coffeeTable.position.x, z: coffeeTable.position.z },
+  worldPosition: { ...coffeeTableWorldCenter },
+  width: COFFEE_TABLE_WIDTH,
+  depth: COFFEE_TABLE_DEPTH,
+  approachSideClearance: coffeeTableApproachSideClearance,
+  onRug: Math.abs(coffeeTable.position.x) + COFFEE_TABLE_WIDTH / 2 <= 5.3 / 2
+    && Math.abs(coffeeTable.position.z - (-2.0)) + COFFEE_TABLE_DEPTH / 2 <= 3.65 / 2
+};
 
 const cubeRig = new THREE.Group();
 cubeRig.position.copy(HOME);
@@ -1442,6 +2556,259 @@ scene.add(key, key.target);
 const redRim = new THREE.PointLight(0xff392d, 26, 8, 2);
 redRim.position.set(-3, 2.5, -3.5);
 scene.add(redRim);
+
+const STATIC_SCENE_LAYER = 0;
+const ROBOT_LIGHT_LAYER = 1;
+
+function createBakedAoTexture(size = 128) {
+  const aoCanvas = document.createElement('canvas');
+  aoCanvas.width = aoCanvas.height = size;
+  const context = aoCanvas.getContext('2d');
+  const image = context.createImageData(size, size);
+  let seed = 0xa05c3e11;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = (x + 0.5) / size;
+      const v = (y + 0.5) / size;
+      const edgeDistance = Math.min(u, v, 1 - u, 1 - v) * 2;
+      const cornerDistance = Math.min(
+        Math.hypot(u, v),
+        Math.hypot(1 - u, v),
+        Math.hypot(u, 1 - v),
+        Math.hypot(1 - u, 1 - v)
+      );
+      const edgeOcclusion = THREE.MathUtils.smoothstep(edgeDistance, 0, 0.32);
+      const cornerOcclusion = 1 - THREE.MathUtils.smoothstep(cornerDistance, 0.02, 0.48);
+      const value = THREE.MathUtils.clamp(0.7 + edgeOcclusion * 0.22 - cornerOcclusion * 0.08 + (random() - 0.5) * 0.035, 0.58, 0.94);
+      const channel = Math.round(value * 255);
+      const offset = (y * size + x) * 4;
+      image.data[offset] = channel;
+      image.data[offset + 1] = channel;
+      image.data[offset + 2] = channel;
+      image.data[offset + 3] = 255;
+    }
+  }
+  context.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(aoCanvas);
+  texture.name = 'room-static-ao-bake-v1';
+  texture.channel = 1;
+  texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+const staticAoTexture = createBakedAoTexture();
+const staticAoMaterialCache = new Map();
+const bakedLightDirection = new THREE.Vector3(-0.35, 0.82, 0.45).normalize();
+const bakedNormal = new THREE.Vector3();
+const bakedPosition = new THREE.Vector3();
+const bakedNormalMatrix = new THREE.Matrix3();
+let staticMeshesBaked = 0;
+let staticAoMaterials = 0;
+
+function isRobotDescendant(object) {
+  for (let current = object; current; current = current.parent) {
+    if (current === cubeRig) return true;
+  }
+  return false;
+}
+
+function bakeStaticVertexLighting(mesh) {
+  const source = mesh.geometry;
+  if (!source?.attributes?.position || !source.attributes.normal) return;
+  const geometry = source.clone();
+  mesh.geometry = geometry;
+  if (geometry.attributes.uv && !geometry.attributes.uv1) {
+    geometry.setAttribute('uv1', geometry.attributes.uv.clone());
+  }
+
+  bakedNormalMatrix.getNormalMatrix(mesh.matrixWorld);
+  const normal = geometry.attributes.normal;
+  const position = geometry.attributes.position;
+  const colors = new Float32Array(position.count * 3);
+  for (let index = 0; index < position.count; index++) {
+    bakedNormal.fromBufferAttribute(normal, index).applyMatrix3(bakedNormalMatrix).normalize();
+    bakedPosition.fromBufferAttribute(position, index).applyMatrix4(mesh.matrixWorld);
+    const directional = Math.max(0, bakedNormal.dot(bakedLightDirection));
+    const upwardFill = Math.max(0, bakedNormal.y) * 0.08;
+    const floorContact = bakedPosition.y < 0.18 ? THREE.MathUtils.lerp(0.78, 1, Math.max(0, bakedPosition.y) / 0.18) : 1;
+    const wallContact = Math.max(Math.abs(bakedPosition.x), Math.abs(bakedPosition.z)) > 6.72 ? 0.9 : 1;
+    const underside = bakedNormal.y < -0.15 ? 0.78 : 1;
+    const irradiance = THREE.MathUtils.clamp((0.62 + directional * 0.3 + upwardFill) * floorContact * wallContact * underside, 0.54, 0.98);
+    colors[index * 3] = irradiance;
+    colors[index * 3 + 1] = irradiance;
+    colors[index * 3 + 2] = irradiance;
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+function bakedStaticMaterial(source) {
+  if (staticAoMaterialCache.has(source.uuid)) return staticAoMaterialCache.get(source.uuid);
+  const hasVisibleEmissive = source.emissive?.getHex?.() !== 0 && source.emissiveIntensity > 0.45;
+  const isDisplay = source.map?.isCanvasTexture || hasVisibleEmissive;
+  const color = source.color?.clone?.() || new THREE.Color(0xffffff);
+  if (!isDisplay && Math.max(color.r, color.g, color.b) < 0.13) {
+    color.lerp(new THREE.Color(0x4b4d50), 0.18);
+  }
+  if (source.emissive?.getHex?.() !== 0 && source.emissiveIntensity > 0) {
+    color.lerp(source.emissive, Math.min(0.28, source.emissiveIntensity * 0.1));
+  }
+  const material = new THREE.MeshBasicMaterial({
+    name: `${source.name || source.type}-ao-baked`,
+    color,
+    map: source.map || null,
+    aoMap: isDisplay || !source.map && source.transparent ? null : staticAoTexture,
+    aoMapIntensity: 0.82,
+    alphaMap: source.alphaMap || null,
+    transparent: source.transparent,
+    opacity: source.opacity,
+    alphaTest: source.alphaTest,
+    side: source.side,
+    depthTest: source.depthTest,
+    depthWrite: source.depthWrite,
+    colorWrite: source.colorWrite,
+    blending: source.blending,
+    fog: source.fog,
+    toneMapped: source.toneMapped,
+    vertexColors: !isDisplay
+  });
+  material.polygonOffset = source.polygonOffset;
+  material.polygonOffsetFactor = source.polygonOffsetFactor;
+  material.polygonOffsetUnits = source.polygonOffsetUnits;
+  staticAoMaterialCache.set(source.uuid, material);
+  if (material.aoMap) staticAoMaterials += 1;
+  return material;
+}
+
+scene.updateMatrixWorld(true);
+scene.traverse((object) => {
+  if (!object.isMesh || isRobotDescendant(object) || object === contactShadow || object.material?.isShadowMaterial) return;
+  const materials = Array.isArray(object.material) ? object.material : [object.material];
+  if (!materials.every(material => material && !(material.transparent && material.opacity === 0))) {
+    object.castShadow = false;
+    object.receiveShadow = false;
+    return;
+  }
+  bakeStaticVertexLighting(object);
+  object.material = Array.isArray(object.material)
+    ? materials.map(material => bakedStaticMaterial(material))
+    : bakedStaticMaterial(object.material);
+  object.castShadow = false;
+  object.receiveShadow = false;
+  object.layers.set(STATIC_SCENE_LAYER);
+  staticMeshesBaked += 1;
+});
+
+for (const object of [...scene.children]) {
+  // Child lights are handled by traversal below; this loop intentionally does not detach semantic fixtures.
+  if (object.isLight && object !== key) object.castShadow = false;
+}
+scene.traverse((object) => {
+  if (!object.isLight || object === key) return;
+  object.visible = false;
+  object.intensity = 0;
+  object.castShadow = false;
+});
+
+key.name = 'RobotShadowKey';
+key.layers.set(ROBOT_LIGHT_LAYER);
+key.shadow.camera.layers.set(ROBOT_LIGHT_LAYER);
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.left = -2.4;
+key.shadow.camera.right = 2.4;
+key.shadow.camera.top = 2.4;
+key.shadow.camera.bottom = -2.4;
+key.shadow.camera.near = 0.5;
+key.shadow.camera.far = 18;
+key.shadow.bias = -0.0001;
+key.shadow.normalBias = 0.018;
+camera.layers.enable(ROBOT_LIGHT_LAYER);
+cube.traverse((object) => {
+  if (!object.isMesh) return;
+  object.layers.set(ROBOT_LIGHT_LAYER);
+  object.castShadow = true;
+  object.receiveShadow = false;
+});
+contactShadow.material.visible = false;
+contactShadow.userData.dynamic = true;
+
+const robotShadowReceiver = new THREE.Mesh(
+  new THREE.PlaneGeometry(14, 14),
+  new THREE.ShadowMaterial({ color: 0x020305, opacity: 0.62, transparent: true, depthWrite: false })
+);
+robotShadowReceiver.name = 'RobotDynamicShadowReceiver';
+robotShadowReceiver.rotation.x = -Math.PI / 2;
+robotShadowReceiver.position.y = 0.018;
+robotShadowReceiver.receiveShadow = true;
+robotShadowReceiver.castShadow = false;
+robotShadowReceiver.layers.set(ROBOT_LIGHT_LAYER);
+robotShadowReceiver.userData.dynamic = true;
+robotShadowReceiver.raycast = () => {};
+scene.add(robotShadowReceiver);
+
+function createRobotProjectedShadowTexture(size = 192) {
+  const shadowCanvas = document.createElement('canvas');
+  shadowCanvas.width = shadowCanvas.height = size;
+  const context = shadowCanvas.getContext('2d');
+  context.clearRect(0, 0, size, size);
+  context.save();
+  context.translate(size / 2, size / 2);
+  context.scale(0.62, 1);
+  const gradient = context.createRadialGradient(0, -size * 0.08, size * 0.03, 0, 0, size * 0.47);
+  gradient.addColorStop(0, 'rgba(0,0,0,0.82)');
+  gradient.addColorStop(0.35, 'rgba(0,0,0,0.52)');
+  gradient.addColorStop(0.72, 'rgba(0,0,0,0.18)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0)');
+  context.fillStyle = gradient;
+  context.fillRect(-size, -size, size * 2, size * 2);
+  context.restore();
+  const texture = new THREE.CanvasTexture(shadowCanvas);
+  texture.name = 'robot-directional-shadow-texture-v1';
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+const robotProjectedShadowTexture = createRobotProjectedShadowTexture();
+const robotProjectedShadow = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.45, 2.25),
+  new THREE.MeshBasicMaterial({
+    color: 0x050608,
+    map: robotProjectedShadowTexture,
+    transparent: true,
+    opacity: 0.48,
+    depthWrite: false,
+    toneMapped: false
+  })
+);
+robotProjectedShadow.name = 'RobotProjectedShadowTexture';
+robotProjectedShadow.rotation.x = -Math.PI / 2;
+robotProjectedShadow.position.set(cubeRig.position.x - 0.38, 0.021, cubeRig.position.z - 0.56);
+robotProjectedShadow.renderOrder = 2;
+robotProjectedShadow.userData.dynamic = true;
+robotProjectedShadow.raycast = () => {};
+scene.add(robotProjectedShadow);
+
+const lightingRuntime = {
+  mode: 'ao-baked-static',
+  bakedAoTexture: staticAoTexture.name,
+  staticMeshesBaked,
+  staticAoMaterials,
+  decorativeDynamicLights: 0,
+  dynamicShadowLights: 1,
+  staticShadowCasters: 0,
+  robotShadowCasters: robotPartNames.length,
+  shadowReceiverMaterial: robotShadowReceiver.material.type,
+  projectedShadowTexture: robotProjectedShadowTexture.name,
+  robotLightLayer: ROBOT_LIGHT_LAYER,
+  staticLayer: STATIC_SCENE_LAYER,
+  shadowMapEnabled: renderer.shadowMap.enabled
+};
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -1863,6 +3230,7 @@ function finishTask() {
 
 const configuredEventPort = new URLSearchParams(window.location.search).get('eventPort') || '8000';
 const eventApiUrl = `${window.location.protocol}//${window.location.hostname}:${configuredEventPort}/event`;
+ledMatrixState.endpoint = eventApiUrl;
 const networkDestinations = {
   read: { id: 'workbench', spot: WORK_SPOT, finalYaw: -Math.PI / 2 },
   prepare: { id: 'workbench', spot: WORK_SPOT, finalYaw: -Math.PI / 2 },
@@ -1925,7 +3293,8 @@ eventStream.addEventListener('open', () => { networkEventState.connection = 'ope
 eventStream.addEventListener('error', () => { networkEventState.connection = 'reconnecting'; });
 eventStream.addEventListener('room-event', (message) => {
   try {
-    routeNetworkEvent(JSON.parse(message.data));
+    const event = JSON.parse(message.data);
+    if (!routeActivityStreamEvent(event) && !routeLedMatrixEvent(event)) routeNetworkEvent(event);
   } catch {
     networkEventState.connection = 'invalid-event';
   }
@@ -1990,7 +3359,33 @@ function resize() {
   const height = window.innerHeight;
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
-  if (width < 700) {
+  const reviewParams = new URLSearchParams(window.location.search);
+  const loungeLampCloseup = reviewParams.has('loungeLampReview');
+  const electricalPanelCloseup = reviewParams.has('electricalPanelReview');
+  const ledMatrixCloseup = reviewParams.has('ledMatrixReview');
+  const softwareStationCloseup = reviewParams.has('softwareStationReview');
+  const reviewStationCloseup = reviewParams.has('reviewStationReview');
+  if (loungeLampCloseup) {
+    camera.fov = 40;
+    camera.position.set(6.8, 2.2, 1.0);
+    camera.lookAt(5.95, 1.3, 6.0);
+  } else if (electricalPanelCloseup) {
+    camera.fov = 38;
+    camera.position.set(3.5, 4.6, 4.7);
+    camera.lookAt(-6.55, 3.6, 4.9);
+  } else if (ledMatrixCloseup) {
+    camera.fov = 36;
+    camera.position.set(2.15, 4.72, 0.8);
+    camera.lookAt(2.15, 4.72, -6.82);
+  } else if (softwareStationCloseup) {
+    camera.fov = 33;
+    camera.position.set(0.7, 2.8, -1.3);
+    camera.lookAt(6.12, 1.32, -1.3);
+  } else if (reviewStationCloseup) {
+    camera.fov = 33;
+    camera.position.set(1.6, 2.8, 0.4);
+    camera.lookAt(1.6, 1.32, -6.12);
+  } else if (width < 700) {
     camera.fov = 48;
     camera.position.set(9.8, 10.2, 15.5);
     camera.lookAt(0, 0.6, -1.2);
@@ -2319,6 +3714,145 @@ function updateMotion(now) {
   }
 }
 
+const STATIC_BATCH_CELL_SIZE = 5;
+const staticBatchRoot = new THREE.Group();
+staticBatchRoot.name = 'AutoStaticBatches';
+staticBatchRoot.userData.autoBatchOutput = true;
+scene.add(staticBatchRoot);
+
+const staticBatchState = {
+  enabled: true,
+  cellSize: STATIC_BATCH_CELL_SIZE,
+  sourceMeshes: 0,
+  mergedSourceMeshes: 0,
+  batches: 0,
+  cells: 0,
+  estimatedDrawCallsSaved: 0,
+  semanticObjectsPreserved: true
+};
+let hiddenStaticBatchSources = [];
+
+function hasAncestor(object, ancestor) {
+  for (let current = object; current; current = current.parent) {
+    if (current === ancestor) return true;
+  }
+  return false;
+}
+
+function geometryLayoutKey(geometry) {
+  const attributes = Object.entries(geometry.attributes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, attribute]) => `${name}:${attribute.itemSize}:${attribute.normalized ? 1 : 0}`)
+    .join(',');
+  return `${geometry.index ? 'indexed' : 'plain'}|${attributes}`;
+}
+
+function autoBatchRejectionReason(mesh) {
+  if (!mesh?.isMesh) return 'not-mesh';
+  if (!mesh.visible) return 'hidden';
+  if (!mesh.geometry) return 'no-geometry';
+  if (Array.isArray(mesh.material)) return 'material-array';
+  if (!mesh.material || mesh.material.visible === false) return 'material-hidden';
+  if (mesh.material.transparent || mesh.material.opacity < 1) return 'transparent';
+  if (mesh.isSkinnedMesh) return 'skinned';
+  if (mesh.morphTargetInfluences) return 'morph-targets';
+  if (mesh.userData.dynamic || mesh.userData.noAutoBatch) return 'dynamic-opt-out';
+  if (mesh.userData.autoBatchOutput) return 'batch-output';
+  if (mesh === floor) return 'raycast-floor';
+  if (mesh.name?.includes('Collider')) return 'collider';
+  if (hasAncestor(mesh, cubeRig)) return 'robot';
+  if (hasAncestor(mesh, marker)) return 'marker';
+  if (hasAncestor(mesh, staticBatchRoot)) return 'batch-output';
+  for (let parent = mesh.parent; parent; parent = parent.parent) {
+    if (parent.userData?.dynamic || parent.userData?.noAutoBatch) return 'ancestor-opt-out';
+  }
+  if (mesh.geometry.drawRange.start !== 0 || mesh.geometry.drawRange.count !== Infinity) return 'partial-draw-range';
+  if (mesh.matrixWorld.determinant() <= 0) return 'mirrored-transform';
+  return null;
+}
+
+function isAutoBatchCandidate(mesh) {
+  return autoBatchRejectionReason(mesh) === null;
+}
+
+function clearStaticBatches() {
+  for (const source of hiddenStaticBatchSources) source.mesh.visible = source.visible;
+  hiddenStaticBatchSources = [];
+  for (const batch of [...staticBatchRoot.children]) {
+    staticBatchRoot.remove(batch);
+    batch.geometry.dispose();
+  }
+}
+
+function rebatchStaticMeshes() {
+  clearStaticBatches();
+  scene.updateMatrixWorld(true);
+
+  const buckets = new Map();
+  const cells = new Set();
+  const center = new THREE.Vector3();
+  let sourceMeshes = 0;
+
+  scene.traverse((object) => {
+    if (!isAutoBatchCandidate(object)) return;
+    sourceMeshes += 1;
+    if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+    object.geometry.boundingBox.getCenter(center).applyMatrix4(object.matrixWorld);
+    const cell = [center.x, center.y, center.z]
+      .map(value => Math.floor(value / STATIC_BATCH_CELL_SIZE))
+      .join(':');
+    cells.add(cell);
+    const key = [
+      cell,
+      object.material.uuid,
+      geometryLayoutKey(object.geometry),
+      object.castShadow ? 1 : 0,
+      object.receiveShadow ? 1 : 0,
+      object.renderOrder,
+      object.layers.mask
+    ].join('|');
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(object);
+  });
+
+  let mergedSourceMeshes = 0;
+  let batchCount = 0;
+  for (const meshes of buckets.values()) {
+    if (meshes.length < 2) continue;
+    const geometries = meshes.map(mesh => mesh.geometry.clone().applyMatrix4(mesh.matrixWorld));
+    const mergedGeometry = mergeGeometries(geometries, false);
+    for (const geometry of geometries) geometry.dispose();
+    if (!mergedGeometry) continue;
+
+    const first = meshes[0];
+    const batch = new THREE.Mesh(mergedGeometry, first.material);
+    batch.name = `AutoStaticBatch-${batchCount + 1}`;
+    batch.castShadow = first.castShadow;
+    batch.receiveShadow = first.receiveShadow;
+    batch.renderOrder = first.renderOrder;
+    batch.layers.mask = first.layers.mask;
+    batch.userData.autoBatchOutput = true;
+    staticBatchRoot.add(batch);
+
+    for (const mesh of meshes) {
+      hiddenStaticBatchSources.push({ mesh, visible: mesh.visible });
+      mesh.visible = false;
+    }
+    mergedSourceMeshes += meshes.length;
+    batchCount += 1;
+  }
+
+  staticBatchState.sourceMeshes = sourceMeshes;
+  staticBatchState.mergedSourceMeshes = mergedSourceMeshes;
+  staticBatchState.batches = batchCount;
+  staticBatchState.cells = cells.size;
+  staticBatchState.estimatedDrawCallsSaved = mergedSourceMeshes - batchCount;
+  staticBatchState.semanticObjectsPreserved = hiddenStaticBatchSources.every(({ mesh }) => Boolean(mesh.parent));
+  return { ...staticBatchState };
+}
+
+rebatchStaticMeshes();
+
 function countVisibleGeometryVertices() {
   let vertices = 0;
   scene.traverseVisible((object) => {
@@ -2335,6 +3869,7 @@ function countVisibleGeometryVertices() {
 const performanceMetrics = {
   vertices: countVisibleGeometryVertices(),
   fps: 0,
+  drawCalls: 0,
   frames: 0,
   lastSample: performance.now()
 };
@@ -2351,10 +3886,36 @@ function updatePerformanceMetrics(timestamp) {
   if (sampleDuration < 750) return;
   performanceMetrics.fps = Math.max(1, Math.round(performanceMetrics.frames * 1000 / sampleDuration));
   performanceMetrics.vertices = countVisibleGeometryVertices();
+  performanceMetrics.drawCalls = renderer.info.render.calls;
   performanceMetrics.frames = 0;
   performanceMetrics.lastSample = now;
   vertexCountText.textContent = performanceMetrics.vertices.toLocaleString('en-US');
   fpsCountText.textContent = `${performanceMetrics.fps} FPS`;
+  drawCallCountText.textContent = `${performanceMetrics.drawCalls.toLocaleString('en-US')} CALLS`;
+}
+
+function inspectAutoBatchRejections() {
+  const rows = [];
+  const rootName = (object) => {
+    let current = object;
+    while (current?.parent && current.parent !== room && current.parent !== scene) current = current.parent;
+    return current?.name || object?.name || object?.type || 'Unnamed';
+  };
+  scene.traverseVisible((object) => {
+    if (!object.isMesh || object.userData.autoBatchOutput) return;
+    const reason = autoBatchRejectionReason(object);
+    const materialSlots = Array.isArray(object.material) ? object.material.length : 1;
+    const geometryGroups = object.geometry?.groups?.length || 0;
+    rows.push({
+      root: rootName(object),
+      object: object.name || object.type,
+      reason: reason || 'eligible-singleton',
+      materialSlots,
+      geometryGroups,
+      estimatedCalls: Array.isArray(object.material) ? geometryGroups : 1
+    });
+  });
+  return rows.sort((a, b) => b.estimatedCalls - a.estimatedCalls);
 }
 
 function animate(timestamp) {
@@ -2364,8 +3925,18 @@ function animate(timestamp) {
   updateRobotAnimation(now);
   updateOscilloscopeDisplay(now);
   updateReviewMonitor(now);
+  updateRainyCityWindow(now);
+  updateActivityStreamDuration();
   if (motion.phase === 'idle' && robotAnimationState !== 'sit') cube.position.y = Math.sin(now * 1.55) * 0.006;
   if (robotAnimationState === 'sit') cube.position.y = 0;
+  const shadowHeight = Math.max(0, cubeRig.position.y);
+  robotProjectedShadow.visible = contactShadow.visible && shadowHeight < 2.2;
+  robotProjectedShadow.position.set(cubeRig.position.x - 0.38, 0.021, cubeRig.position.z - 0.56);
+  robotProjectedShadow.material.opacity = 0.48 / (1 + shadowHeight * 0.75);
+  robotProjectedShadow.scale.setScalar(1 + shadowHeight * 0.16);
+  key.position.set(cubeRig.position.x + 3.5, cubeRig.position.y + 9, cubeRig.position.z + 5);
+  key.target.position.set(cubeRig.position.x, cubeRig.position.y, cubeRig.position.z - 1);
+  key.target.updateMatrixWorld();
   markerRing.material.opacity = marker.visible ? 0.55 + Math.sin(now * 4) * 0.22 : 0;
   redRim.intensity = 25 + Math.sin(now * 0.8) * 2;
   renderer.render(scene, camera);
@@ -2404,6 +3975,8 @@ const stationById = id => stations.find(station => station.id === id);
 
 window.__ROOM__ = {
   ready: true,
+  rebatchStaticMeshes,
+  inspectAutoBatchRejections,
   moveTo: (x, z) => { if (!task.active) beginMove(x, z, { kind: 'floor' }); },
   useWorkbench: () => startStationTask(stationById('workbench')),
   useDesk: () => startStationTask(stationById('desk')),
@@ -2483,7 +4056,16 @@ window.__ROOM__ = {
     testBench: { x: testBench.position.x, z: testBench.position.z },
     performance: {
       vertices: performanceMetrics.vertices,
-      fps: performanceMetrics.fps
+      fps: performanceMetrics.fps,
+      drawCalls: performanceMetrics.drawCalls
+    },
+    batching: { ...staticBatchState },
+    lighting: {
+      ...lightingRuntime,
+      shadowProjection: {
+        x: cubeRig.position.x,
+        z: cubeRig.position.z
+      }
     },
     network: {
       connection: networkEventState.connection,
@@ -2513,6 +4095,51 @@ window.__ROOM__ = {
         height: reviewMonitorState.height,
         updates: reviewMonitorState.updates,
         cursor: reviewMonitorState.cursor
+      },
+      ledMatrix: {
+        type: ledMatrixState.type,
+        canvasElement: ledMatrixState.canvasElement,
+        mode: ledMatrixState.mode,
+        width: ledMatrixState.width,
+        height: ledMatrixState.height,
+        columns: ledMatrixState.columns,
+        rows: ledMatrixState.rows,
+        physicalWidth: ledMatrixState.physicalWidth,
+        physicalHeight: ledMatrixState.physicalHeight,
+        wall: ledMatrixState.wall,
+        sseCapable: ledMatrixState.sseCapable,
+        endpoint: ledMatrixState.endpoint,
+        source: ledMatrixState.source,
+        title: ledMatrixState.title,
+        lines: ledMatrixActivityState.active
+          ? [...ledMatrixState.lines.slice(0, 3), `duration: ${Math.max(0, Math.floor((Date.now() - ledMatrixActivityState.timestampMs) / 1000))}s`]
+          : [...ledMatrixState.lines],
+        status: ledMatrixState.status,
+        accent: ledMatrixState.accent,
+        messages: ledMatrixState.messages,
+        updates: ledMatrixState.updates,
+        lastEventId: ledMatrixState.lastEventId,
+        lastReceivedAt: ledMatrixState.lastReceivedAt,
+        activityStream: {
+          ...ledMatrixActivityState,
+          durationSeconds: ledMatrixActivityState.active
+            ? Math.max(0, Math.floor((Date.now() - ledMatrixActivityState.timestampMs) / 1000))
+            : ledMatrixActivityState.durationSeconds,
+          metadata: ledMatrixActivityState.metadata ? { ...ledMatrixActivityState.metadata } : null
+        }
+      },
+      cityWindow: {
+        type: cityWindowState.type,
+        canvasElement: cityWindowState.canvasElement,
+        animated: cityWindowState.animated,
+        mode: cityWindowState.mode,
+        width: cityWindowState.width,
+        height: cityWindowState.height,
+        skylineLayers: cityWindowState.skylineLayers,
+        rainStreaks: cityWindowState.rainStreaks,
+        updates: cityWindowState.updates,
+        phase: cityWindowState.phase,
+        textureName: cityWindowTexture.name
       }
     },
     architecture: {
@@ -2547,6 +4174,13 @@ window.__ROOM__ = {
         turnsAtCeiling: pipeSpecs.every((_, index) => Boolean(doorPipeAssembly.getObjectByName(`DoorPipeElbow${index + 1}`))),
         runsOverDoor: pipeSpecs.every((_, index) => Boolean(doorPipeAssembly.getObjectByName(`DoorPipeOverDoor${index + 1}`)))
       },
+      electricalPanel: {
+        ...electricalPanelRuntime,
+        hasCabinet: Boolean(electricalPanel.getObjectByName('VoltagePanelCabinet')),
+        hasVoltageSymbol: Boolean(electricalPanel.getObjectByName('VoltageSymbol')),
+        hasCeilingTermination: Boolean(electricalPanel.getObjectByName('ConduitCeilingBox')),
+        conduitCouplings: electricalPanel.children.filter(child => child.name.startsWith('ConduitCoupling')).length
+      },
       planningBench: {
         ...planningBenchVisual.userData.sculptRuntime,
         colliderPreserved: workbenchCollider.parent === workbench,
@@ -2557,6 +4191,44 @@ window.__ROOM__ = {
           return count;
         })()
       },
+      reviewStation: {
+        ...softwareStationRuntime,
+        colliderPreserved: testBenchCollider.parent === testBench,
+        approachPoint: { x: TEST_BENCH_SPOT.x, z: TEST_BENCH_SPOT.z },
+        semanticGroups: reviewStationVisual.children.map(group => group.name),
+        meshCount: (() => {
+          let count = 0;
+          reviewStationVisual.traverse(child => { if (child.isMesh) count += 1; });
+          return count;
+        })()
+      },
+      softwareStation: {
+        ...softwareStationV2Runtime,
+        colliderPreserved: deskCollider.parent === desk,
+        approachPoint: { x: DESK_SPOT.x, z: DESK_SPOT.z },
+        semanticGroups: softwareStationV2Visual.children.map(group => group.name),
+        meshCount: (() => {
+          let count = 0;
+          softwareStationV2Visual.traverse(child => { if (child.isMesh) count += 1; });
+          return count;
+        })()
+      },
+      ledMatrix: {
+        ...ledMatrixRuntime,
+        canvasElementId: ledMatrixCanvas.id,
+        textureName: ledMatrixTexture.name,
+        grid: { columns: LED_MATRIX_COLUMNS, rows: LED_MATRIX_ROWS },
+        screenPresent: ledMatrixScreen.parent === ledMatrixAssembly,
+        frameParts: ledMatrixAssembly.children.filter(child => child.isMesh).length
+      },
+      cityWindow: {
+        ...cityWindowRuntime,
+        canvasElementId: cityWindowCanvas.id,
+        textureName: cityWindowTexture.name,
+        frameParts: cityWindowAssembly.children.filter(child => child.isMesh).length,
+        hasSill: Boolean(cityWindowAssembly.getObjectByName('CityWindowSill')),
+        hasCoolInteriorGlow: cityWindowGlow.parent === cityWindowAssembly
+      },
       lounge: {
         corner: 'front-right',
         position: { x: lounge.position.x, z: lounge.position.z },
@@ -2566,7 +4238,11 @@ window.__ROOM__ = {
         hasRug: Boolean(lounge.getObjectByName('LoungeRug')),
         plants: loungePlants.length,
         magazines: loungeMagazines.length,
-        clearOfDesk: lounge.position.z - 3.825 > desk.position.z + 1.9
+        clearOfDesk: lounge.position.z - 3.825 > desk.position.z + 1.9,
+        coffeeTable: { ...coffeeTableRuntime },
+        couchApproachPoint: { x: COUCH_SPOT.x, z: COUCH_SPOT.z },
+        walkPathToCouchClear: coffeeTableRuntime.onRug && coffeeTableApproachSideClearance > 0.55,
+        floorLamp: { ...loungeFloorLampRuntime }
       },
       plants: {
         model: deskPlant.userData.sculptRuntime.model,

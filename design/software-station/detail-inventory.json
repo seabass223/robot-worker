@@ -1,0 +1,219 @@
+{
+  "sourceImage": "design/software-station/reference/front.png",
+  "detailInventory": {
+    "scanMethod": "grid-4x4 plus semantic vision analysis",
+    "targetMinDetails": 10,
+    "details": [
+      {
+        "id": "thick-walnut-top",
+        "kind": "bevel",
+        "description": "Thick walnut slab and darker front edge",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "worktop"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "trestle-profile",
+        "kind": "contour",
+        "description": "Angled charcoal supports and open center",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "trestle-frame"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "low-stretcher",
+        "kind": "ridge",
+        "description": "Long low crossbar",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "lower-stretcher"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "overhead-rectangle",
+        "kind": "contour",
+        "description": "Black rectangular frame behind monitor",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "overhead-frame"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "cyan-code-screen",
+        "kind": "emissive",
+        "description": "Wide animated cyan code display",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "monitor-screen"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "speaker-layout",
+        "kind": "contour",
+        "description": "Asymmetric speaker pair",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "audio-cluster"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "fan-array",
+        "kind": "linework",
+        "description": "Silver ring and twelve radial blades",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "desk-fan"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "copper-lamp",
+        "kind": "bevel",
+        "description": "Warm articulated lamp",
+        "region": "generated front concept",
+        "scale": "meso",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "task-lamp"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.9
+      },
+      {
+        "id": "key-grid",
+        "kind": "linework",
+        "description": "Four by nine raised key grid",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "keyboard"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "mouse-profile",
+        "kind": "contour",
+        "description": "Separate low mouse",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "mouse"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "plant-pair",
+        "kind": "contour",
+        "description": "Tall leaves and terracotta accent plant",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "plant-accent"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "drawer-seams",
+        "kind": "seam",
+        "description": "Two inset drawer faces and pulls",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "drawer-cabinet"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "pc-fan-rings",
+        "kind": "emissive",
+        "description": "Two cyan tower fan rings",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "pc-tower"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "cable-tray",
+        "kind": "groove",
+        "description": "Rear tray and bundled drop",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "cable-management"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      },
+      {
+        "id": "speaker-drivers",
+        "kind": "contour",
+        "description": "Circular woofer and tweeter faces",
+        "region": "generated front concept",
+        "scale": "micro",
+        "affects": "identity",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "speaker-drivers"
+        },
+        "evidenceRef": "front-view",
+        "confidence": 0.8
+      }
+    ]
+  }
+}
