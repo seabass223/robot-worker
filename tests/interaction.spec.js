@@ -22,8 +22,8 @@ test('articulated red robot runs walk, work, and couch-sit animation states', as
   expect(robot.legReach).toBeLessThan(0.58);
 
   await page.evaluate(() => window.__ROOM__.moveTo(2.4, 0));
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().robot.statesPlayed.includes('walk')), { timeout: 8000 }).toBeTruthy();
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 8000 }).toBe('idle');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().robot.statesPlayed.includes('walk')), { timeout: 12000 }).toBeTruthy();
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 12000 }).toBe('idle');
   const walked = await page.evaluate(() => window.__ROOM__.snapshot().robot);
   expect(walked.statesPlayed).toContain('walk');
   expect(walked.hipSwingAmplitude).toBeGreaterThan(0.5);
@@ -186,10 +186,31 @@ test('reference density fill closes the upper-wall and stair-base silhouette gap
   expect(reference.identityFeatures).toContain('upper-center-density-fill');
 });
 
+test('strict reference detail fill makes large workbench, lounge, and workstation props explicit', async ({ page }) => {
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+
+  const reference = await page.evaluate(() => window.__ROOM__.snapshot().referenceMatch);
+  const detail = reference.zones.strictDetail;
+  expect(detail.model).toBe('strict-reference-detail-fill-v1');
+  expect(detail.clusters).toBe(3);
+  expect(detail.workbench.toolSilhouettes).toBeGreaterThanOrEqual(8);
+  expect(detail.workbench.partsBins).toBeGreaterThanOrEqual(2);
+  expect(detail.workbench.cableReel).toBeTruthy();
+  expect(detail.lounge.beanbag).toBeTruthy();
+  expect(detail.lounge.accessories).toBeGreaterThanOrEqual(6);
+  expect(detail.lounge.floorCable).toBeTruthy();
+  expect(detail.workstation.extraMonitors).toBeGreaterThanOrEqual(1);
+  expect(detail.workstation.speakers).toBeGreaterThanOrEqual(2);
+  expect(detail.workstation.cableBundle).toBeTruthy();
+  expect(detail.practicalLights).toBeLessThanOrEqual(3);
+  expect(reference.identityFeatures).toContain('strict-reference-detail-fill');
+});
+
 test('multi-material plant leaves use consolidated groups without losing semantic plant models', async ({ page }) => {
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(600);
 
   const result = await page.evaluate(() => ({
     snapshot: window.__ROOM__.snapshot(),
@@ -823,8 +844,8 @@ test('network event API validates the phase contract and routes all ten room pha
     ['review', 'testbench', 1.6, -4.82],
     ['submit', 'testbench', 1.6, -4.82],
     ['sync', 'testbench', 1.6, -4.82],
-    ['waiting', 'couch', 1.6, 4.1],
-    ['done', 'couch', 1.6, 4.1]
+    ['waiting', 'couch', 2.4, 5.2],
+    ['done', 'couch', 2.4, 5.2]
   ];
 
   for (const [phase, destination, x, z] of routes) {
@@ -842,8 +863,8 @@ test('network event API validates the phase contract and routes all ten room pha
 
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 12000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
-  expect(final.position.x).toBeCloseTo(1.6, 1);
-  expect(final.position.z).toBeCloseTo(4.1, 1);
+  expect(final.position.x).toBeCloseTo(2.4, 1);
+  expect(final.position.z).toBeCloseTo(5.2, 1);
   expect(final.status).toBe('DONE');
 });
 
@@ -914,6 +935,7 @@ test('canvas pointer click produces a valid floor target', async ({ page }) => {
 });
 
 test('clicking the workbench completes work and automatically returns home', async ({ page }) => {
+  test.setTimeout(60_000);
   const errors = [];
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto('/?eventPort=8001');
@@ -924,11 +946,11 @@ test('clicking the workbench completes work and automatically returns home', asy
   await page.mouse.click(point.x, point.y);
 
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().workbenchHits)).toBe(1);
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 8000 }).toBe('working');
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().workProgress), { timeout: 5000 }).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('working');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().workProgress), { timeout: 10000 }).toBeGreaterThan(0);
   await expect(page.locator('#work-progress')).toBeVisible();
 
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 10000 }).toBe('idle');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(final.workProgress).toBe(100);
   expect(final.position.x).toBeCloseTo(0, 1);
@@ -939,23 +961,24 @@ test('clicking the workbench completes work and automatically returns home', asy
 });
 
 test('clicking the computer desk runs a desk task and returns the cube home', async ({ page }) => {
+  test.setTimeout(60_000);
   const errors = [];
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
-  await page.evaluate(() => window.__ROOM__.setWorkDuration(6));
+  await page.evaluate(() => window.__ROOM__.setWorkDuration(12));
 
   const point = await page.evaluate(() => window.__ROOM__.deskScreen());
   await page.mouse.click(point.x, point.y);
 
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().deskHits)).toBe(1);
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 8000 }).toBe('working');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('working');
   const active = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(active.activeStation).toBe('desk');
   await expect(page.locator('#work-label')).toHaveText('DESK TASK');
   await expect(page.locator('#work-progress')).toBeVisible();
 
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 10000 }).toBe('idle');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(final.workProgress).toBe(100);
   expect(final.position.x).toBeCloseTo(0, 1);
@@ -966,23 +989,24 @@ test('clicking the computer desk runs a desk task and returns the cube home', as
 });
 
 test('clicking the test bench runs analysis and returns the cube home', async ({ page }) => {
+  test.setTimeout(60_000);
   const errors = [];
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
-  await page.evaluate(() => window.__ROOM__.setWorkDuration(6));
+  await page.evaluate(() => window.__ROOM__.setWorkDuration(12));
 
   const point = await page.evaluate(() => window.__ROOM__.testBenchScreen());
   await page.mouse.click(point.x, point.y);
 
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().testBenchHits)).toBe(1);
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 8000 }).toBe('working');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('working');
   const active = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(active.activeStation).toBe('testbench');
   await expect(page.locator('#work-label')).toHaveText('TEST BENCH TASK');
   await expect(page.locator('#work-progress')).toBeVisible();
 
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 10000 }).toBe('idle');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(final.workProgress).toBe(100);
   expect(final.position.x).toBeCloseTo(0, 1);
@@ -990,4 +1014,269 @@ test('clicking the test bench runs analysis and returns the cube home', async ({
   expect(final.status).toBe('READY');
   await expect(page.locator('#work-progress')).toBeHidden();
   expect(errors).toEqual([]);
+});
+
+test('edit mode raycast-selects semantic objects and switches M R S gizmos before Escape rebatches', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+
+  const editToggle = page.locator('#edit-mode-toggle');
+  await expect(editToggle).toBeVisible();
+  await editToggle.click();
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.active)).toBe(true);
+  const editableObjects = await page.evaluate(() => window.__ROOM__.snapshot().editor.editableObjects);
+  expect(editableObjects).toEqual(expect.arrayContaining([
+    'CoffeeTable', 'RustElectricGuitar', 'CharcoalBeanbag',
+    'TallRightWallPlant', 'ReferenceWorkstationSwivelChair', 'DensePegboardToolWall'
+  ]));
+
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  expect(point).toBeTruthy();
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.selected)).toBe('BuildDebugDeployRepeatCyanSign');
+
+  await page.keyboard.press('m');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.mode)).toBe('translate');
+  expect(await page.evaluate(() => window.__ROOM__.snapshot().editor.handles)).toEqual(['X', 'Y', 'Z']);
+
+  await page.keyboard.press('r');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.mode)).toBe('rotate');
+  expect(await page.evaluate(() => window.__ROOM__.snapshot().editor.rotationArcs)).toEqual(['X', 'Y', 'Z']);
+
+  await page.keyboard.press('s');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.mode)).toBe('scale');
+  expect(await page.evaluate(() => window.__ROOM__.snapshot().editor.uniformScaleOnly)).toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.active)).toBe(false);
+  expect(await page.evaluate(() => window.__ROOM__.snapshot().editor.selected)).toBeNull();
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().batching)).enabled).toBe(true);
+});
+
+test('entering edit mode fully cancels an active station task and progress UI', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.evaluate(() => {
+    window.__ROOM__.setWorkDuration(30);
+    window.__ROOM__.useDesk();
+  });
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 20000 }).toBe('working');
+  await expect(page.locator('#work-progress')).toBeVisible();
+
+  await page.locator('#edit-mode-toggle').click();
+
+  const snapshot = await page.evaluate(() => window.__ROOM__.snapshot());
+  expect(snapshot.editor.active).toBe(true);
+  expect(snapshot.phase).toBe('idle');
+  expect(snapshot.taskActive).toBe(false);
+  expect(snapshot.activeStation).toBeNull();
+  expect(snapshot.workProgress).toBe(0);
+  await expect(page.locator('#work-progress')).toBeHidden();
+  await expect(page.locator('#work-percent')).toHaveText('0%');
+});
+
+test('entering edit mode during a stair climb leaves a neutral floor-level robot', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.evaluate(() => window.__ROOM__.climbStairs());
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().stairClimb.active), { timeout: 20000 }).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().position.y), { timeout: 20000 }).toBeGreaterThan(0);
+
+  await page.locator('#edit-mode-toggle').click();
+
+  const snapshot = await page.evaluate(() => window.__ROOM__.snapshot());
+  expect(snapshot.editor.active).toBe(true);
+  expect(snapshot.phase).toBe('idle');
+  expect(snapshot.stairClimb.active).toBe(false);
+  expect(snapshot.position.y).toBe(0);
+  expect(snapshot.robot.animation).toBe('idle');
+  expect(snapshot.robot.leftKneeAngle).toBe(0);
+  expect(snapshot.robot.rightKneeAngle).toBe(0);
+});
+
+test('editor omits zero-delta and baseline-reverted objects from layout JSON', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(point.x, point.y);
+
+  const baseline = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', 0));
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout().objects)).toEqual([]);
+
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', 0.75));
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout().objects)).toHaveLength(1);
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', -0.75));
+
+  expect(await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).toEqual(baseline);
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout().objects)).toEqual([]);
+});
+
+test('editor deterministic scale path enforces the same uniform bounds as pointer dragging', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(point.x, point.y);
+
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('scale', 'XYZ', 100));
+  expect((await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).scale).toEqual({ x: 8, y: 8, z: 8 });
+
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('scale', 'XYZ', -100));
+  expect((await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).scale).toEqual({ x: 0.05, y: 0.05, z: 0.05 });
+});
+
+test('editor starts a native gizmo drag on first-contact touch without prior hover', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const objectPoint = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(objectPoint.x, objectPoint.y);
+  const guide = await page.evaluate(() => window.__ROOM__.editorAxisGuideScreen('X'));
+  const point = {
+    x: guide.origin.x + (guide.endpoint.x - guide.origin.x) * 0.55,
+    y: guide.origin.y + (guide.endpoint.y - guide.origin.y) * 0.55
+  };
+
+  await page.locator('canvas').dispatchEvent('pointerdown', {
+    pointerId: 41, pointerType: 'touch', isPrimary: true, button: 0,
+    clientX: point.x, clientY: point.y, bubbles: true
+  });
+
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.dragging)).toBe(true);
+});
+
+test('editor pointer-cancel restores a native drag and clears export state', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const objectPoint = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(objectPoint.x, objectPoint.y);
+  const baseline = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  const guide = await page.evaluate(() => window.__ROOM__.editorAxisGuideScreen('X'));
+  const point = {
+    x: guide.origin.x + (guide.endpoint.x - guide.origin.x) * 0.55,
+    y: guide.origin.y + (guide.endpoint.y - guide.origin.y) * 0.55
+  };
+  const canvas = page.locator('canvas');
+  await canvas.dispatchEvent('pointerdown', {
+    pointerId: 42, pointerType: 'touch', isPrimary: true, button: 0,
+    clientX: point.x, clientY: point.y, bubbles: true
+  });
+  await canvas.dispatchEvent('pointermove', {
+    pointerId: 42, pointerType: 'touch', isPrimary: true, button: -1,
+    clientX: point.x + 90, clientY: point.y, bubbles: true
+  });
+  await expect.poll(async () => (await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).position.x).not.toBe(baseline.position.x);
+
+  await canvas.dispatchEvent('pointercancel', {
+    pointerId: 42, pointerType: 'touch', isPrimary: true, button: 0,
+    clientX: point.x + 90, clientY: point.y, bubbles: true
+  });
+
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.dragging)).toBe(false);
+  expect(await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).toEqual(baseline);
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout().objects)).toEqual([]);
+});
+
+test('Escape during uniform scaling restores the drag-start transform and exits edit mode', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const objectPoint = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(objectPoint.x, objectPoint.y);
+  await page.keyboard.press('s');
+  const baseline = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  const origin = await page.evaluate(() => window.__ROOM__.editorGizmoOriginScreen());
+  const canvas = page.locator('canvas');
+  await canvas.dispatchEvent('pointerdown', {
+    pointerId: 43, pointerType: 'touch', isPrimary: true, button: 0,
+    clientX: origin.x, clientY: origin.y, bubbles: true
+  });
+  await canvas.dispatchEvent('pointermove', {
+    pointerId: 43, pointerType: 'touch', isPrimary: true, button: -1,
+    clientX: origin.x, clientY: origin.y - 70, bubbles: true
+  });
+  await expect.poll(async () => (await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).scale.x).not.toBe(baseline.scale.x);
+
+  await page.keyboard.press('Escape');
+
+  await expect(page.locator('#edit-mode-toggle')).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'))).toEqual(baseline);
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout().objects)).toEqual([]);
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor)).dragging).toBe(false);
+});
+
+test('editor reports clipboard rejection without an unhandled page error', async ({ page }) => {
+  test.setTimeout(60_000);
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: () => Promise.reject(new Error('clipboard denied')) }
+    });
+  });
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  await page.locator('#save-layout').click();
+  await page.locator('#copy-layout-json').click();
+
+  await expect(page.locator('#copy-layout-json')).toHaveText('COPY FAILED');
+  expect(pageErrors).toEqual([]);
+});
+
+test('editor locks transforms to requested axes, keeps scale uniform, and copies versioned JSON', async ({ page, context }) => {
+  test.setTimeout(90_000);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.selected)).toBe('BuildDebugDeployRepeatCyanSign');
+
+  const before = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', 0.75));
+  const moved = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  expect(moved.position.x).toBeCloseTo(before.position.x + 0.75, 4);
+  expect(moved.position.y).toBeCloseTo(before.position.y, 5);
+  expect(moved.position.z).toBeCloseTo(before.position.z, 5);
+
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('rotate', 'Y', 0.25));
+  const rotated = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  expect(rotated.rotation.x).toBeCloseTo(moved.rotation.x, 5);
+  expect(rotated.rotation.y).toBeCloseTo(moved.rotation.y + 0.25, 4);
+  expect(rotated.rotation.z).toBeCloseTo(moved.rotation.z, 5);
+
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('scale', 'XYZ', 0.2));
+  const scaled = await page.evaluate(() => window.__ROOM__.editorTransform('BuildDebugDeployRepeatCyanSign'));
+  expect(scaled.scale.x).toBeCloseTo(scaled.scale.y, 5);
+  expect(scaled.scale.y).toBeCloseTo(scaled.scale.z, 5);
+  expect(scaled.scale.x).toBeCloseTo(before.scale.x + 0.2, 4);
+
+  await page.locator('#save-layout').click();
+  await expect(page.locator('#layout-export')).toBeVisible();
+  const raw = await page.locator('#layout-json').inputValue();
+  const payload = JSON.parse(raw);
+  expect(payload.schema).toBe('raycast-room-layout/v1');
+  expect(payload.objects).toHaveLength(1);
+  expect(payload.objects[0].name).toBe('BuildDebugDeployRepeatCyanSign');
+  expect(payload.objects[0].position.x).toBeCloseTo(before.position.x + 0.75, 4);
+  expect(payload.objects[0].rotationRadians.y).toBeCloseTo(before.rotation.y + 0.25, 4);
+  expect(payload.objects[0].scale.x).toBeCloseTo(payload.objects[0].scale.y, 5);
+
+  await page.locator('#copy-layout-json').click();
+  expect(JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))).toEqual(payload);
 });

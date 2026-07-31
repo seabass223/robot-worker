@@ -60,8 +60,12 @@ export function createCompositionDensityFill(options = {}) {
     silver: standard('DensityVentSilver', 0x9ba2a3, 0.28, 0.86, true),
     silverDark: standard('DensityVentCollar', 0x4a5155, 0.38, 0.82, true),
     warmGlow: new THREE.MeshStandardMaterial({
-      name: 'DensityWarmGlow', color: 0xffd296, emissive: warm,
-      emissiveIntensity: 3.1, roughness: 0.24, metalness: 0, toneMapped: false
+      name: 'DensityWarmGlow', color: 0xffb36b, emissive: warm,
+      emissiveIntensity: 2.4, roughness: 0.34, metalness: 0.02, toneMapped: false
+    }),
+    screenGlow: new THREE.MeshStandardMaterial({
+      name: 'DensityScreenGlow', color: 0x46c9e8, emissive: 0x168fae,
+      emissiveIntensity: 2.8, roughness: 0.28, metalness: 0.02, toneMapped: false
     }),
     bookRed: standard('DensityBookRed', 0x9c3d31, 0.78, 0.02),
     bookOchre: standard('DensityBookOchre', 0xc08b3f, 0.76, 0.02),
@@ -118,10 +122,20 @@ export function createCompositionDensityFill(options = {}) {
   box(shelfStructure, 'ShelfDarkBackSilhouette', [4.02, 2.18, 0.08], [-2.75, 4.22, -6.78], materials.recess);
 
   const bookSpecs = [
-    [-4.25, 3.55, 0.22, 0.54, 0.30, -0.05], [-3.98, 3.52, 0.25, 0.48, 0.30, 0.03],
-    [-3.68, 3.56, 0.28, 0.56, 0.30, -0.04], [-2.58, 4.50, 0.22, 0.50, 0.28, 0.04],
-    [-2.31, 4.53, 0.25, 0.56, 0.28, -0.03], [-2.01, 4.48, 0.27, 0.46, 0.28, 0.06],
-    [-4.20, 5.48, 0.20, 0.52, 0.28, 0.02], [-3.95, 5.51, 0.26, 0.58, 0.28, -0.04]
+    // Lower shelf: two broad runs around the storage bins.
+    [-4.38, 3.55, 0.22, 0.54, 0.30, -0.05], [-4.10, 3.52, 0.25, 0.48, 0.30, 0.03],
+    [-3.80, 3.56, 0.28, 0.56, 0.30, -0.04], [-2.64, 3.54, 0.23, 0.52, 0.30, 0.04],
+    [-2.36, 3.57, 0.25, 0.58, 0.30, -0.02], [-2.06, 3.52, 0.24, 0.48, 0.30, 0.05],
+    [-1.77, 3.55, 0.26, 0.54, 0.30, -0.03], [-1.10, 3.53, 0.23, 0.50, 0.30, 0.03],
+    // Middle shelf: dense manuals flanking the camera silhouette.
+    [-4.35, 4.50, 0.22, 0.50, 0.28, 0.04], [-4.08, 4.53, 0.25, 0.56, 0.28, -0.03],
+    [-3.78, 4.48, 0.27, 0.46, 0.28, 0.06], [-2.72, 4.50, 0.22, 0.50, 0.28, 0.04],
+    [-2.45, 4.53, 0.25, 0.56, 0.28, -0.03], [-2.15, 4.48, 0.27, 0.46, 0.28, 0.06],
+    [-1.92, 4.51, 0.18, 0.52, 0.28, -0.04],
+    // Top shelf: a long readable run between plant, trophy, and duct.
+    [-4.36, 5.48, 0.20, 0.52, 0.28, 0.02], [-4.10, 5.51, 0.26, 0.58, 0.28, -0.04],
+    [-1.98, 5.50, 0.22, 0.55, 0.28, 0.03], [-1.70, 5.47, 0.24, 0.49, 0.28, -0.03],
+    [-1.42, 5.52, 0.25, 0.59, 0.28, 0.04], [-1.13, 5.49, 0.22, 0.53, 0.28, -0.02]
   ];
   const bookMaterials = [materials.bookRed, materials.bookOchre, materials.bookBlue];
   const booksByMaterial = bookMaterials.map((material, materialIndex) => {
@@ -187,6 +201,60 @@ export function createCompositionDensityFill(options = {}) {
   box(ventilation, 'VentDuctLowerRegister', [0.82, 0.52, 0.22], [-0.96, 4.46, -6.10], materials.silverDark);
   for (let index = 0; index < 4; index++) {
     box(ventilation, `VentRegisterSlat-${index + 1}`, [0.10, 0.36, 0.04], [-1.23 + index * 0.18, 4.46, -5.97], materials.recess);
+  }
+
+  // Broad back-wall maker bench fills the dominant central-left silhouette under
+  // the shelf band. Screenshot-scale drawers and tools read as one workshop mass.
+  const centralBench = namedGroup('BroadCentralBackWallWorkbench', backWallBand);
+  box(centralBench, 'CentralWorkbenchPegboard', [4.60, 1.95, 0.16], [-3.18, 2.13, -5.54], materials.recess);
+  box(centralBench, 'CentralWorkbenchTop', [4.72, 0.20, 1.12], [-3.18, 1.03, -5.03], materials.shelf);
+  box(centralBench, 'CentralWorkbenchFrontRail', [4.75, 0.18, 0.16], [-3.18, 0.90, -4.48], materials.shelfEdge);
+  box(centralBench, 'CentralWorkbenchLeftCabinet', [1.22, 0.90, 0.92], [-4.82, 0.48, -5.06], materials.bin);
+  box(centralBench, 'CentralWorkbenchRightCabinet', [1.22, 0.90, 0.92], [-1.54, 0.48, -5.06], materials.bin);
+  for (const [x, prefix] of [[-4.82, 'Left'], [-1.54, 'Right']]) {
+    for (let index = 0; index < 3; index++) {
+      box(centralBench, `CentralWorkbench${prefix}Drawer-${index + 1}`, [1.02, 0.22, 0.08], [x, 0.25 + index * 0.27, -4.56], materials.silverDark);
+      box(centralBench, `CentralWorkbench${prefix}Handle-${index + 1}`, [0.42, 0.055, 0.06], [x, 0.25 + index * 0.27, -4.49], materials.brass);
+    }
+  }
+  box(centralBench, 'CentralWorkbenchTaskShelf', [4.35, 0.14, 0.58], [-3.18, 3.18, -5.20], materials.shelf);
+  box(centralBench, 'CentralWorkbenchWarmTaskStrip', [3.95, 0.07, 0.08], [-3.18, 3.05, -4.88], materials.warmGlow);
+  const toolXs = [-4.68, -4.25, -3.80, -3.35, -2.86, -2.36, -1.88];
+  toolXs.forEach((x, index) => {
+    box(centralBench, `CentralPegToolHandle-${index + 1}`, [0.13, 0.78 + (index % 3) * 0.14, 0.10], [x, 2.18, -5.42], index % 3 === 0 ? materials.bookRed : materials.silverDark, [0, 0, index % 2 ? -0.12 : 0.10]);
+    box(centralBench, `CentralPegToolHead-${index + 1}`, [0.38, 0.18, 0.13], [x, 2.64 + (index % 3) * 0.07, -5.38], index % 3 === 0 ? materials.bookOchre : materials.silverDark);
+  });
+  box(centralBench, 'CentralBenchOscilloscope', [0.92, 0.62, 0.58], [-3.65, 1.43, -5.02], materials.camera);
+  box(centralBench, 'CentralBenchScopeScreen', [0.58, 0.34, 0.05], [-3.65, 1.45, -4.70], materials.screenGlow);
+  box(centralBench, 'CentralBenchPartsOrganizer', [1.02, 0.72, 0.45], [-2.30, 1.47, -5.18], materials.bin);
+  // Ground the full run and make the storage/instrument identities unmistakable.
+  box(centralBench, 'CentralWorkbenchContinuousCabinetBody', [4.42, 0.82, 0.82], [-3.18, 0.46, -5.08], materials.recess);
+  box(centralBench, 'CentralWorkbenchContinuousKickPlinth', [4.54, 0.14, 0.90], [-3.18, 0.08, -5.08], materials.shelfEdge);
+  box(centralBench, 'CentralWorkbenchCenterLowerShelf', [1.86, 0.12, 0.78], [-3.18, 0.34, -5.06], materials.shelfEdge);
+  for (let index = 0; index < 3; index++) {
+    box(centralBench, `CentralWorkbenchCenterDrawer-${index + 1}`, [1.74, 0.20, 0.08], [-3.18, 0.24 + index * 0.27, -4.62], materials.silverDark);
+    box(centralBench, `CentralWorkbenchCenterPull-${index + 1}`, [0.55, 0.06, 0.07], [-3.18, 0.24 + index * 0.27, -4.54], materials.brass);
+  }
+  cylinder(centralBench, 'CentralScopeKnobA', 0.085, 0.08, [-3.90, 1.28, -4.65], materials.brass, [Math.PI / 2, 0, 0]);
+  cylinder(centralBench, 'CentralScopeKnobB', 0.065, 0.08, [-3.66, 1.28, -4.65], materials.brass, [Math.PI / 2, 0, 0]);
+  box(centralBench, 'CentralBenchViseBody', [0.62, 0.32, 0.42], [-4.42, 1.27, -4.72], materials.silverDark);
+  box(centralBench, 'CentralBenchViseJaw', [0.66, 0.24, 0.10], [-4.42, 1.44, -4.48], materials.brass);
+  cylinder(centralBench, 'CentralBenchViseHandle', 0.035, 0.72, [-4.42, 1.15, -4.45], materials.silverDark, [0, 0, Math.PI / 2]);
+  box(centralBench, 'CentralBenchPartsTrayA', [0.72, 0.12, 0.46], [-2.82, 1.20, -4.73], materials.bookOchre);
+  box(centralBench, 'CentralBenchPartsTrayB', [0.64, 0.10, 0.42], [-2.12, 1.19, -4.76], materials.bookRed);
+  const stool = namedGroup('CentralWorkbenchStool', centralBench);
+  cylinder(stool, 'CentralWorkbenchStoolSeat', 0.42, 0.14, [-3.18, 0.70, -4.18], materials.bookRed, [0, 0, 0]);
+  cylinder(stool, 'CentralWorkbenchStoolPost', 0.08, 0.66, [-3.18, 0.36, -4.18], materials.silverDark);
+  for (let index = 0; index < 4; index++) {
+    const angle = index * Math.PI / 2;
+    box(stool, `CentralWorkbenchStoolFoot-${index + 1}`, [0.64, 0.08, 0.10], [-3.18 + Math.cos(angle) * 0.22, 0.06, -4.18 + Math.sin(angle) * 0.22], materials.recess, [0, angle, 0]);
+  }
+  if (lights) {
+    const benchLight = new THREE.PointLight(warm, 2.6 * lightIntensity, 4.0, 2);
+    benchLight.name = 'CentralWorkbenchTaskPractical';
+    benchLight.position.set(-3.18, 2.76, -4.65);
+    benchLight.castShadow = false;
+    centralBench.add(benchLight);
   }
 
   // Dark cable tray forms a strong ceiling silhouette above shelf and duct.

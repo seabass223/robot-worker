@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -9,6 +10,7 @@ import { createCentralRobotBay } from './reference/centralRobotBay.js';
 import { createLeftWorkshopDetails } from './reference/leftWorkshopDetails.js';
 import { createRightLoungeDetails } from './reference/rightLoungeDetails.js';
 import { createCompositionDensityFill } from './reference/compositionDensityFill.js';
+import { createStrictReferenceDetailFill } from './reference/strictReferenceDetailFill.js';
 import './style.css';
 
 const pageParams = new URLSearchParams(window.location.search);
@@ -28,6 +30,14 @@ const workProgressFill = document.querySelector('#work-progress-fill');
 const vertexCountText = document.querySelector('#vertex-count');
 const fpsCountText = document.querySelector('#fps-count');
 const drawCallCountText = document.querySelector('#draw-call-count');
+const editModeToggle = document.querySelector('#edit-mode-toggle');
+const editorModeButtons = document.querySelector('#editor-mode-buttons');
+const editorSelection = document.querySelector('#editor-selection');
+const saveLayoutButton = document.querySelector('#save-layout');
+const layoutExport = document.querySelector('#layout-export');
+const layoutJson = document.querySelector('#layout-json');
+const copyLayoutJsonButton = document.querySelector('#copy-layout-json');
+const closeLayoutExportButton = document.querySelector('#close-layout-export');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0d12);
@@ -39,7 +49,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = legacyAoMode ? 1.05 : 0.78;
+renderer.toneMappingExposure = legacyAoMode ? 1.05 : 0.62;
 
 const camera = new THREE.PerspectiveCamera(39, 1, 0.1, 50);
 camera.position.set(10.4, 9.6, 14.2);
@@ -51,8 +61,8 @@ if (showcaseBloom) {
   composer.addPass(new RenderPass(scene, camera));
   composer.addPass(new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.30,
-    0.42,
+    0.24,
+    0.35,
     0.80
   ));
   composer.addPass(new OutputPass());
@@ -194,8 +204,8 @@ const floorMaterial = new THREE.MeshStandardMaterial({
   color: 0xffffff,
   map: floorTextures.map,
   bumpMap: floorTextures.bumpMap,
-  bumpScale: 0.065,
-  roughness: 0.74,
+  bumpScale: 0.085,
+  roughness: 0.68,
   metalness: 0.015
 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), floorMaterial);
@@ -208,8 +218,8 @@ const wallMaterial = new THREE.MeshStandardMaterial({
   color: 0xffffff,
   map: wallTextures.map,
   bumpMap: wallTextures.bumpMap,
-  bumpScale: 0.12,
-  roughness: 0.92,
+  bumpScale: 0.18,
+  roughness: 0.88,
   metalness: 0.01
 });
 const backWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 7), wallMaterial);
@@ -1056,15 +1066,15 @@ const deskCollider = box(
 deskCollider.castShadow = false;
 deskCollider.receiveShadow = false;
 const DESK_SPOT = new THREE.Vector3(3.9, 0, -0.85);
-const COUCH_SPOT = new THREE.Vector3(1.6, 0, 4.1);
+const COUCH_SPOT = new THREE.Vector3(2.4, 0, 5.2);
 
 // Camera-near lounge: a charcoal left-chaise sectional facing a low walnut table.
 const lounge = new THREE.Group();
 lounge.name = 'FrontRightLounge';
-lounge.position.set(1.6, 0, 5.0);
+lounge.position.set(2.4, 0, 6.1);
 scene.add(lounge);
-const loungeFabricMat = new THREE.MeshStandardMaterial({ color: 0x323438, roughness: 0.94, metalness: 0.01 });
-const loungeCushionMat = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.97, metalness: 0.0 });
+const loungeFabricMat = new THREE.MeshStandardMaterial({ color: 0x443b36, emissive: 0x120b07, emissiveIntensity: 0.12, roughness: 0.92, metalness: 0.01 });
+const loungeCushionMat = new THREE.MeshStandardMaterial({ color: 0x51453e, emissive: 0x100907, emissiveIntensity: 0.1, roughness: 0.95, metalness: 0.0 });
 const loungeSeamMat = new THREE.MeshStandardMaterial({ color: 0x17191c, roughness: 1 });
 const loungeFootMat = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.52, metalness: 0.34 });
 const rugMat = new THREE.MeshStandardMaterial({ color: 0x1d2025, roughness: 1, metalness: 0 });
@@ -1103,6 +1113,11 @@ box([0.055, 0.2, 0.79], loungeSeamMat, [-0.71, 0.505, -0.08], lounge, 'SeatSeam1
 box([0.055, 0.2, 0.79], loungeSeamMat, [0.71, 0.505, -0.08], lounge, 'SeatSeam2');
 const throwPillow = box([0.52, 0.48, 0.18], loungeCushionMat, [-1.8, 0.82, 0.18], lounge, 'ThrowPillow');
 throwPillow.rotation.z = -0.18;
+const loungeAccentPillowMat = new THREE.MeshStandardMaterial({ color: 0x9b4d35, emissive: 0x170804, emissiveIntensity: 0.08, roughness: 0.96 });
+const accentPillowA = box([0.58, 0.52, 0.20], loungeAccentPillowMat, [0.62, 0.82, 0.17], lounge, 'RustThrowPillow1');
+accentPillowA.rotation.z = 0.14;
+const accentPillowB = box([0.54, 0.48, 0.20], loungeAccentPillowMat, [1.65, 0.80, 0.16], lounge, 'RustThrowPillow2');
+accentPillowB.rotation.z = -0.12;
 for (const [x, z] of [[-1.92, 0.31], [1.92, 0.31], [-1.92, -0.32], [1.92, -0.32], [-1.45, -1.65], [-0.95, -1.65]]) {
   box([0.16, 0.12, 0.16], loungeFootMat, [x, 0.06, z], lounge, 'SectionalFoot');
 }
@@ -2446,7 +2461,7 @@ centralRobotBay.position.y = -0.07;
 const referencePartsCart = centralRobotBay.getObjectByName('RedRobotPartsCart');
 if (referencePartsCart) {
   referencePartsCart.scale.setScalar(1.9);
-  referencePartsCart.position.set(3.0, 0, -0.2);
+  referencePartsCart.position.set(3.0, 0, 1.2);
 }
 referenceSetDressing.add(centralRobotBay);
 
@@ -2455,7 +2470,26 @@ const leftWorkshopReference = createLeftWorkshopDetails({
   lights: !legacyAoMode,
   shadows: false
 });
-leftWorkshopReference.scale.set(0.95, 1.1, 1.12);
+leftWorkshopReference.position.z += 0.65;
+leftWorkshopReference.scale.set(1.05, 1.16, 1.18);
+const buildDebugSign = leftWorkshopReference.getObjectByName('BuildDebugDeployRepeatCyanSign');
+if (buildDebugSign) {
+  const signCenter = new THREE.Vector3(-0.65, 3.45, 1.28);
+  for (const child of buildDebugSign.children) {
+    child.position.sub(signCenter);
+    if (child.isMesh) child.scale.multiplyScalar(1.55);
+    if (child.name === 'CyanSignFace') {
+      child.position.x = 0.135;
+      child.material.emissiveIntensity = 3.2;
+      child.material.toneMapped = false;
+      child.material.side = THREE.DoubleSide;
+      child.material.needsUpdate = true;
+    }
+  }
+  buildDebugSign.position.set(-6.45, 4.55, 2.3);
+  buildDebugSign.rotation.y = 0;
+  referenceSetDressing.add(buildDebugSign);
+}
 referenceSetDressing.add(leftWorkshopReference);
 
 const rightLoungeReference = createRightLoungeDetails({
@@ -2469,9 +2503,9 @@ for (const panelName of ['WideSystemStatusDisplay', 'CyanCodePanel', 'RainyCityT
 }
 const todoBoard = rightNarrative?.getObjectByName('TodoWhiteboard');
 if (todoBoard) {
-  todoBoard.position.set(6.78, 4.35, -0.45);
+  todoBoard.position.set(6.35, 4.30, -1.15);
   todoBoard.rotation.set(0, Math.PI / 3.1, 0);
-  todoBoard.scale.setScalar(1.12);
+  todoBoard.scale.setScalar(0.92);
   const todoSurface = todoBoard.getObjectByName('TodoWhiteboardCanvasSurface');
   if (todoSurface?.material) {
     todoSurface.material.toneMapped = true;
@@ -2487,19 +2521,19 @@ if (rightVentPipe) rightVentPipe.position.set(0, 0, -1.15);
 const deskEmbellishments = rightLoungeReference.getObjectByName('CodingDeskEmbellishments');
 if (deskEmbellishments) deskEmbellishments.position.set(-0.63, 0, 0.45);
 const loungeForegroundAccents = rightLoungeReference.getObjectByName('LoungeForegroundAccents');
-if (loungeForegroundAccents) loungeForegroundAccents.position.set(-2.4, 0, -0.85);
+if (loungeForegroundAccents) loungeForegroundAccents.position.set(-1.6, 0, 0.25);
 const patternedRugOverlay = rightLoungeReference.getObjectByName('PatternedRugOverlay');
 if (patternedRugOverlay) patternedRugOverlay.scale.x = 5.7;
 const loungeMusic = rightLoungeReference.getObjectByName('LoungeGuitarAndAmp');
 let referenceGuitar = null;
 if (loungeMusic) {
-  loungeMusic.position.set(-8.32, 0, 5.3);
+  loungeMusic.position.set(-8.45, 0, 5.45);
   loungeMusic.scale.setScalar(1);
   referenceGuitar = loungeMusic.getObjectByName('RustElectricGuitar');
   if (referenceGuitar) {
     referenceGuitar.position.x += 1.3;
     referenceGuitar.position.z += 0.9;
-    referenceGuitar.scale.setScalar(1.8);
+    referenceGuitar.scale.setScalar(1.35);
     referenceGuitar.traverse((child) => {
       if (!child.isMesh) return;
       child.material = child.material.clone();
@@ -2513,12 +2547,59 @@ if (loungeMusic) {
     });
   }
   const referenceAmp = loungeMusic.getObjectByName('GuitarAmpCabinet')?.parent;
-  if (referenceAmp && referenceAmp !== loungeMusic) referenceAmp.scale.setScalar(1.2);
+  if (referenceAmp && referenceAmp !== loungeMusic) referenceAmp.scale.setScalar(1.0);
   loungeMusic.traverse((child) => {
     if (child.isMesh || child.isInstancedMesh) child.userData.noAutoBatch = true;
   });
 }
 referenceSetDressing.add(rightLoungeReference);
+
+function consolidateReferenceStaticMeshes(root, batchPrefix) {
+  for (const child of [...root.children]) {
+    if (!child.userData.manualBatchOutput || child.userData.batchPrefix !== batchPrefix) continue;
+    root.remove(child);
+    child.geometry?.dispose();
+  }
+  root.traverse((object) => {
+    if (object.userData.manualBatchSourcePrefix === batchPrefix) object.visible = true;
+  });
+  root.updateMatrixWorld(true);
+  const rootInverse = root.matrixWorld.clone().invert();
+  const materialGroups = new Map();
+  root.traverse((object) => {
+    if (!object.isMesh || object.isInstancedMesh || !object.visible || Array.isArray(object.material) || object.userData.manualBatchOutput) return;
+    if (!object.geometry?.attributes?.position || object.material.transparent) return;
+    const key = object.material.uuid;
+    if (!materialGroups.has(key)) materialGroups.set(key, { material: object.material, meshes: [] });
+    materialGroups.get(key).meshes.push(object);
+  });
+  let batchIndex = 0;
+  for (const { material, meshes } of materialGroups.values()) {
+    if (meshes.length < 2) continue;
+    const geometries = meshes.map((mesh) => {
+      const geometry = mesh.geometry.clone();
+      geometry.applyMatrix4(rootInverse.clone().multiply(mesh.matrixWorld));
+      return geometry;
+    });
+    const merged = mergeGeometries(geometries, false);
+    geometries.forEach((geometry) => geometry.dispose());
+    if (!merged) continue;
+    const batch = new THREE.Mesh(merged, material);
+    batch.name = `${batchPrefix}-${++batchIndex}`;
+    batch.castShadow = false;
+    batch.receiveShadow = false;
+    batch.userData.noAutoBatch = true;
+    batch.userData.manualBatchOutput = true;
+    batch.userData.batchPrefix = batchPrefix;
+    batch.userData.sourceMeshes = meshes;
+    root.add(batch);
+    meshes.forEach((mesh) => {
+      mesh.userData.manualBatchSourcePrefix = batchPrefix;
+      mesh.visible = false;
+    });
+  }
+  return batchIndex;
+}
 
 const compositionDensityFill = createCompositionDensityFill({
   shadows: false,
@@ -2528,9 +2609,54 @@ const compositionDensityFill = createCompositionDensityFill({
 });
 referenceSetDressing.add(compositionDensityFill);
 const densityUpperBand = compositionDensityFill.getObjectByName('UpperCenterBackWallShelfAndDuctBand');
-if (densityUpperBand) densityUpperBand.position.y = -0.28;
+if (densityUpperBand) {
+  densityUpperBand.position.set(1.1, -0.84, 0);
+  densityUpperBand.scale.set(1.4, 1.2, 1);
+}
 const densityCabinet = compositionDensityFill.getObjectByName('LowEquipmentCabinetToolCase');
 if (densityCabinet) densityCabinet.position.set(-0.35, 0, -0.2);
+const centralPegboard = compositionDensityFill.getObjectByName('CentralWorkbenchPegboard');
+if (centralPegboard) {
+  const pegCanvas = document.createElement('canvas');
+  pegCanvas.width = 1024;
+  pegCanvas.height = 512;
+  const context = pegCanvas.getContext('2d');
+  context.fillStyle = '#302d29';
+  context.fillRect(0, 0, pegCanvas.width, pegCanvas.height);
+  context.fillStyle = '#5a554c';
+  for (let y = 24; y < 500; y += 28) for (let x = 22; x < 1010; x += 28) {
+    context.beginPath(); context.arc(x, y, 3.3, 0, Math.PI * 2); context.fill();
+  }
+  context.strokeStyle = '#c0c5bf'; context.fillStyle = '#c0c5bf'; context.lineWidth = 7; context.lineCap = 'round';
+  const tools = Array.from({ length: 13 }, (_, index) => {
+    const x = 70 + index * 72;
+    return [x, 92 + (index % 3) * 24, x + (index % 2 ? 11 : -9), 320 + (index % 4) * 17];
+  });
+  tools.forEach(([x1, y1, x2, y2], index) => {
+    context.beginPath(); context.moveTo(x1, y1); context.lineTo(x2, y2); context.stroke();
+    context.lineWidth = 11; context.beginPath(); context.moveTo(x1 - 12, y1 + 8); context.lineTo(x1 + 12, y1 - 8); context.stroke(); context.lineWidth = 7;
+    context.fillStyle = index % 2 ? '#d85a38' : '#d39a42'; context.fillRect(x2 - 9, y2 - 3, 18, 62); context.fillStyle = '#c0c5bf';
+  });
+  context.strokeStyle = '#7dd2df'; context.lineWidth = 3; context.strokeRect(34, 32, 956, 444);
+  context.font = 'bold 28px monospace'; context.fillStyle = '#e5c078'; context.fillText('ROBOTICS / FABRICATION', 54, 70);
+  context.font = '20px monospace'; context.fillStyle = '#8cb8bd'; context.fillText('CALIBRATE  •  REPAIR  •  TEST', 590, 466);
+  const pegTexture = new THREE.CanvasTexture(pegCanvas);
+  pegTexture.colorSpace = THREE.SRGBColorSpace;
+  pegTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  pegTexture.name = 'central-workbench-detailed-pegboard';
+  centralPegboard.material = new THREE.MeshStandardMaterial({
+    name: 'CentralWorkbenchDetailedPegboard', map: pegTexture, roughness: 0.82, metalness: 0.04
+  });
+}
+const centralWorkbenchTop = compositionDensityFill.getObjectByName('CentralWorkbenchTop');
+if (centralWorkbenchTop) {
+  centralWorkbenchTop.material = new THREE.MeshStandardMaterial({
+    name: 'CentralWorkbenchProceduralWood', color: 0xa36a3e,
+    map: floorTextures.map, bumpMap: floorTextures.bumpMap, bumpScale: 0.075,
+    roughness: 0.70, metalness: 0.02
+  });
+}
+const densityManualBatchCount = consolidateReferenceStaticMeshes(compositionDensityFill, 'CompositionDensityMaterialBatch');
 const densityRawRuntime = compositionDensityFill.userData.referenceRuntime;
 const compositionFillRuntime = {
   model: 'reference-composition-density-fill-v1',
@@ -2549,6 +2675,59 @@ const compositionFillRuntime = {
   practicalLights: densityRawRuntime.counts.lightCount,
   anchors: densityRawRuntime.anchors,
   constraints: densityRawRuntime.constraints
+};
+
+const strictReferenceDetailFill = createStrictReferenceDetailFill({
+  shadows: false,
+  lights: !legacyAoMode,
+  lightIntensity: 1.1,
+  warm: 0xff9f55,
+  cyan: 0x56d9ff
+});
+const strictLeftBooster = strictReferenceDetailFill.getObjectByName('LeftWorkbenchPegboardBooster');
+if (strictLeftBooster) {
+  strictLeftBooster.position.add(new THREE.Vector3(0.3, 0.2, 0.4));
+  strictLeftBooster.rotation.y = 0.12;
+  strictLeftBooster.scale.setScalar(1.25);
+}
+const strictLoungeBooster = strictReferenceDetailFill.getObjectByName('ForegroundLoungeBooster');
+const duplicateRustBeanbag = strictReferenceDetailFill.getObjectByName('RustBeanbagAssembly');
+if (duplicateRustBeanbag) duplicateRustBeanbag.scale.setScalar(0.001);
+if (strictLoungeBooster) {
+  strictLoungeBooster.position.add(new THREE.Vector3(0, 0, 1.0));
+  strictLoungeBooster.rotation.y = 0.21;
+  strictLoungeBooster.scale.setScalar(1.15);
+}
+const strictRightBooster = strictReferenceDetailFill.getObjectByName('RightWorkstationBooster');
+if (strictRightBooster) {
+  strictRightBooster.position.add(new THREE.Vector3(-0.35, 0, -0.35));
+  strictRightBooster.rotation.y = -0.21;
+  strictRightBooster.scale.set(1.05, 0.82, 1.24);
+}
+consolidateReferenceStaticMeshes(strictReferenceDetailFill, 'StrictDetailMaterialBatch');
+referenceSetDressing.add(strictReferenceDetailFill);
+const strictRawRuntime = strictReferenceDetailFill.userData.referenceRuntime;
+const strictCounts = strictRawRuntime.counts;
+const strictDetailRuntime = {
+  model: strictRawRuntime.model,
+  clusters: strictRawRuntime.constraints.clusterCount,
+  workbench: {
+    toolSilhouettes: strictCounts.drills + strictCounts.wrenches + strictCounts.solderStations + strictCounts.hangingLeads,
+    partsBins: strictCounts.partsBins,
+    cableReel: strictCounts.cableReels > 0
+  },
+  lounge: {
+    beanbag: strictCounts.beanbags > 0,
+    accessories: strictCounts.sideCrates + strictCounts.readingStacks + strictCounts.mugs + strictCounts.headphones + strictCounts.beanbags,
+    floorCable: strictCounts.floorCableCoils > 0
+  },
+  workstation: {
+    extraMonitors: strictCounts.secondMonitors,
+    speakers: strictCounts.speakerPairs * 2,
+    cableBundle: strictCounts.cableBundles > 0
+  },
+  practicalLights: strictCounts.pointLights,
+  raw: strictRawRuntime
 };
 
 const upperLeftServiceBand = new THREE.Group();
@@ -2629,7 +2808,7 @@ for (const [name, x, z, width, depth] of [
   ['WorkbenchContact', -6.0, -1.5, 1.1, 3.8],
   ['CodingDeskContact', 5.55, -0.85, 1.5, 3.9],
   ['TestBenchContact', 1.6, -6.05, 3.5, 1.0],
-  ['LoungeContact', 1.6, 4.3, 4.8, 3.0]
+  ['LoungeContact', 2.4, 5.4, 4.8, 3.0]
 ]) {
   const patch = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), contactPatchMaterial);
   patch.name = name;
@@ -2651,7 +2830,8 @@ const referenceMatchRuntime = {
     centralRobotBay: centralRobotBay.userData.referenceRuntime,
     leftWorkshop: leftWorkshopReference.userData.referenceRuntime,
     rightLounge: rightLoungeReference.userData.referenceRuntime,
-    compositionFill: compositionFillRuntime
+    compositionFill: compositionFillRuntime,
+    strictDetail: strictDetailRuntime
   },
   identityFeatures: [
     'hazard-platform',
@@ -2668,7 +2848,8 @@ const referenceMatchRuntime = {
     'blue-lit-beverage-fridge',
     'coffee-station',
     'vent-pipe',
-    'upper-center-density-fill'
+    'upper-center-density-fill',
+    'strict-reference-detail-fill'
   ],
   targetPalette: ['warm-amber', 'cyan-blue', 'warning-red', 'dark-brick', 'warm-wood']
 };
@@ -2833,7 +3014,7 @@ for (let i = 0; i < 4; i++) {
 marker.position.y = 0.025;
 scene.add(marker);
 
-scene.add(new THREE.HemisphereLight(0x74849a, 0x170c08, 0.28));
+scene.add(new THREE.HemisphereLight(0x74849a, 0x170c08, 0.18));
 const key = new THREE.DirectionalLight(0xffe5d1, 4.2);
 key.position.set(3.5, 9, 5);
 key.target.position.set(0, 0, -1);
@@ -2845,10 +3026,10 @@ key.shadow.camera.top = 9;
 key.shadow.camera.bottom = -9;
 key.shadow.bias = -0.00025;
 scene.add(key, key.target);
-const redRim = new THREE.PointLight(0xff392d, 26, 8, 2);
+const redRim = new THREE.PointLight(0xff392d, 14, 7, 2);
 redRim.position.set(-3, 2.5, -3.5);
 scene.add(redRim);
-const rearLeftRedPractical = new THREE.PointLight(0xff3227, 16.5, 5.8, 2);
+const rearLeftRedPractical = new THREE.PointLight(0xff3227, 9.5, 5.2, 2);
 rearLeftRedPractical.name = 'RearLeftDoorWorkshopRedPractical';
 rearLeftRedPractical.position.set(-5.75, 3.85, -3.85);
 scene.add(rearLeftRedPractical);
@@ -3133,6 +3314,7 @@ const lightingRuntime = {
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const clock = new THREE.Clock();
+let editorController = null;
 const target = new THREE.Vector3();
 const screenPoint = new THREE.Vector3();
 const motion = {
@@ -3548,6 +3730,42 @@ function finishTask() {
   setStatus('READY');
 }
 
+function cancelGameplayForEditing() {
+  motion.phase = 'idle';
+  motion.journey = null;
+  motion.stairMove = null;
+  motion.turnPurpose = 'travel';
+  target.set(cubeRig.position.x, 0, cubeRig.position.z);
+  marker.visible = false;
+
+  task.active = false;
+  task.station = null;
+  task.startedAt = 0;
+  task.progress = 0;
+  workProgress.hidden = true;
+  workLabel.textContent = 'TASK';
+  workPercent.textContent = '0%';
+  workProgressFill.style.width = '0%';
+
+  stairClimbState.active = false;
+  stairClimbState.completed = false;
+  stairClimbState.descentCompleted = false;
+  stairClimbState.moveIndex = -1;
+  stairClimbState.stepProgress = 0;
+  stairClimbState.moves = [];
+  stairClimbState.swingTarget = null;
+
+  robotSitProgress = 0;
+  robotSitStartedAt = 0;
+  robotStandStartProgress = 0;
+  robotStandFrames = 0;
+  robotAnimationState = 'idle';
+  cubeRig.position.y = 0;
+  resetCubePose();
+  contactShadow.visible = true;
+  networkEventState.workAnimation = false;
+}
+
 const configuredEventPort = new URLSearchParams(window.location.search).get('eventPort') || '8000';
 const eventApiUrl = `${window.location.protocol}//${window.location.hostname}:${configuredEventPort}/event`;
 ledMatrixState.endpoint = eventApiUrl;
@@ -3645,6 +3863,10 @@ function updatePointer(event) {
 }
 
 function onPointerDown(event) {
+  if (editorController?.active) {
+    editorController.pointerDown(event);
+    return;
+  }
   updatePointer(event);
   const station = getHitStation();
   if (station) {
@@ -3668,11 +3890,23 @@ function onPointerDown(event) {
 }
 
 function onPointerMove(event) {
+  if (editorController?.active) {
+    if (editorController.pointerMove(event)) return;
+    updatePointer(event);
+    canvas.style.cursor = editorController.transformControls.axis ? 'grabbing' : 'pointer';
+    return;
+  }
   updatePointer(event);
   canvas.style.cursor = (getHitStation() || getHitDoor() || getHitCouch()) ? 'pointer' : 'crosshair';
 }
 canvas.addEventListener('pointerdown', onPointerDown);
 canvas.addEventListener('pointermove', onPointerMove);
+canvas.addEventListener('pointerup', event => {
+  if (editorController?.active) editorController.pointerUp(event);
+});
+canvas.addEventListener('pointercancel', event => {
+  if (editorController?.active) editorController.pointerUp(event);
+});
 
 function resize() {
   const width = window.innerWidth;
@@ -3706,14 +3940,22 @@ function resize() {
     camera.fov = 33;
     camera.position.set(1.6, 2.8, 0.4);
     camera.lookAt(1.6, 1.32, -6.12);
+  } else if (pageParams.get('camTop') === '1') {
+    camera.fov = 41;
+    camera.position.set(9.8, 9.7, 13.4);
+    camera.lookAt(-0.35, 0.72, 0.05);
+  } else if (pageParams.get('camLow') === '1') {
+    camera.fov = 39;
+    camera.position.set(9.8, 7.4, 13.4);
+    camera.lookAt(-0.35, 0.75, 0.1);
   } else if (width < 700) {
     camera.fov = 48;
     camera.position.set(9.8, 10.2, 15.5);
     camera.lookAt(0, 0.6, -1.2);
   } else {
     camera.fov = 41;
-    camera.position.set(9.8, 8.6, 13.4);
-    camera.lookAt(-0.35, 0.8, 0.15);
+    camera.position.set(9.8, 8.9, 13.4);
+    camera.lookAt(-0.35, 0.78, 0.12);
   }
   camera.updateProjectionMatrix();
 }
@@ -4155,6 +4397,7 @@ function rebatchStaticMeshes() {
     batch.renderOrder = first.renderOrder;
     batch.layers.mask = first.layers.mask;
     batch.userData.autoBatchOutput = true;
+    batch.userData.sourceMeshes = meshes;
     staticBatchRoot.add(batch);
 
     for (const mesh of meshes) {
@@ -4175,6 +4418,480 @@ function rebatchStaticMeshes() {
 }
 
 rebatchStaticMeshes();
+
+function createSceneEditor() {
+  const additionalSemanticNames = [
+    'CoffeeTable', 'SoftwareTaskLamp', 'Oscilloscope', 'ElectricalPanel',
+    'RustElectricGuitar', 'LoungeGuitarAndAmp', 'GuitarAmpCabinet',
+    'CharcoalBeanbag', 'BlueLitBeverageFridge', 'TallRightWallPlant',
+    'StockedCyanShelfUnit', 'DeskHeadphonesWithStand', 'RustCodingMug',
+    'DensePegboardToolWall', 'CompactOscilloscope', 'HangingTaskLampAndOrangeHoist',
+    'CentralWorkbenchRun', 'ReferenceWorkstationSwivelChair', 'CoffeeTableStoryProps'
+  ];
+  const namedEditableRoots = [
+    workbench, desk, testBench, lounge, coffeeTable, loungeFloorLamp,
+    taskLamp, oscilloscope, electricalPanel,
+    centralRobotBay, referencePartsCart, leftWorkshopReference,
+    rightLoungeReference, compositionDensityFill, strictReferenceDetailFill,
+    buildDebugSign, todoBoard,
+    centralRobotBay.getObjectByName('CentralRobotPlatform'),
+    compositionDensityFill.getObjectByName('CentralWorkbenchRun'),
+    strictLeftBooster, strictRightBooster, strictLoungeBooster,
+    ...additionalSemanticNames.map(name => scene.getObjectByName(name))
+  ].filter(Boolean);
+  const roots = [...new Set(namedEditableRoots)];
+  const rootSet = new Set(roots);
+  for (const root of roots) root.userData.editorRoot = true;
+
+  const transformControls = new TransformControls(camera, renderer.domElement);
+  transformControls.disconnect();
+  renderer.domElement.style.touchAction = 'none';
+  transformControls.setSpace('world');
+  transformControls.setSize(0.82);
+  const transformHelper = transformControls.getHelper();
+  transformHelper.name = 'SceneEditorTransformGizmo';
+  transformHelper.visible = false;
+  const retainNamedHandles = (group, names) => {
+    if (!group) return;
+    for (const child of [...group.children]) {
+      if (!names.includes(child.name)) group.remove(child);
+    }
+  };
+  const transformGizmo = transformControls._gizmo;
+  if (!transformGizmo?.gizmo?.translate || !transformGizmo?.picker?.translate
+    || !transformGizmo?.gizmo?.rotate || !transformGizmo?.picker?.rotate
+    || !transformGizmo?.gizmo?.scale || !transformGizmo?.picker?.scale) {
+    throw new Error('Incompatible Three.js TransformControls gizmo structure');
+  }
+  retainNamedHandles(transformGizmo.gizmo.translate, ['X', 'Y', 'Z']);
+  retainNamedHandles(transformGizmo.picker.translate, ['X', 'Y', 'Z']);
+  retainNamedHandles(transformGizmo.gizmo.scale, ['XYZ']);
+  retainNamedHandles(transformGizmo.picker.scale, ['XYZ']);
+  retainNamedHandles(transformGizmo.gizmo.rotate, ['X', 'Y', 'Z']);
+  retainNamedHandles(transformGizmo.picker.rotate, ['X', 'Y', 'Z']);
+  scene.add(transformHelper);
+  const selectionBox = new THREE.BoxHelper(new THREE.Object3D(), 0x67dff2);
+  selectionBox.name = 'SceneEditorSelectionOutline';
+  selectionBox.material.depthTest = false;
+  selectionBox.material.transparent = true;
+  selectionBox.material.opacity = 0.9;
+  selectionBox.renderOrder = 999;
+  selectionBox.visible = false;
+  scene.add(selectionBox);
+
+  const state = {
+    active: false,
+    mode: 'translate',
+    selected: null,
+    dragging: false,
+    nativeDrag: null,
+    uniformScaleDrag: null,
+    explodedBatches: 0,
+    manualBatchRoots: new Map(),
+    changed: new Map()
+  };
+
+  const objectLabel = object => object?.name || `Object-${object?.id ?? 'unknown'}`;
+  const isVisibleInHierarchy = object => {
+    for (let current = object; current; current = current.parent) {
+      if (!current.visible) return false;
+    }
+    return true;
+  };
+  const semanticRootFor = object => {
+    for (let current = object; current; current = current.parent) {
+      if (rootSet.has(current)) return current;
+    }
+    return null;
+  };
+  const explodeAutoBatchesFor = root => {
+    let exploded = 0;
+    for (const batch of staticBatchRoot.children) {
+      const sources = batch.userData.sourceMeshes || [];
+      if (!sources.some(mesh => hasAncestor(mesh, root))) continue;
+      batch.visible = false;
+      for (const mesh of sources) mesh.visible = true;
+      exploded += 1;
+    }
+    state.explodedBatches = exploded;
+  };
+  const explodeManualBatchesFor = selectedRoot => {
+    scene.traverse((object) => {
+      if (!object.userData.manualBatchOutput) return;
+      const sources = object.userData.sourceMeshes || [];
+      if (!sources.some(mesh => hasAncestor(mesh, selectedRoot))) return;
+      object.visible = false;
+      for (const mesh of sources) mesh.visible = true;
+      state.manualBatchRoots.set(object.parent.uuid, {
+        root: object.parent,
+        prefix: object.userData.batchPrefix
+      });
+    });
+  };
+  const rebuildExplodedManualBatches = () => {
+    for (const { root, prefix } of state.manualBatchRoots.values()) {
+      consolidateReferenceStaticMeshes(root, prefix);
+    }
+    state.manualBatchRoots.clear();
+  };
+  const vectorPayload = vector => ({
+    x: Number(vector.x.toFixed(5)),
+    y: Number(vector.y.toFixed(5)),
+    z: Number(vector.z.toFixed(5))
+  });
+  const transformFor = object => object ? {
+    position: vectorPayload(object.position),
+    rotation: vectorPayload(object.rotation),
+    scale: vectorPayload(object.scale)
+  } : null;
+  const originalTransforms = new Map(roots.map(object => [object, transformFor(object)]));
+  const transformsEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+  const rememberTransform = object => {
+    if (!object) return;
+    const current = transformFor(object);
+    if (transformsEqual(current, originalTransforms.get(object))) state.changed.delete(object);
+    else state.changed.set(object, current);
+  };
+  const applyDelta = (mode, axis, amount) => {
+    if (!state.active || !state.selected || !Number.isFinite(Number(amount))) return false;
+    const delta = Number(amount);
+    setMode(mode);
+    if (mode === 'translate' && ['X', 'Y', 'Z'].includes(axis)) {
+      state.selected.position[axis.toLowerCase()] += delta;
+    } else if (mode === 'rotate' && ['X', 'Y', 'Z'].includes(axis)) {
+      state.selected.rotation[axis.toLowerCase()] += delta;
+    } else if (mode === 'scale' && axis === 'XYZ') {
+      state.selected.scale.setScalar(THREE.MathUtils.clamp(state.selected.scale.x + delta, 0.05, 8));
+    } else {
+      return false;
+    }
+    state.selected.updateMatrixWorld(true);
+    selectionBox.setFromObject(state.selected);
+    rememberTransform(state.selected);
+    refreshUi();
+    return true;
+  };
+  const serialize = () => ({
+    schema: 'raycast-room-layout/v1',
+    coordinateSpace: 'local-to-parent',
+    angleUnits: 'radians-and-degrees',
+    objects: [...state.changed.entries()].map(([object, transform]) => {
+      const name = objectLabel(object);
+      return {
+        name,
+        parent: object?.parent?.name || null,
+        position: transform.position,
+        rotationRadians: transform.rotation,
+        rotationDegrees: {
+          x: Number(THREE.MathUtils.radToDeg(transform.rotation.x).toFixed(3)),
+          y: Number(THREE.MathUtils.radToDeg(transform.rotation.y).toFixed(3)),
+          z: Number(THREE.MathUtils.radToDeg(transform.rotation.z).toFixed(3))
+        },
+        scale: transform.scale
+      };
+    })
+  });
+  const refreshUi = () => {
+    editModeToggle.setAttribute('aria-pressed', String(state.active));
+    editModeToggle.textContent = state.active ? 'EXIT EDIT' : 'EDIT MODE';
+    editorModeButtons.hidden = !state.active;
+    editorSelection.hidden = !state.active;
+    editorSelection.textContent = state.selected
+      ? `${objectLabel(state.selected)} · ${state.mode.toUpperCase()}`
+      : 'SELECT AN OBJECT';
+    for (const button of editorModeButtons.querySelectorAll('[data-editor-mode]')) {
+      button.classList.toggle('is-active', button.dataset.editorMode === state.mode);
+    }
+    document.body.classList.toggle('editor-active', state.active);
+  };
+  const applyScaleHandleVisibility = () => {
+    if (state.mode !== 'scale') return;
+    transformHelper.traverse((child) => {
+      if (['X', 'Y', 'Z', 'XY', 'YZ', 'XZ'].includes(child.name)) child.visible = false;
+    });
+  };
+  const setMode = mode => {
+    if (!['translate', 'rotate', 'scale'].includes(mode)) return;
+    if (state.dragging && mode !== state.mode) finishActiveDrag(null, true);
+    state.mode = mode;
+    transformControls.setMode(mode);
+    transformControls.axis = null;
+    if (state.selected) transformHelper.visible = true;
+    applyScaleHandleVisibility();
+    refreshUi();
+  };
+  const select = object => {
+    if (state.selected !== object) {
+      transformControls.detach();
+      rebuildExplodedManualBatches();
+      rebatchStaticMeshes();
+      state.explodedBatches = 0;
+    }
+    state.selected = object;
+    if (object) {
+      explodeAutoBatchesFor(object);
+      explodeManualBatchesFor(object);
+      transformControls.attach(object);
+      selectionBox.setFromObject(object);
+      selectionBox.visible = true;
+      transformHelper.visible = true;
+      setMode(state.mode);
+      setStatus(`EDIT ${objectLabel(object).toUpperCase()}`);
+    } else {
+      transformControls.detach();
+      transformHelper.visible = false;
+      selectionBox.visible = false;
+      setStatus('EDIT MODE');
+    }
+    refreshUi();
+  };
+  const enter = () => {
+    if (state.active) return;
+    staticBatchState.enabled = true;
+    state.active = true;
+    cancelGameplayForEditing();
+    setStatus('EDIT MODE');
+    refreshUi();
+  };
+  const exit = () => {
+    if (!state.active) return;
+    finishActiveDrag(null, true);
+    select(null);
+    state.active = false;
+    staticBatchState.enabled = true;
+    setStatus('READY');
+    canvas.style.cursor = 'crosshair';
+    layoutExport.hidden = true;
+    refreshUi();
+  };
+  const controlPointerFor = event => {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      button: event.button
+    };
+  };
+  const capturePointer = pointerId => {
+    try { canvas.setPointerCapture?.(pointerId); } catch { /* synthetic pointer events are not capturable */ }
+  };
+  const releasePointer = pointerId => {
+    try {
+      if (canvas.hasPointerCapture?.(pointerId)) canvas.releasePointerCapture(pointerId);
+    } catch { /* pointer may already be released */ }
+  };
+  const finishActiveDrag = (event = null, cancel = false) => {
+    if (state.uniformScaleDrag) {
+      const { pointerId, startScale, object } = state.uniformScaleDrag;
+      if (cancel && object) {
+        object.scale.setScalar(startScale);
+        object.updateMatrixWorld(true);
+        selectionBox.setFromObject(object);
+        rememberTransform(object);
+      }
+      releasePointer(pointerId);
+      state.uniformScaleDrag = null;
+      state.dragging = false;
+      canvas.style.cursor = 'pointer';
+      return true;
+    }
+    if (state.nativeDrag || transformControls.dragging) {
+      const pointerId = state.nativeDrag?.pointerId;
+      if (cancel) transformControls.reset();
+      transformControls.pointerUp(null);
+      releasePointer(pointerId);
+      state.nativeDrag = null;
+      state.dragging = false;
+      canvas.style.cursor = 'pointer';
+      return true;
+    }
+    return false;
+  };
+  const pointerDown = event => {
+    const controlPointer = controlPointerFor(event);
+    transformControls.pointerHover(controlPointer);
+    if (state.mode === 'scale' && state.selected && transformControls.axis === 'XYZ') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      state.uniformScaleDrag = {
+        startY: event.clientY,
+        startScale: state.selected.scale.x,
+        pointerId: event.pointerId,
+        object: state.selected
+      };
+      capturePointer(event.pointerId);
+      state.dragging = true;
+      canvas.style.cursor = 'ns-resize';
+      return;
+    }
+    if (transformControls.axis && state.selected) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      transformControls.pointerDown(controlPointer);
+      if (transformControls.dragging) {
+        state.nativeDrag = { pointerId: event.pointerId, object: state.selected };
+        capturePointer(event.pointerId);
+      }
+      return;
+    }
+    if (state.dragging) return;
+    updatePointer(event);
+    const hits = raycaster.intersectObjects(roots, true);
+    const hit = hits.find(candidate => semanticRootFor(candidate.object));
+    select(hit ? semanticRootFor(hit.object) : null);
+  };
+  const pointerMove = event => {
+    if (state.uniformScaleDrag && state.selected) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const factor = Math.exp((state.uniformScaleDrag.startY - event.clientY) * 0.012);
+      const scale = THREE.MathUtils.clamp(state.uniformScaleDrag.startScale * factor, 0.05, 8);
+      state.selected.scale.setScalar(scale);
+      state.selected.updateMatrixWorld(true);
+      selectionBox.setFromObject(state.selected);
+      rememberTransform(state.selected);
+      refreshUi();
+      return true;
+    }
+    const controlPointer = controlPointerFor(event);
+    if (transformControls.dragging) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      transformControls.pointerMove(controlPointer);
+      return true;
+    }
+    transformControls.pointerHover(controlPointer);
+    return false;
+  };
+  const pointerUp = event => {
+    const handled = finishActiveDrag(event, event.type === 'pointercancel');
+    if (handled) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    return handled;
+  };
+  const gizmoHandleNames = mode => [...new Set(
+    (transformGizmo.gizmo[mode]?.children || []).map(child => child.name).filter(Boolean)
+  )];
+  const objectScreen = name => {
+    const object = roots.find(candidate => candidate.name === name);
+    if (!object) return null;
+    object.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(object);
+    const point = box.isEmpty() ? object.getWorldPosition(new THREE.Vector3()) : box.getCenter(new THREE.Vector3());
+    point.project(camera);
+    return {
+      x: (point.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-point.y * 0.5 + 0.5) * window.innerHeight
+    };
+  };
+
+  transformControls.addEventListener('dragging-changed', event => { state.dragging = event.value; });
+  transformControls.addEventListener('objectChange', () => {
+    if (state.mode === 'scale' && state.selected) {
+      const uniform = THREE.MathUtils.clamp((state.selected.scale.x + state.selected.scale.y + state.selected.scale.z) / 3, 0.05, 8);
+      state.selected.scale.setScalar(uniform);
+    }
+    rememberTransform(state.selected);
+    if (state.selected) selectionBox.setFromObject(state.selected);
+    applyScaleHandleVisibility();
+    refreshUi();
+  });
+  editModeToggle.addEventListener('click', () => state.active ? exit() : enter());
+  editorModeButtons.addEventListener('click', event => {
+    const button = event.target.closest('[data-editor-mode]');
+    if (button) setMode(button.dataset.editorMode);
+  });
+  saveLayoutButton.addEventListener('click', () => {
+    layoutJson.value = JSON.stringify(serialize(), null, 2);
+    layoutExport.hidden = false;
+  });
+  closeLayoutExportButton.addEventListener('click', () => { layoutExport.hidden = true; });
+  copyLayoutJsonButton.addEventListener('click', async () => {
+    if (!layoutJson.value) layoutJson.value = JSON.stringify(serialize(), null, 2);
+    let resetDelay = 1200;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(layoutJson.value);
+      copyLayoutJsonButton.textContent = 'COPIED';
+    } catch {
+      copyLayoutJsonButton.textContent = 'COPY FAILED';
+      setStatus('COPY FAILED');
+      resetDelay = 4000;
+    }
+    window.setTimeout(() => { copyLayoutJsonButton.textContent = 'COPY JSON'; }, resetDelay);
+  });
+  window.addEventListener('keydown', event => {
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+    if (event.key === 'Escape' && state.active) {
+      event.preventDefault();
+      exit();
+      return;
+    }
+    if (!state.active || !state.selected) return;
+    const mode = { m: 'translate', r: 'rotate', s: 'scale' }[event.key.toLowerCase()];
+    if (mode) {
+      event.preventDefault();
+      setMode(mode);
+    }
+  });
+
+  refreshUi();
+  return {
+    get active() { return state.active; },
+    transformControls,
+    pointerDown,
+    pointerMove,
+    pointerUp,
+    enter,
+    exit,
+    select,
+    setMode,
+    objectScreen,
+    originScreen: () => {
+      if (!state.selected) return null;
+      const point = state.selected.getWorldPosition(new THREE.Vector3()).project(camera);
+      return {
+        x: (point.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-point.y * 0.5 + 0.5) * window.innerHeight
+      };
+    },
+    axisGuideScreen: axis => {
+      if (!state.selected || !['X', 'Y', 'Z'].includes(axis)) return null;
+      const origin = state.selected.getWorldPosition(new THREE.Vector3());
+      const endpoint = origin.clone();
+      endpoint[axis.toLowerCase()] += 1.8;
+      const project = point => {
+        point.project(camera);
+        return {
+          x: (point.x * 0.5 + 0.5) * window.innerWidth,
+          y: (-point.y * 0.5 + 0.5) * window.innerHeight
+        };
+      };
+      return { origin: project(origin), endpoint: project(endpoint) };
+    },
+    transformFor: name => transformFor(roots.find(candidate => candidate.name === name)),
+    applyDelta,
+    serialize,
+    snapshot: () => ({
+      active: state.active,
+      selected: state.selected ? objectLabel(state.selected) : null,
+      mode: state.mode,
+      handles: state.mode === 'translate' && state.selected ? gizmoHandleNames('translate') : [],
+      rotationArcs: state.mode === 'rotate' && state.selected ? gizmoHandleNames('rotate') : [],
+      uniformScaleOnly: state.mode === 'scale' && gizmoHandleNames('scale').join(',') === 'XYZ',
+      dragging: state.dragging,
+      hoveredAxis: transformControls.axis,
+      explodedBatches: state.explodedBatches,
+      batchingStrategy: 'selective-source-explode',
+      editableObjects: roots.map(objectLabel),
+      changedObjects: [...state.changed.keys()].map(objectLabel)
+    })
+  };
+}
+
+editorController = createSceneEditor();
 
 function countVisibleGeometryVertices() {
   let vertices = 0;
@@ -4261,7 +4978,7 @@ function animate(timestamp) {
   key.target.position.set(cubeRig.position.x, cubeRig.position.y, cubeRig.position.z - 1);
   key.target.updateMatrixWorld();
   markerRing.material.opacity = marker.visible ? 0.55 + Math.sin(now * 4) * 0.22 : 0;
-  redRim.intensity = 25 + Math.sin(now * 0.8) * 2;
+  redRim.intensity = 13.5 + Math.sin(now * 0.8) * 1.5;
   if (composer) composer.render();
   else renderer.render(scene, camera);
   updatePerformanceMetrics(timestamp);
@@ -4327,6 +5044,12 @@ window.__ROOM__ = {
   ready: true,
   rebatchStaticMeshes,
   inspectAutoBatchRejections,
+  editorObjectScreen: name => editorController.objectScreen(name),
+  editorGizmoOriginScreen: () => editorController.originScreen(),
+  editorAxisGuideScreen: axis => editorController.axisGuideScreen(axis),
+  editorTransform: name => editorController.transformFor(name),
+  applyEditorDelta: (mode, axis, amount) => editorController.applyDelta(mode, axis, amount),
+  serializeEditorLayout: () => editorController.serialize(),
   moveTo: (x, z) => { if (!task.active) beginMove(x, z, { kind: 'floor' }); },
   useWorkbench: () => startStationTask(stationById('workbench')),
   useDesk: () => startStationTask(stationById('desk')),
@@ -4340,7 +5063,8 @@ window.__ROOM__ = {
   referencePropScreens: () => ({
     guitar: objectScreenBounds(referenceGuitar),
     amp: objectScreenBounds(loungeMusic?.getObjectByName('GuitarAmpCabinet')),
-    partsCart: objectScreenBounds(referencePartsCart)
+    partsCart: objectScreenBounds(referencePartsCart),
+    buildSign: objectScreenBounds(buildDebugSign)
   }),
   projectWorld: (x, y, z) => {
     const point = new THREE.Vector3(x, y, z).project(camera);
@@ -4423,6 +5147,7 @@ window.__ROOM__ = {
       drawCalls: performanceMetrics.drawCalls
     },
     batching: { ...staticBatchState },
+    editor: editorController.snapshot(),
     lighting: {
       ...lightingRuntime,
       shadowProjection: {

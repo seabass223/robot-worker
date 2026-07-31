@@ -43,6 +43,21 @@
         <div class="work-progress__meta"><span id="work-label">BENCH TASK</span><strong id="work-percent">0%</strong></div>
         <div class="work-progress__track"><span id="work-progress-fill"></span></div>
       </div>
+      <div class="editor-toolbar" aria-label="Scene edit controls">
+        <button id="edit-mode-toggle" class="editor-button" type="button" aria-pressed="false">EDIT MODE</button>
+        <div id="editor-mode-buttons" class="editor-mode-buttons" hidden>
+          <button class="editor-button" type="button" data-editor-mode="translate" title="Move (M)"><kbd>M</kbd> MOVE</button>
+          <button class="editor-button" type="button" data-editor-mode="rotate" title="Rotate (R)"><kbd>R</kbd> ROTATE</button>
+          <button class="editor-button" type="button" data-editor-mode="scale" title="Uniform scale (S)"><kbd>S</kbd> SCALE</button>
+          <button id="save-layout" class="editor-button editor-button--save" type="button">SAVE JSON</button>
+        </div>
+        <div id="editor-selection" class="editor-selection" hidden>SELECT AN OBJECT</div>
+      </div>
+      <section id="layout-export" class="layout-export" hidden aria-label="Layout JSON export">
+        <div class="layout-export__header"><strong>LAYOUT OVERRIDES</strong><button id="close-layout-export" type="button" aria-label="Close layout export">×</button></div>
+        <textarea id="layout-json" readonly spellcheck="false" aria-label="Serialized layout changes"></textarea>
+        <button id="copy-layout-json" class="editor-button editor-button--save" type="button">COPY JSON</button>
+      </section>
       <canvas id="scene" aria-label="3D room with an articulated red bipedal robot, three workstations, a couch, and an elevated red door. Click the floor to walk, a workstation to begin a task, the couch to sit, or the red door to climb; click the door again at the top to descend."></canvas>
     </main>
     <script type="module" src="/src/main.js"></script>

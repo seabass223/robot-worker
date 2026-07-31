@@ -65,7 +65,7 @@ export function createCentralRobotBay(options = {}) {
       name: 'BayHazardYellow', color: 0xf0bd2f, roughness: 0.54, metalness: 0.22, flatShading: true
     }),
     cyan: new THREE.MeshStandardMaterial({
-      name: 'BayCyanEnergy', color: 0x48cde0, emissive: 0x138da4, emissiveIntensity: 1.45,
+      name: 'BayCyanEnergy', color: 0x48cde0, emissive: 0x138da4, emissiveIntensity: 0.55,
       roughness: 0.22, metalness: 0.18, toneMapped: true
     }),
     cyanDim: new THREE.MeshStandardMaterial({
@@ -128,11 +128,11 @@ export function createCentralRobotBay(options = {}) {
   // Alternating yellow/black segmented keep-clear rim, built as two instanced batches.
   const hazardCount = 24;
   const hazardRadius = radius * 0.935;
-  const hazardRadial = radius * 0.115;
-  const hazardTangent = TAU * hazardRadius / hazardCount * 0.88;
+  const hazardRadial = radius * 0.285;
+  const hazardTangent = TAU * hazardRadius / hazardCount * 0.96;
   const hazardGeometry = new THREE.BoxGeometry(
     hazardRadial,
-    Math.max(height * 0.34, 0.12 * scale),
+    Math.max(height * 0.34, 0.26 * scale),
     hazardTangent
   );
   const yellowTransforms = [];
@@ -140,7 +140,7 @@ export function createCentralRobotBay(options = {}) {
   for (let index = 0; index < hazardCount; index += 1) {
     const angle = index * TAU / hazardCount;
     const transform = {
-      position: [Math.cos(angle) * hazardRadius, Math.max(height * 0.75, 0.06 * scale), Math.sin(angle) * hazardRadius],
+      position: [Math.cos(angle) * hazardRadius, Math.max(height * 0.75, 0.13 * scale), Math.sin(angle) * hazardRadius],
       rotation: [0, -angle, 0]
     };
     (index % 2 === 0 ? yellowTransforms : blackTransforms).push(transform);
@@ -150,7 +150,7 @@ export function createCentralRobotBay(options = {}) {
 
   // Cyan ring lives inside the plate/rim seam and is readable without a real light.
   const energyRing = new THREE.Mesh(
-    new THREE.TorusGeometry(radius * 0.735, radius * 0.018, 8, 64), materials.cyan
+    new THREE.TorusGeometry(radius * 0.735, radius * 0.01, 8, 64), materials.cyan
   );
   energyRing.name = 'CyanInsetEnergyRing';
   energyRing.rotation.x = Math.PI / 2;
