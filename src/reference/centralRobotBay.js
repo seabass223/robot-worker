@@ -130,13 +130,17 @@ export function createCentralRobotBay(options = {}) {
   const hazardRadius = radius * 0.935;
   const hazardRadial = radius * 0.115;
   const hazardTangent = TAU * hazardRadius / hazardCount * 0.88;
-  const hazardGeometry = new THREE.BoxGeometry(hazardRadial, height * 0.34, hazardTangent);
+  const hazardGeometry = new THREE.BoxGeometry(
+    hazardRadial,
+    Math.max(height * 0.34, 0.12 * scale),
+    hazardTangent
+  );
   const yellowTransforms = [];
   const blackTransforms = [];
   for (let index = 0; index < hazardCount; index += 1) {
     const angle = index * TAU / hazardCount;
     const transform = {
-      position: [Math.cos(angle) * hazardRadius, height * 0.92, Math.sin(angle) * hazardRadius],
+      position: [Math.cos(angle) * hazardRadius, Math.max(height * 0.75, 0.06 * scale), Math.sin(angle) * hazardRadius],
       rotation: [0, -angle, 0]
     };
     (index % 2 === 0 ? yellowTransforms : blackTransforms).push(transform);
@@ -262,6 +266,10 @@ export function createCentralRobotBay(options = {}) {
     [0, 0.25 * scale, 0], cart);
   addBox('CartTopTray', [cartWidth, 0.085 * scale, cartDepth], materials.steel,
     [0, cartTopY, 0], cart);
+  addBox('CartHazardIdentityStripe', [cartWidth * 0.74, 0.1 * scale, 0.025 * scale], materials.yellowHazard,
+    [0, cartTopY - 0.06 * scale, cartDepth * 0.51], cart).castShadow = false;
+  addBox('CartLowerHazardStripe', [cartWidth * 0.74, 0.075 * scale, 0.026 * scale], materials.yellowHazard,
+    [0, 0.25 * scale, cartDepth * 0.51], cart).castShadow = false;
   addBox('CartRedDrawerCase', [cartWidth * 0.72, 0.27 * scale, cartDepth * 0.83], materials.red,
     [0, 0.46 * scale, 0], cart);
   for (let index = 0; index < 2; index += 1) {

@@ -169,6 +169,23 @@ test('reference workshop defaults to cinematic practical lighting and complete s
   expect(snapshot.lighting.robotShadowCasters).toBeGreaterThan(20);
 });
 
+test('reference density fill closes the upper-wall and stair-base silhouette gaps', async ({ page }) => {
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  const reference = await page.evaluate(() => window.__ROOM__.snapshot().referenceMatch);
+  const density = reference.zones.compositionFill;
+  expect(density.model).toBe('reference-composition-density-fill-v1');
+  expect(density.upperWall.shelves).toBeGreaterThanOrEqual(3);
+  expect(density.upperWall.stockedProps).toBeGreaterThanOrEqual(16);
+  expect(density.upperWall.hasCurvedDuct).toBeTruthy();
+  expect(density.upperWall.hasCableTray).toBeTruthy();
+  expect(density.stairBase.hasEquipmentCabinet).toBeTruthy();
+  expect(density.stairBase.hasPlant).toBeTruthy();
+  expect(density.stairBase.hasCoiledCable).toBeTruthy();
+  expect(density.practicalLights).toBeGreaterThanOrEqual(2);
+  expect(reference.identityFeatures).toContain('upper-center-density-fill');
+});
+
 test('multi-material plant leaves use consolidated groups without losing semantic plant models', async ({ page }) => {
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
@@ -650,7 +667,7 @@ test('front-right lounge matches the sectional furniture reference', async ({ pa
   await page.waitForFunction(() => window.__ROOM__?.ready);
   const lounge = await page.evaluate(() => window.__ROOM__.snapshot().architecture.lounge);
   expect(lounge.corner).toBe('front-right');
-  expect(lounge.position.x).toBeGreaterThan(2);
+  expect(lounge.position.x).toBeGreaterThan(1.4);
   expect(lounge.position.z).toBeGreaterThan(3);
   expect(lounge.chaiseSide).toBe('left');
   expect(lounge.seatCushions).toBe(3);
@@ -679,8 +696,8 @@ test('front-right couch corner has a styled warm arched floor lamp', async ({ pa
     clearOfCouchPath: true,
     insideRoomBounds: true
   });
-  expect(lounge.floorLamp.position.x).toBeGreaterThan(6.2);
-  expect(lounge.floorLamp.position.z).toBeGreaterThan(6.1);
+  expect(lounge.floorLamp.position.x).toBeGreaterThan(4.8);
+  expect(lounge.floorLamp.position.z).toBeGreaterThan(4.7);
   expect(lounge.floorLamp.parts).toBeGreaterThanOrEqual(10);
 });
 
@@ -764,7 +781,7 @@ test('right-wall software station uses the second reference interpretation', asy
     hasCableManagement: true,
     plantPreserved: true,
     colliderPreserved: true,
-    approachPoint: { x: 4.88, z: -1.3 }
+    approachPoint: { x: 3.9, z: -0.85 }
   });
   expect(station.semanticGroups).toEqual(expect.arrayContaining([
     'SoftwareV2Structure',
@@ -801,13 +818,13 @@ test('network event API validates the phase contract and routes all ten room pha
     ['read', 'workbench', -4.88, -1.5],
     ['prepare', 'workbench', -4.88, -1.5],
     ['spec', 'workbench', -4.88, -1.5],
-    ['implement', 'desk', 4.88, -1.3],
+    ['implement', 'desk', 3.9, -0.85],
     ['validate', 'testbench', 1.6, -4.82],
     ['review', 'testbench', 1.6, -4.82],
     ['submit', 'testbench', 1.6, -4.82],
     ['sync', 'testbench', 1.6, -4.82],
-    ['waiting', 'couch', 4.0, 4.95],
-    ['done', 'couch', 4.0, 4.95]
+    ['waiting', 'couch', 1.6, 4.1],
+    ['done', 'couch', 1.6, 4.1]
   ];
 
   for (const [phase, destination, x, z] of routes) {
@@ -825,8 +842,8 @@ test('network event API validates the phase contract and routes all ten room pha
 
   await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 12000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
-  expect(final.position.x).toBeCloseTo(4.0, 1);
-  expect(final.position.z).toBeCloseTo(4.95, 1);
+  expect(final.position.x).toBeCloseTo(1.6, 1);
+  expect(final.position.z).toBeCloseTo(4.1, 1);
   expect(final.status).toBe('DONE');
 });
 

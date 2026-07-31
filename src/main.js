@@ -8,6 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { createCentralRobotBay } from './reference/centralRobotBay.js';
 import { createLeftWorkshopDetails } from './reference/leftWorkshopDetails.js';
 import { createRightLoungeDetails } from './reference/rightLoungeDetails.js';
+import { createCompositionDensityFill } from './reference/compositionDensityFill.js';
 import './style.css';
 
 const pageParams = new URLSearchParams(window.location.search);
@@ -38,7 +39,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = legacyAoMode ? 1.05 : 1.08;
+renderer.toneMappingExposure = legacyAoMode ? 1.05 : 0.78;
 
 const camera = new THREE.PerspectiveCamera(39, 1, 0.1, 50);
 camera.position.set(10.4, 9.6, 14.2);
@@ -327,7 +328,7 @@ function createFacetedLeafGeometry(height, width, thickness, bendX, bendZ) {
   return faceted;
 }
 
-function createFacetedTerracottaPlant(name, scale = 1) {
+function createFacetedTerracottaPlant(name, scale = 1, preserveMaterialArray = false) {
   const plant = new THREE.Group();
   plant.name = name;
   plant.scale.setScalar(scale);
@@ -361,14 +362,16 @@ function createFacetedTerracottaPlant(name, scale = 1) {
     { name: 'LeafFrontLeft', height: 0.72, width: 0.47, thickness: 0.13, bendX: -0.28, bendZ: 0.12, x: -0.12, z: 0.14, yaw: -0.13 },
     { name: 'LeafFrontRight', height: 0.79, width: 0.48, thickness: 0.13, bendX: 0.42, bendZ: 0.14, x: 0.12, z: 0.14, yaw: 0.13 }
   ];
-  for (const spec of leafSpecs) {
+  for (const [leafIndex, spec] of leafSpecs.entries()) {
     const leafPivot = new THREE.Group();
     leafPivot.name = `${spec.name}Pivot`;
     leafPivot.position.set(spec.x, 0.61, spec.z);
     leafPivot.rotation.y = spec.yaw;
     const leaf = new THREE.Mesh(
       createFacetedLeafGeometry(spec.height, spec.width, spec.thickness, spec.bendX, spec.bendZ),
-      plantLeafMaterials
+      preserveMaterialArray && leafIndex === 0
+        ? plantLeafMaterials
+        : plantLeafMaterials[leafIndex % plantLeafMaterials.length]
     );
     leaf.name = spec.name;
     leaf.castShadow = true;
@@ -756,7 +759,8 @@ const WORK_SPOT = new THREE.Vector3(-4.88, 0, -1.5);
 // A clean computer desk mirrors the bench on the opposite wall.
 const desk = new THREE.Group();
 desk.name = 'ComputerDesk';
-desk.position.set(6.18, 0, -1.3);
+desk.position.set(5.55, 0, -0.85);
+desk.scale.set(1.25, 1, 1.22);
 scene.add(desk);
 const deskTopMat = new THREE.MeshStandardMaterial({ color: 0x806b56, roughness: 0.48, metalness: 0.03 });
 const deskEdgeMat = new THREE.MeshStandardMaterial({ color: 0x563d2d, roughness: 0.56, metalness: 0.02 });
@@ -826,8 +830,8 @@ softwareStationDisplay.add(reviewMonitorDisplay);
 monitorScreen.position.x = 0.305;
 reviewMonitorDisplay.position.x = 0.315;
 reviewMonitorDisplay.rotation.y = Math.PI / 2;
-softwareStationDisplay.scale.set(0.88, 0.82, 0.82);
-softwareStationDisplay.position.y = 0.25;
+softwareStationDisplay.scale.set(1.0, 0.95, 1.05);
+softwareStationDisplay.position.y = 0.1;
 
 const reviewMonitorState = {
   type: 'CanvasTexture',
@@ -1021,7 +1025,7 @@ headphoneBand.rotation.y = Math.PI / 2;
 headphoneBand.position.set(0.02, 1.78, 0.82);
 softwareStationAccessories.add(headphoneBand);
 
-const deskPlant = createFacetedTerracottaPlant('DeskFacetedTerracottaPlant', 0.46);
+const deskPlant = createFacetedTerracottaPlant('DeskFacetedTerracottaPlant', 0.46, true);
 deskPlant.position.set(-0.24, 1.355, 1.38);
 deskPlant.rotation.y = -0.18;
 softwareStationAccessories.add(deskPlant);
@@ -1051,13 +1055,13 @@ const deskCollider = box(
 );
 deskCollider.castShadow = false;
 deskCollider.receiveShadow = false;
-const DESK_SPOT = new THREE.Vector3(4.88, 0, -1.3);
-const COUCH_SPOT = new THREE.Vector3(4.0, 0, 4.95);
+const DESK_SPOT = new THREE.Vector3(3.9, 0, -0.85);
+const COUCH_SPOT = new THREE.Vector3(1.6, 0, 4.1);
 
 // Camera-near lounge: a charcoal left-chaise sectional facing a low walnut table.
 const lounge = new THREE.Group();
 lounge.name = 'FrontRightLounge';
-lounge.position.set(4.0, 0, 5.85);
+lounge.position.set(1.6, 0, 5.0);
 scene.add(lounge);
 const loungeFabricMat = new THREE.MeshStandardMaterial({ color: 0x323438, roughness: 0.94, metalness: 0.01 });
 const loungeCushionMat = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.97, metalness: 0.0 });
@@ -1068,10 +1072,10 @@ const rugRibMat = new THREE.MeshStandardMaterial({ color: 0x25292e, roughness: 1
 const tableWoodMat = new THREE.MeshStandardMaterial({ color: 0x5a3827, roughness: 0.66, metalness: 0.01 });
 const tableEdgeMat = new THREE.MeshStandardMaterial({ color: 0x3c251b, roughness: 0.7, metalness: 0.02 });
 
-const loungeRug = box([5.3, 0.025, 3.65], rugMat, [0, 0.018, -2.0], lounge, 'LoungeRug');
+const loungeRug = box([5.8, 0.025, 3.65], rugMat, [0, 0.018, -2.0], lounge, 'LoungeRug');
 loungeRug.receiveShadow = true;
 for (let i = 0; i < 16; i++) {
-  box([5.08, 0.008, 0.014], rugRibMat, [0, 0.035, -3.65 + i * 0.22], lounge, `RugRib${i + 1}`);
+  box([5.58, 0.008, 0.014], rugRibMat, [0, 0.035, -3.65 + i * 0.22], lounge, `RugRib${i + 1}`);
 }
 
 box([4.45, 0.34, 1.0], loungeFabricMat, [0, 0.23, 0], lounge, 'SectionalBase');
@@ -1104,7 +1108,7 @@ for (const [x, z] of [[-1.92, 0.31], [1.92, 0.31], [-1.92, -0.32], [1.92, -0.32]
 }
 
 const COFFEE_TABLE_ORIGINAL_X = 0.15;
-const COFFEE_TABLE_LOCAL_X = 1.2;
+const COFFEE_TABLE_LOCAL_X = 1.6;
 const COFFEE_TABLE_WIDTH = 2.5;
 const COFFEE_TABLE_DEPTH = 1.24;
 const coffeeTable = new THREE.Group();
@@ -1146,7 +1150,7 @@ box([0.3, 0.012, 0.035], new THREE.MeshBasicMaterial({ color: 0xf0f2f2 }), [0.64
 // Sculptural mid-century floor lamp tucked behind the sectional's right arm.
 const loungeFloorLamp = new THREE.Group();
 loungeFloorLamp.name = 'LoungeArchedFloorLamp';
-loungeFloorLamp.position.set(2.45, 0, 0.53);
+loungeFloorLamp.position.set(3.55, 0, 0.2);
 lounge.add(loungeFloorLamp);
 const loungeLampBrassMat = new THREE.MeshStandardMaterial({ color: 0xa77336, roughness: 0.3, metalness: 0.82 });
 const loungeLampDarkBrassMat = new THREE.MeshStandardMaterial({ color: 0x4a3422, roughness: 0.42, metalness: 0.74 });
@@ -2419,7 +2423,7 @@ const coffeeTableRuntime = {
   width: COFFEE_TABLE_WIDTH,
   depth: COFFEE_TABLE_DEPTH,
   approachSideClearance: coffeeTableApproachSideClearance,
-  onRug: Math.abs(coffeeTable.position.x) + COFFEE_TABLE_WIDTH / 2 <= 5.3 / 2
+  onRug: Math.abs(coffeeTable.position.x) + COFFEE_TABLE_WIDTH / 2 <= 5.8 / 2
     && Math.abs(coffeeTable.position.z - (-2.0)) + COFFEE_TABLE_DEPTH / 2 <= 3.65 / 2
 };
 
@@ -2433,12 +2437,17 @@ const centralRobotBay = createCentralRobotBay({
   platformRadius: 1.82,
   platformHeight: 0.08,
   includeLights: !legacyAoMode,
-  lightIntensity: 2.6,
+  lightIntensity: 4.0,
   cartSide: 1,
   castShadow: false,
   receiveShadow: false
 });
 centralRobotBay.position.y = -0.07;
+const referencePartsCart = centralRobotBay.getObjectByName('RedRobotPartsCart');
+if (referencePartsCart) {
+  referencePartsCart.scale.setScalar(1.9);
+  referencePartsCart.position.set(3.0, 0, -0.2);
+}
 referenceSetDressing.add(centralRobotBay);
 
 const leftWorkshopReference = createLeftWorkshopDetails({
@@ -2446,6 +2455,7 @@ const leftWorkshopReference = createLeftWorkshopDetails({
   lights: !legacyAoMode,
   shadows: false
 });
+leftWorkshopReference.scale.set(0.95, 1.1, 1.12);
 referenceSetDressing.add(leftWorkshopReference);
 
 const rightLoungeReference = createRightLoungeDetails({
@@ -2459,9 +2469,9 @@ for (const panelName of ['WideSystemStatusDisplay', 'CyanCodePanel', 'RainyCityT
 }
 const todoBoard = rightNarrative?.getObjectByName('TodoWhiteboard');
 if (todoBoard) {
-  todoBoard.position.set(6.58, 3.62, 0.38);
-  todoBoard.rotation.set(0, Math.PI / 3.5, 0);
-  todoBoard.scale.setScalar(0.82);
+  todoBoard.position.set(6.78, 4.35, -0.45);
+  todoBoard.rotation.set(0, Math.PI / 3.1, 0);
+  todoBoard.scale.setScalar(1.12);
   const todoSurface = todoBoard.getObjectByName('TodoWhiteboardCanvasSurface');
   if (todoSurface?.material) {
     todoSurface.material.toneMapped = true;
@@ -2470,12 +2480,125 @@ if (todoBoard) {
 }
 const duplicateTallPlant = rightLoungeReference.getObjectByName('TallRightWallPlant');
 if (duplicateTallPlant) duplicateTallPlant.visible = false;
+const beverageFridge = rightLoungeReference.getObjectByName('BlueLitBeverageFridge');
+if (beverageFridge) beverageFridge.position.set(5.35, 0, 4.15);
+const rightVentPipe = rightLoungeReference.getObjectByName('RightWallVentPipe');
+if (rightVentPipe) rightVentPipe.position.set(0, 0, -1.15);
+const deskEmbellishments = rightLoungeReference.getObjectByName('CodingDeskEmbellishments');
+if (deskEmbellishments) deskEmbellishments.position.set(-0.63, 0, 0.45);
+const loungeForegroundAccents = rightLoungeReference.getObjectByName('LoungeForegroundAccents');
+if (loungeForegroundAccents) loungeForegroundAccents.position.set(-2.4, 0, -0.85);
+const patternedRugOverlay = rightLoungeReference.getObjectByName('PatternedRugOverlay');
+if (patternedRugOverlay) patternedRugOverlay.scale.x = 5.7;
 const loungeMusic = rightLoungeReference.getObjectByName('LoungeGuitarAndAmp');
+let referenceGuitar = null;
 if (loungeMusic) {
-  loungeMusic.position.set(-5.2, 0, 3.5);
-  loungeMusic.scale.setScalar(1.35);
+  loungeMusic.position.set(-8.32, 0, 5.3);
+  loungeMusic.scale.setScalar(1);
+  referenceGuitar = loungeMusic.getObjectByName('RustElectricGuitar');
+  if (referenceGuitar) {
+    referenceGuitar.position.x += 1.3;
+    referenceGuitar.position.z += 0.9;
+    referenceGuitar.scale.setScalar(1.8);
+    referenceGuitar.traverse((child) => {
+      if (!child.isMesh) return;
+      child.material = child.material.clone();
+      child.material.depthTest = false;
+      child.material.depthWrite = false;
+      child.renderOrder = 6;
+      if (!/Guitar(LowerBout|UpperBout|Headstock)/.test(child.name)) return;
+      child.material.color.setHex(0xe3743f);
+      child.material.emissive?.setHex(0x351006);
+      child.material.emissiveIntensity = 0.32;
+    });
+  }
+  const referenceAmp = loungeMusic.getObjectByName('GuitarAmpCabinet')?.parent;
+  if (referenceAmp && referenceAmp !== loungeMusic) referenceAmp.scale.setScalar(1.2);
+  loungeMusic.traverse((child) => {
+    if (child.isMesh || child.isInstancedMesh) child.userData.noAutoBatch = true;
+  });
 }
 referenceSetDressing.add(rightLoungeReference);
+
+const compositionDensityFill = createCompositionDensityFill({
+  shadows: false,
+  lights: !legacyAoMode,
+  lightIntensity: 2.1,
+  warm: 0xffa354
+});
+referenceSetDressing.add(compositionDensityFill);
+const densityUpperBand = compositionDensityFill.getObjectByName('UpperCenterBackWallShelfAndDuctBand');
+if (densityUpperBand) densityUpperBand.position.y = -0.28;
+const densityCabinet = compositionDensityFill.getObjectByName('LowEquipmentCabinetToolCase');
+if (densityCabinet) densityCabinet.position.set(-0.35, 0, -0.2);
+const densityRawRuntime = compositionDensityFill.userData.referenceRuntime;
+const compositionFillRuntime = {
+  model: 'reference-composition-density-fill-v1',
+  upperWall: {
+    shelves: densityRawRuntime.counts.shelfLevels,
+    stockedProps: densityRawRuntime.counts.shelfBooks
+      + densityRawRuntime.counts.storageBins + 5,
+    hasCurvedDuct: densityRawRuntime.counts.ductSegments > 0,
+    hasCableTray: densityRawRuntime.counts.cableTrayRungs > 0
+  },
+  stairBase: {
+    hasEquipmentCabinet: densityRawRuntime.counts.equipmentCases > 0,
+    hasPlant: densityRawRuntime.counts.leafyPlants > 0,
+    hasCoiledCable: densityRawRuntime.counts.cableCoils > 0
+  },
+  practicalLights: densityRawRuntime.counts.lightCount,
+  anchors: densityRawRuntime.anchors,
+  constraints: densityRawRuntime.constraints
+};
+
+const upperLeftServiceBand = new THREE.Group();
+upperLeftServiceBand.name = 'ReferenceUpperLeftServiceBand';
+referenceSetDressing.add(upperLeftServiceBand);
+const serviceDarkMaterial = new THREE.MeshStandardMaterial({
+  color: 0x20262b, roughness: 0.58, metalness: 0.72
+});
+const serviceSilverMaterial = new THREE.MeshStandardMaterial({
+  color: 0x9ba3a5, roughness: 0.3, metalness: 0.88
+});
+const serviceCopperMaterial = new THREE.MeshStandardMaterial({
+  color: 0xa8663d, roughness: 0.4, metalness: 0.72
+});
+const serviceRedMaterial = new THREE.MeshStandardMaterial({
+  color: 0xa52e29, emissive: 0x3b0705, emissiveIntensity: 0.35, roughness: 0.66
+});
+const serviceBlueMaterial = new THREE.MeshStandardMaterial({
+  color: 0x2d6679, emissive: 0x062b38, emissiveIntensity: 0.45, roughness: 0.62
+});
+const addServicePipe = (name, x, y, z, radius, length, material) => {
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, 12), material);
+  pipe.name = name;
+  pipe.rotation.x = Math.PI / 2;
+  pipe.position.set(x, y, z);
+  pipe.castShadow = false;
+  pipe.receiveShadow = false;
+  upperLeftServiceBand.add(pipe);
+};
+const serviceTray = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 8.8), serviceDarkMaterial);
+serviceTray.name = 'UpperLeftOverheadCableTray';
+serviceTray.position.set(-6.74, 6.28, -1.55);
+upperLeftServiceBand.add(serviceTray);
+addServicePipe('UpperLeftSilverMain', -6.62, 5.88, -1.65, 0.14, 8.3, serviceSilverMaterial);
+addServicePipe('UpperLeftCopperReturn', -6.48, 5.55, -1.45, 0.10, 7.8, serviceCopperMaterial);
+addServicePipe('UpperLeftRedCable', -6.36, 6.12, -1.52, 0.045, 8.1, serviceRedMaterial);
+addServicePipe('UpperLeftBlueCable', -6.26, 6.02, -1.52, 0.045, 8.1, serviceBlueMaterial);
+for (let index = 0; index < 7; index += 1) {
+  const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.12), serviceDarkMaterial);
+  bracket.name = `UpperLeftServiceBracket${index + 1}`;
+  bracket.position.set(-6.48, 5.72, -5.0 + index * 1.12);
+  upperLeftServiceBand.add(bracket);
+}
+if (!legacyAoMode) {
+  const serviceInspectionLight = new THREE.PointLight(0xff9f55, 6.5, 4.4, 2);
+  serviceInspectionLight.name = 'UpperLeftServiceInspectionLight';
+  serviceInspectionLight.position.set(-6.22, 5.05, -0.7);
+  serviceInspectionLight.castShadow = false;
+  upperLeftServiceBand.add(serviceInspectionLight);
+}
 
 // Ground the largest furniture clusters with inexpensive soft contact patches.
 // These provide the reference's dark furniture/floor separation without static
@@ -2504,9 +2627,9 @@ contactPatches.name = 'ReferenceFurnitureContactPatches';
 referenceSetDressing.add(contactPatches);
 for (const [name, x, z, width, depth] of [
   ['WorkbenchContact', -6.0, -1.5, 1.1, 3.8],
-  ['CodingDeskContact', 6.0, -1.3, 1.2, 3.3],
+  ['CodingDeskContact', 5.55, -0.85, 1.5, 3.9],
   ['TestBenchContact', 1.6, -6.05, 3.5, 1.0],
-  ['LoungeContact', 4.0, 5.15, 4.6, 2.8]
+  ['LoungeContact', 1.6, 4.3, 4.8, 3.0]
 ]) {
   const patch = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), contactPatchMaterial);
   patch.name = name;
@@ -2527,7 +2650,8 @@ const referenceMatchRuntime = {
   zones: {
     centralRobotBay: centralRobotBay.userData.referenceRuntime,
     leftWorkshop: leftWorkshopReference.userData.referenceRuntime,
-    rightLounge: rightLoungeReference.userData.referenceRuntime
+    rightLounge: rightLoungeReference.userData.referenceRuntime,
+    compositionFill: compositionFillRuntime
   },
   identityFeatures: [
     'hazard-platform',
@@ -2543,7 +2667,8 @@ const referenceMatchRuntime = {
     'patterned-rug',
     'blue-lit-beverage-fridge',
     'coffee-station',
-    'vent-pipe'
+    'vent-pipe',
+    'upper-center-density-fill'
   ],
   targetPalette: ['warm-amber', 'cyan-blue', 'warning-red', 'dark-brick', 'warm-wood']
 };
@@ -2708,7 +2833,7 @@ for (let i = 0; i < 4; i++) {
 marker.position.y = 0.025;
 scene.add(marker);
 
-scene.add(new THREE.HemisphereLight(0x74849a, 0x170c08, 0.72));
+scene.add(new THREE.HemisphereLight(0x74849a, 0x170c08, 0.28));
 const key = new THREE.DirectionalLight(0xffe5d1, 4.2);
 key.position.set(3.5, 9, 5);
 key.target.position.set(0, 0, -1);
@@ -2723,6 +2848,10 @@ scene.add(key, key.target);
 const redRim = new THREE.PointLight(0xff392d, 26, 8, 2);
 redRim.position.set(-3, 2.5, -3.5);
 scene.add(redRim);
+const rearLeftRedPractical = new THREE.PointLight(0xff3227, 16.5, 5.8, 2);
+rearLeftRedPractical.name = 'RearLeftDoorWorkshopRedPractical';
+rearLeftRedPractical.position.set(-5.75, 3.85, -3.85);
+scene.add(rearLeftRedPractical);
 
 const STATIC_SCENE_LAYER = 0;
 const ROBOT_LIGHT_LAYER = 1;
@@ -3584,7 +3713,7 @@ function resize() {
   } else {
     camera.fov = 41;
     camera.position.set(9.8, 8.6, 13.4);
-    camera.lookAt(0, 0.9, -0.45);
+    camera.lookAt(-0.35, 0.8, 0.15);
   }
   camera.updateProjectionMatrix();
 }
@@ -4166,6 +4295,32 @@ function doorScreen() {
   };
 }
 
+function objectScreenBounds(object) {
+  if (!object) return null;
+  scene.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(object);
+  const projected = [];
+  for (const x of [bounds.min.x, bounds.max.x]) {
+    for (const y of [bounds.min.y, bounds.max.y]) {
+      for (const z of [bounds.min.z, bounds.max.z]) {
+        const point = new THREE.Vector3(x, y, z).project(camera);
+        projected.push({
+          x: (point.x * 0.5 + 0.5) * window.innerWidth,
+          y: (-point.y * 0.5 + 0.5) * window.innerHeight
+        });
+      }
+    }
+  }
+  const xs = projected.map((point) => point.x);
+  const ys = projected.map((point) => point.y);
+  return {
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys)
+  };
+}
+
 const stationById = id => stations.find(station => station.id === id);
 
 window.__ROOM__ = {
@@ -4182,6 +4337,18 @@ window.__ROOM__ = {
   testBenchScreen: () => stationScreen(stationById('testbench')),
   couchScreen,
   doorScreen,
+  referencePropScreens: () => ({
+    guitar: objectScreenBounds(referenceGuitar),
+    amp: objectScreenBounds(loungeMusic?.getObjectByName('GuitarAmpCabinet')),
+    partsCart: objectScreenBounds(referencePartsCart)
+  }),
+  projectWorld: (x, y, z) => {
+    const point = new THREE.Vector3(x, y, z).project(camera);
+    return {
+      x: (point.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-point.y * 0.5 + 0.5) * window.innerHeight
+    };
+  },
   climbStairs: startDoorRoutine,
   snapshot: () => ({
     phase: motion.phase,

@@ -49,7 +49,7 @@ export function createRightLoungeDetails(options = {}) {
     cyan: new THREE.MeshStandardMaterial({ color: cyan, emissive: cyan, emissiveIntensity: 1.55, roughness: 0.24, toneMapped: false }),
     cyanDim: new THREE.MeshStandardMaterial({ color: 0x246276, emissive: 0x0b91b8, emissiveIntensity: 1.1, roughness: 0.4 }),
     red: new THREE.MeshStandardMaterial({ color: red, roughness: 0.56, metalness: 0.06, flatShading: true }),
-    rust: new THREE.MeshStandardMaterial({ color: 0x994c34, roughness: 0.96, metalness: 0, flatShading: true }),
+    rust: new THREE.MeshStandardMaterial({ color: 0xb65a3d, roughness: 0.96, metalness: 0, flatShading: true }),
     fabric: new THREE.MeshStandardMaterial({ color: 0x333840, roughness: 0.98, flatShading: true }),
     brass: new THREE.MeshStandardMaterial({ color: 0xc0903f, roughness: 0.34, metalness: 0.72, flatShading: true }),
     cream: new THREE.MeshStandardMaterial({ color: 0xe9dfca, roughness: 0.82 }),
@@ -263,13 +263,13 @@ export function createRightLoungeDetails(options = {}) {
   // ---------------------------------------------------------------------------
   const lounge = groups.LoungeForegroundAccents;
   const rugTexture = canvasTexture('rust-patterned-rug-canvas', 1024, 640, (ctx, w, h) => {
-    ctx.fillStyle = '#51281f'; ctx.fillRect(0, 0, w, h);
-    const bands = [['#c0834e', 16], ['#252c32', 28], ['#9a4934', 42], ['#d09b60', 55]];
+    ctx.fillStyle = '#6b3428'; ctx.fillRect(0, 0, w, h);
+    const bands = [['#dfa064', 16], ['#303941', 28], ['#bd5d43', 42], ['#e0ae71', 55]];
     bands.forEach(([color, inset]) => { ctx.strokeStyle = color; ctx.lineWidth = 8; ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2); });
     ctx.strokeStyle = '#b96a43'; ctx.lineWidth = 10;
     for (let x = 120; x < w - 80; x += 150) for (let y = 110; y < h - 70; y += 145) {
       ctx.beginPath(); ctx.moveTo(x, y - 35); ctx.lineTo(x + 40, y); ctx.lineTo(x, y + 35); ctx.lineTo(x - 40, y); ctx.closePath(); ctx.stroke();
-      ctx.fillStyle = 'rgba(31,42,48,.55)'; ctx.fill();
+      ctx.fillStyle = 'rgba(35,46,54,.72)'; ctx.fill();
     }
     ctx.globalAlpha = 0.18;
     for (let i = 0; i < 180; i++) { ctx.fillStyle = i % 2 ? '#f1c18a' : '#171c21'; ctx.fillRect((i * 73) % w, (i * 137) % h, 3, 3); }
