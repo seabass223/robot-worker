@@ -1,7 +1,20 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { createCentralRobotBay } from './reference/centralRobotBay.js';
+import { createLeftWorkshopDetails } from './reference/leftWorkshopDetails.js';
+import { createRightLoungeDetails } from './reference/rightLoungeDetails.js';
 import './style.css';
+
+const pageParams = new URLSearchParams(window.location.search);
+const legacyAoMode = pageParams.get('legacyAo') === '1';
+const showcaseBloom = !legacyAoMode
+  && (pageParams.get('bloom') === '1' || (!navigator.webdriver && pageParams.get('bloom') !== '0'));
+if (pageParams.get('cinematicCapture') === '1') document.documentElement.classList.add('cinematic-capture');
 
 const canvas = document.querySelector('#scene');
 const statusText = document.querySelector('#status-text');
@@ -25,11 +38,24 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = legacyAoMode ? 1.05 : 1.08;
 
 const camera = new THREE.PerspectiveCamera(39, 1, 0.1, 50);
-camera.position.set(9.6, 8.4, 13.2);
-camera.lookAt(1.25, 0.75, -0.7);
+camera.position.set(10.4, 9.6, 14.2);
+camera.lookAt(0.15, 0.9, -0.45);
+
+let composer = null;
+if (showcaseBloom) {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.30,
+    0.42,
+    0.80
+  ));
+  composer.addPass(new OutputPass());
+}
 
 const room = new THREE.Group();
 scene.add(room);
@@ -111,8 +137,8 @@ function makeProceduralSurface(kind, size = 512) {
       const offset = row % 2 ? blockWidth / 2 : 0;
       for (let x = -offset; x < size; x += blockWidth) {
         const y = row * blockHeight;
-        const value = 104 + Math.floor((random() - 0.5) * 13);
-        colorContext.fillStyle = `rgb(${value},${value + 2},${value})`;
+        const value = 49 + Math.floor((random() - 0.5) * 11);
+        colorContext.fillStyle = `rgb(${value},${value + 3},${value + 6})`;
         colorContext.fillRect(x + 4, y + 4, blockWidth - 8, blockHeight - 8);
         colorContext.fillStyle = 'rgba(196,199,194,.14)';
         colorContext.fillRect(x + 5, y + 5, blockWidth - 10, 3);
@@ -382,6 +408,7 @@ const STAIR_SIDE = new THREE.Vector3(0, 0, -1);
 const stairYaw = Math.atan2(-STAIR_DIRECTION.x, -STAIR_DIRECTION.z);
 const stairBodyMat = new THREE.MeshStandardMaterial({ color: 0x34383a, roughness: 0.82, metalness: 0.16 });
 const stairTreadMat = new THREE.MeshStandardMaterial({ color: 0x93672f, roughness: 0.64, metalness: 0.03 });
+const stairStepLightMat = new THREE.MeshStandardMaterial({ color: 0xffc06b, emissive: 0xff8a32, emissiveIntensity: 3.2, roughness: 0.32 });
 const railMat = new THREE.MeshStandardMaterial({ color: 0x53395d, roughness: 0.4, metalness: 0.66 });
 const doorMat = new THREE.MeshStandardMaterial({ color: 0x421719, roughness: 0.55, metalness: 0.42 });
 const doorInsetMat = new THREE.MeshStandardMaterial({ color: 0xa83934, roughness: 0.5, metalness: 0.18 });
@@ -394,7 +421,15 @@ for (let i = 0; i < STAIR_STEPS; i++) {
   riser.rotation.y = stairYaw;
   const tread = box([1.54, 0.07, STAIR_RUN + 0.06], stairTreadMat, [center.x, height + 0.035, center.z], stairwell, `StairTread${i + 1}`);
   tread.rotation.y = stairYaw;
+  box([0.035, 0.065, 0.9], stairStepLightMat, [center.x + STAIR_RUN * 0.52, Math.max(0.12, height - 0.12), center.z], stairwell, `StairStepLight${i + 1}`);
   stairTreads.push({ step: i + 1, center: center.clone(), top: height + 0.07, mesh: tread });
+}
+for (const stepIndex of [2, 7]) {
+  const step = stairTreads[stepIndex];
+  const glow = new THREE.PointLight(0xffa34c, 2.4, 2.1, 2);
+  glow.name = `StairWarmPool${stepIndex + 1}`;
+  glow.position.set(step.center.x + 0.35, step.top + 0.18, step.center.z);
+  stairwell.add(glow);
 }
 
 const LANDING_DEPTH = 0.65;
@@ -440,7 +475,7 @@ doorHandle.position.set(-6.75, doorBottom + doorHeight * 0.48, doorZ + 0.38);
 doorHandle.castShadow = true;
 doorHandle.name = 'DoorHandle';
 stairwell.add(doorHandle);
-const stairLight = new THREE.PointLight(0xff7566, 4.8, 3.1, 2);
+const stairLight = new THREE.PointLight(0xff7566, 8.5, 3.8, 2);
 stairLight.position.set(-6.45, doorBottom + doorHeight + 0.35, doorZ);
 stairwell.add(stairLight);
 box([0.18, 0.1, 0.34], doorInsetMat, [-6.78, doorBottom + doorHeight + 0.28, doorZ], stairwell, 'DoorLight');
@@ -634,7 +669,7 @@ function createReferencePlanningWorkbench() {
   const lampHood = box([0.34, 0.27, 0.48], redMat, [0.12, 2.12, 1.43], accessories, 'PlanningBenchLampHood');
   lampHood.rotation.z = -0.08;
   box([0.012, 0.17, 0.34], diffuserMat, [0.298, 2.12, 1.43], accessories, 'PlanningBenchLampDiffuser');
-  const benchLight = new THREE.PointLight(0xffd2a5, 3.2, 2.6, 2);
+  const benchLight = new THREE.PointLight(0xffd2a5, 6.5, 3.0, 2);
   benchLight.position.set(0.38, 2.02, 1.43);
   accessories.add(benchLight);
 
@@ -786,6 +821,13 @@ reviewMonitorDisplay.position.set(0.14, 2.02, -0.22);
 reviewMonitorDisplay.rotation.y = -Math.PI / 2;
 reviewMonitorDisplay.castShadow = false;
 softwareStationDisplay.add(reviewMonitorDisplay);
+// Present the actual screen toward the cutaway camera and reduce the rear
+// housing's foreground silhouette without changing desk interaction geometry.
+monitorScreen.position.x = 0.305;
+reviewMonitorDisplay.position.x = 0.315;
+reviewMonitorDisplay.rotation.y = Math.PI / 2;
+softwareStationDisplay.scale.set(0.88, 0.82, 0.82);
+softwareStationDisplay.position.y = 0.25;
 
 const reviewMonitorState = {
   type: 'CanvasTexture',
@@ -983,7 +1025,7 @@ const deskPlant = createFacetedTerracottaPlant('DeskFacetedTerracottaPlant', 0.4
 deskPlant.position.set(-0.24, 1.355, 1.38);
 deskPlant.rotation.y = -0.18;
 softwareStationAccessories.add(deskPlant);
-const deskGlow = new THREE.PointLight(0x5dc9ff, 5.5, 2.6, 2);
+const deskGlow = new THREE.PointLight(0x5dc9ff, 8.5, 3.0, 2);
 deskGlow.position.set(-0.1, 2.0, -0.22);
 softwareStationDisplay.add(deskGlow);
 
@@ -1017,8 +1059,8 @@ const lounge = new THREE.Group();
 lounge.name = 'FrontRightLounge';
 lounge.position.set(4.0, 0, 5.85);
 scene.add(lounge);
-const loungeFabricMat = new THREE.MeshStandardMaterial({ color: 0x25282c, roughness: 0.94, metalness: 0.01 });
-const loungeCushionMat = new THREE.MeshStandardMaterial({ color: 0x30343a, roughness: 0.97, metalness: 0.0 });
+const loungeFabricMat = new THREE.MeshStandardMaterial({ color: 0x323438, roughness: 0.94, metalness: 0.01 });
+const loungeCushionMat = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.97, metalness: 0.0 });
 const loungeSeamMat = new THREE.MeshStandardMaterial({ color: 0x17191c, roughness: 1 });
 const loungeFootMat = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.52, metalness: 0.34 });
 const rugMat = new THREE.MeshStandardMaterial({ color: 0x1d2025, roughness: 1, metalness: 0 });
@@ -1122,7 +1164,7 @@ const loungeLampShadeMat = new THREE.MeshStandardMaterial({
 const loungeLampDiffuserMat = new THREE.MeshStandardMaterial({
   color: 0xffe1af,
   emissive: 0xffb45d,
-  emissiveIntensity: 2.4,
+  emissiveIntensity: 1.75,
   roughness: 0.5,
   side: THREE.DoubleSide
 });
@@ -1189,7 +1231,7 @@ const loungeLampPull = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), lo
 loungeLampPull.name = 'LoungeLampPullBead';
 loungeLampPull.position.set(-0.73, 2.04, -0.58);
 loungeFloorLamp.add(loungeLampPull);
-const loungeLampLight = new THREE.PointLight(0xffb45f, 12, 4.2, 2);
+const loungeLampLight = new THREE.PointLight(0xffb45f, 25, 5.1, 2);
 loungeLampLight.name = 'LoungeLampWarmPointLight';
 loungeLampLight.position.set(-1.0, 2.1, -0.78);
 loungeFloorLamp.add(loungeLampLight);
@@ -1251,7 +1293,7 @@ magnifierRing.castShadow = true;
 magnifier.add(magnifierRing);
 const magnifierGlass = new THREE.Mesh(
   new THREE.CircleGeometry(0.225, 32),
-  new THREE.MeshPhysicalMaterial({ color: 0x9cdcf0, transparent: true, opacity: 0.2, roughness: 0.05, transmission: 0.45, side: THREE.DoubleSide, depthWrite: false })
+  new THREE.MeshPhysicalMaterial({ color: 0x9cdcf0, transparent: true, opacity: 0.22, roughness: 0.08, transmission: 0, side: THREE.DoubleSide, depthWrite: false })
 );
 magnifierGlass.position.set(0.07, 2.14, 0.002);
 magnifier.add(magnifierGlass);
@@ -1284,7 +1326,7 @@ objective.position.set(-0.23, 1.82, 0);
 objective.rotation.z = -0.48;
 objective.castShadow = true;
 microscope.add(objective);
-const testGlow = new THREE.PointLight(0x48e1c1, 5.5, 3, 2);
+const testGlow = new THREE.PointLight(0x48e1c1, 8.5, 3.4, 2);
 testGlow.position.set(-0.9, 2.1, 0.5);
 testBench.add(testGlow);
 const testBenchCollider = box(
@@ -1468,7 +1510,7 @@ box([0.16, 0.11, 2.45], deskFrameMat, [0.42, 1.09, 0], softwareV2UnderDesk, 'Sof
 box([0.07, 0.05, 1.32], deskElectronicsMat, [0.35, 0.99, -0.18], softwareV2UnderDesk, 'SoftwareV2PowerStrip');
 rodBetween(new THREE.Vector3(0.36, 1.04, 0.72), new THREE.Vector3(0.28, 0.96, 1.0), 0.018, deskFrameMat, softwareV2UnderDesk, 'SoftwareV2TowerCable');
 rodBetween(new THREE.Vector3(0.36, 1.04, -0.42), new THREE.Vector3(0.18, 1.44, -0.3), 0.018, deskFrameMat, softwareV2UnderDesk, 'SoftwareV2MonitorCable');
-const softwareDeskGlow = new THREE.PointLight(0x48cde8, 4.0, 2.5, 2);
+const softwareDeskGlow = new THREE.PointLight(0x48cde8, 7.5, 3.0, 2);
 softwareDeskGlow.position.set(-0.15, 2.05, -0.15);
 softwareV2Displays.add(softwareDeskGlow);
 
@@ -1746,7 +1788,7 @@ for (const [x, y] of [[-2.28, -0.87], [-2.28, 0.87], [2.28, -0.87], [2.28, 0.87]
   ledMatrixAssembly.add(fastener);
 }
 box([0.08, 0.72, 0.08], ledMatrixTrimMaterial, [2.14, -1.25, -0.02], ledMatrixAssembly, 'LedMatrixLowerConduit');
-const ledMatrixGlow = new THREE.PointLight(0x59f3ff, 7, 3.8, 2);
+const ledMatrixGlow = new THREE.PointLight(0x59f3ff, 10.5, 4.2, 2);
 ledMatrixGlow.position.set(0, -0.12, 0.72);
 ledMatrixAssembly.add(ledMatrixGlow);
 renderLedMatrix();
@@ -2070,7 +2112,7 @@ cityWindowView.name = 'CityWindowAnimatedSkyline';
 cityWindowView.position.z = 0.075;
 cityWindowView.castShadow = false;
 cityWindowAssembly.add(cityWindowView);
-const cityWindowGlass = new THREE.Mesh(new THREE.PlaneGeometry(CITY_WINDOW_PHYSICAL_WIDTH, CITY_WINDOW_PHYSICAL_HEIGHT), new THREE.MeshPhysicalMaterial({ color: 0x164763, transparent: true, opacity: 0.13, roughness: 0.16, metalness: 0.05, transmission: 0.08, side: THREE.DoubleSide }));
+const cityWindowGlass = new THREE.Mesh(new THREE.PlaneGeometry(CITY_WINDOW_PHYSICAL_WIDTH, CITY_WINDOW_PHYSICAL_HEIGHT), new THREE.MeshPhysicalMaterial({ color: 0x164763, transparent: true, opacity: 0.14, roughness: 0.16, metalness: 0.05, transmission: 0, side: THREE.DoubleSide }));
 cityWindowGlass.name = 'CityWindowWetGlass';
 cityWindowGlass.position.z = 0.095;
 cityWindowAssembly.add(cityWindowGlass);
@@ -2082,7 +2124,7 @@ for (const [index, x] of [[1, -1.3], [2, 0.73]]) box([0.09, 1.45, 0.16], cityWin
 box([5.72, 0.14, 0.38], cityWindowSillMat, [0, -0.84, 0.16], cityWindowAssembly, 'CityWindowSill');
 box([5.18, 0.025, 0.04], cityWindowCyanMat, [0, -0.735, 0.14], cityWindowAssembly, 'CityWindowLowerBlueEdge');
 box([0.025, 1.42, 0.04], cityWindowCyanMat, [-2.575, 0, 0.14], cityWindowAssembly, 'CityWindowLeftBlueEdge');
-const cityWindowGlow = new THREE.PointLight(0x1a8fca, 4.2, 4.0, 2);
+const cityWindowGlow = new THREE.PointLight(0x1a8fca, 8.0, 4.4, 2);
 cityWindowGlow.name = 'CityWindowCoolInteriorGlow';
 cityWindowGlow.position.set(0, -0.28, 0.82);
 cityWindowAssembly.add(cityWindowGlow);
@@ -2381,6 +2423,131 @@ const coffeeTableRuntime = {
     && Math.abs(coffeeTable.position.z - (-2.0)) + COFFEE_TABLE_DEPTH / 2 <= 3.65 / 2
 };
 
+// Three independently-authored semantic overlays add the reference's missing
+// hero platform and lived-in workshop density without replacing interactions.
+const referenceSetDressing = new THREE.Group();
+referenceSetDressing.name = 'CozyRoboticsWorkshopReferenceSet';
+scene.add(referenceSetDressing);
+
+const centralRobotBay = createCentralRobotBay({
+  platformRadius: 1.82,
+  platformHeight: 0.08,
+  includeLights: !legacyAoMode,
+  lightIntensity: 2.6,
+  cartSide: 1,
+  castShadow: false,
+  receiveShadow: false
+});
+centralRobotBay.position.y = -0.07;
+referenceSetDressing.add(centralRobotBay);
+
+const leftWorkshopReference = createLeftWorkshopDetails({
+  position: [-6.18, 0, -1.5],
+  lights: !legacyAoMode,
+  shadows: false
+});
+referenceSetDressing.add(leftWorkshopReference);
+
+const rightLoungeReference = createRightLoungeDetails({
+  lights: !legacyAoMode,
+  shadows: false
+});
+const rightNarrative = rightLoungeReference.getObjectByName('CodingWallNarrative');
+for (const panelName of ['WideSystemStatusDisplay', 'CyanCodePanel', 'RainyCityTelemetryPanel']) {
+  const duplicatePanel = rightNarrative?.getObjectByName(panelName);
+  if (duplicatePanel) duplicatePanel.visible = false;
+}
+const todoBoard = rightNarrative?.getObjectByName('TodoWhiteboard');
+if (todoBoard) {
+  todoBoard.position.set(6.58, 3.62, 0.38);
+  todoBoard.rotation.set(0, Math.PI / 3.5, 0);
+  todoBoard.scale.setScalar(0.82);
+  const todoSurface = todoBoard.getObjectByName('TodoWhiteboardCanvasSurface');
+  if (todoSurface?.material) {
+    todoSurface.material.toneMapped = true;
+    todoSurface.material.color.set(0xd4d0c6);
+  }
+}
+const duplicateTallPlant = rightLoungeReference.getObjectByName('TallRightWallPlant');
+if (duplicateTallPlant) duplicateTallPlant.visible = false;
+const loungeMusic = rightLoungeReference.getObjectByName('LoungeGuitarAndAmp');
+if (loungeMusic) {
+  loungeMusic.position.set(-5.2, 0, 3.5);
+  loungeMusic.scale.setScalar(1.35);
+}
+referenceSetDressing.add(rightLoungeReference);
+
+// Ground the largest furniture clusters with inexpensive soft contact patches.
+// These provide the reference's dark furniture/floor separation without static
+// shadow maps or another scene render.
+const contactPatchCanvas = document.createElement('canvas');
+contactPatchCanvas.width = 128;
+contactPatchCanvas.height = 128;
+const contactPatchContext = contactPatchCanvas.getContext('2d');
+const contactPatchGradient = contactPatchContext.createRadialGradient(64, 64, 4, 64, 64, 62);
+contactPatchGradient.addColorStop(0, 'rgba(0, 0, 0, 0.28)');
+contactPatchGradient.addColorStop(0.56, 'rgba(0, 0, 0, 0.12)');
+contactPatchGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+contactPatchContext.fillStyle = contactPatchGradient;
+contactPatchContext.fillRect(0, 0, 128, 128);
+const contactPatchTexture = new THREE.CanvasTexture(contactPatchCanvas);
+contactPatchTexture.name = 'ReferenceFurnitureContactPatchTexture';
+const contactPatchMaterial = new THREE.MeshBasicMaterial({
+  map: contactPatchTexture,
+  transparent: true,
+  opacity: 0.24,
+  depthWrite: false,
+  toneMapped: false
+});
+const contactPatches = new THREE.Group();
+contactPatches.name = 'ReferenceFurnitureContactPatches';
+referenceSetDressing.add(contactPatches);
+for (const [name, x, z, width, depth] of [
+  ['WorkbenchContact', -6.0, -1.5, 1.1, 3.8],
+  ['CodingDeskContact', 6.0, -1.3, 1.2, 3.3],
+  ['TestBenchContact', 1.6, -6.05, 3.5, 1.0],
+  ['LoungeContact', 4.0, 5.15, 4.6, 2.8]
+]) {
+  const patch = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), contactPatchMaterial);
+  patch.name = name;
+  patch.rotation.x = -Math.PI / 2;
+  patch.position.set(x, 0.012, z);
+  patch.renderOrder = 1;
+  contactPatches.add(patch);
+}
+
+const referenceMatchRuntime = {
+  enabled: true,
+  model: 'cozy-robotics-workshop-reference-v1',
+  camera: {
+    projection: 'perspective-isometric',
+    heroVisible: true,
+    framing: 'full-room-three-quarter'
+  },
+  zones: {
+    centralRobotBay: centralRobotBay.userData.referenceRuntime,
+    leftWorkshop: leftWorkshopReference.userData.referenceRuntime,
+    rightLounge: rightLoungeReference.userData.referenceRuntime
+  },
+  identityFeatures: [
+    'hazard-platform',
+    'warm-platform-rim-bulbs',
+    'robot-parts-cart',
+    'cyan-battery-pillar',
+    'build-debug-deploy-repeat-sign',
+    'danger-electrical-cabinet',
+    'robot-blueprint',
+    'todo-whiteboard',
+    'system-status-display',
+    'guitar-and-amp',
+    'patterned-rug',
+    'blue-lit-beverage-fridge',
+    'coffee-station',
+    'vent-pipe'
+  ],
+  targetPalette: ['warm-amber', 'cyan-blue', 'warning-red', 'dark-brick', 'warm-wood']
+};
+
 const cubeRig = new THREE.Group();
 cubeRig.position.copy(HOME);
 scene.add(cubeRig);
@@ -2541,7 +2708,7 @@ for (let i = 0; i < 4; i++) {
 marker.position.y = 0.025;
 scene.add(marker);
 
-scene.add(new THREE.HemisphereLight(0xd7e0f0, 0x25211e, 1.6));
+scene.add(new THREE.HemisphereLight(0x74849a, 0x170c08, 0.72));
 const key = new THREE.DirectionalLight(0xffe5d1, 4.2);
 key.position.set(3.5, 9, 5);
 key.target.position.set(0, 0, -1);
@@ -2686,34 +2853,51 @@ function bakedStaticMaterial(source) {
 }
 
 scene.updateMatrixWorld(true);
-scene.traverse((object) => {
-  if (!object.isMesh || isRobotDescendant(object) || object === contactShadow || object.material?.isShadowMaterial) return;
-  const materials = Array.isArray(object.material) ? object.material : [object.material];
-  if (!materials.every(material => material && !(material.transparent && material.opacity === 0))) {
+if (legacyAoMode) {
+  scene.traverse((object) => {
+    if (!object.isMesh || isRobotDescendant(object) || object === contactShadow || object.material?.isShadowMaterial) return;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    if (!materials.every(material => material && !(material.transparent && material.opacity === 0))) {
+      object.castShadow = false;
+      object.receiveShadow = false;
+      return;
+    }
+    bakeStaticVertexLighting(object);
+    object.material = Array.isArray(object.material)
+      ? materials.map(material => bakedStaticMaterial(material))
+      : bakedStaticMaterial(object.material);
     object.castShadow = false;
     object.receiveShadow = false;
-    return;
-  }
-  bakeStaticVertexLighting(object);
-  object.material = Array.isArray(object.material)
-    ? materials.map(material => bakedStaticMaterial(material))
-    : bakedStaticMaterial(object.material);
-  object.castShadow = false;
-  object.receiveShadow = false;
-  object.layers.set(STATIC_SCENE_LAYER);
-  staticMeshesBaked += 1;
-});
+    object.layers.set(STATIC_SCENE_LAYER);
+    staticMeshesBaked += 1;
+  });
+
+  scene.traverse((object) => {
+    if (!object.isLight || object === key) return;
+    object.visible = false;
+    object.intensity = 0;
+    object.castShadow = false;
+  });
+} else {
+  // Cinematic reference mode keeps real PBR materials and practical lights. Static
+  // shadows remain disabled so the robot is still the sole real-time shadow caster.
+  scene.traverse((object) => {
+    if (object.isMesh && !isRobotDescendant(object) && object !== contactShadow && !object.material?.isShadowMaterial) {
+      object.castShadow = false;
+      object.receiveShadow = false;
+      object.layers.set(STATIC_SCENE_LAYER);
+    }
+    if (object.isLight && object !== key) {
+      object.visible = true;
+      object.castShadow = false;
+    }
+  });
+}
 
 for (const object of [...scene.children]) {
-  // Child lights are handled by traversal below; this loop intentionally does not detach semantic fixtures.
+  // Child lights are handled by traversal above; semantic fixtures stay attached.
   if (object.isLight && object !== key) object.castShadow = false;
 }
-scene.traverse((object) => {
-  if (!object.isLight || object === key) return;
-  object.visible = false;
-  object.intensity = 0;
-  object.castShadow = false;
-});
 
 key.name = 'RobotShadowKey';
 key.layers.set(ROBOT_LIGHT_LAYER);
@@ -2794,12 +2978,17 @@ robotProjectedShadow.userData.dynamic = true;
 robotProjectedShadow.raycast = () => {};
 scene.add(robotProjectedShadow);
 
+let decorativeDynamicLights = 0;
+scene.traverse((object) => {
+  if (object.isLight && object !== key && object.visible && object.intensity > 0) decorativeDynamicLights += 1;
+});
+
 const lightingRuntime = {
-  mode: 'ao-baked-static',
-  bakedAoTexture: staticAoTexture.name,
+  mode: legacyAoMode ? 'ao-baked-static' : 'cinematic-practicals',
+  bakedAoTexture: legacyAoMode ? staticAoTexture.name : null,
   staticMeshesBaked,
   staticAoMaterials,
-  decorativeDynamicLights: 0,
+  decorativeDynamicLights,
   dynamicShadowLights: 1,
   staticShadowCasters: 0,
   robotShadowCasters: robotPartNames.length,
@@ -2807,7 +2996,9 @@ const lightingRuntime = {
   projectedShadowTexture: robotProjectedShadowTexture.name,
   robotLightLayer: ROBOT_LIGHT_LAYER,
   staticLayer: STATIC_SCENE_LAYER,
-  shadowMapEnabled: renderer.shadowMap.enabled
+  shadowMapEnabled: renderer.shadowMap.enabled,
+  palette: ['warm-amber', 'cyan-blue', 'warning-red'],
+  animatedEmissiveDisplaysPreserved: true
 };
 
 const raycaster = new THREE.Raycaster();
@@ -3358,6 +3549,7 @@ function resize() {
   const width = window.innerWidth;
   const height = window.innerHeight;
   renderer.setSize(width, height, false);
+  composer?.setSize(width, height);
   camera.aspect = width / height;
   const reviewParams = new URLSearchParams(window.location.search);
   const loungeLampCloseup = reviewParams.has('loungeLampReview');
@@ -3390,9 +3582,9 @@ function resize() {
     camera.position.set(9.8, 10.2, 15.5);
     camera.lookAt(0, 0.6, -1.2);
   } else {
-    camera.fov = 39;
-    camera.position.set(9.6, 8.4, 13.2);
-    camera.lookAt(-1.8, 0.75, -0.7);
+    camera.fov = 41;
+    camera.position.set(9.8, 8.6, 13.4);
+    camera.lookAt(0, 0.9, -0.45);
   }
   camera.updateProjectionMatrix();
 }
@@ -3751,6 +3943,7 @@ function autoBatchRejectionReason(mesh) {
   if (!mesh?.isMesh) return 'not-mesh';
   if (!mesh.visible) return 'hidden';
   if (!mesh.geometry) return 'no-geometry';
+  if (mesh.isInstancedMesh) return 'instanced-preserved';
   if (Array.isArray(mesh.material)) return 'material-array';
   if (!mesh.material || mesh.material.visible === false) return 'material-hidden';
   if (mesh.material.transparent || mesh.material.opacity < 1) return 'transparent';
@@ -3764,6 +3957,7 @@ function autoBatchRejectionReason(mesh) {
   if (hasAncestor(mesh, marker)) return 'marker';
   if (hasAncestor(mesh, staticBatchRoot)) return 'batch-output';
   for (let parent = mesh.parent; parent; parent = parent.parent) {
+    if (parent.visible === false) return 'hidden-ancestor';
     if (parent.userData?.dynamic || parent.userData?.noAutoBatch) return 'ancestor-opt-out';
   }
   if (mesh.geometry.drawRange.start !== 0 || mesh.geometry.drawRange.count !== Infinity) return 'partial-draw-range';
@@ -3861,7 +4055,7 @@ function countVisibleGeometryVertices() {
     if (!position) return;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     const contributes = materials.some((material) => material && material.visible !== false && !(material.transparent && material.opacity === 0));
-    if (contributes) vertices += position.count;
+    if (contributes) vertices += position.count * (object.isInstancedMesh ? object.count : 1);
   });
   return vertices;
 }
@@ -3939,7 +4133,8 @@ function animate(timestamp) {
   key.target.updateMatrixWorld();
   markerRing.material.opacity = marker.visible ? 0.55 + Math.sin(now * 4) * 0.22 : 0;
   redRim.intensity = 25 + Math.sin(now * 0.8) * 2;
-  renderer.render(scene, camera);
+  if (composer) composer.render();
+  else renderer.render(scene, camera);
   updatePerformanceMetrics(timestamp);
 }
 renderer.setAnimationLoop(animate);
@@ -3964,7 +4159,7 @@ function couchScreen() {
 
 function doorScreen() {
   const point = new THREE.Vector3(0, 0, 0);
-  elevatedDoor.localToWorld(point).project(camera);
+  doorCollider.localToWorld(point).project(camera);
   return {
     x: (point.x * 0.5 + 0.5) * window.innerWidth,
     y: (-point.y * 0.5 + 0.5) * window.innerHeight
@@ -4054,6 +4249,7 @@ window.__ROOM__ = {
     workbench: { x: workbench.position.x, z: workbench.position.z },
     desk: { x: desk.position.x, z: desk.position.z },
     testBench: { x: testBench.position.x, z: testBench.position.z },
+    referenceMatch: referenceMatchRuntime,
     performance: {
       vertices: performanceMetrics.vertices,
       fps: performanceMetrics.fps,

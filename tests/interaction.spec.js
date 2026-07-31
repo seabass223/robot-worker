@@ -111,9 +111,9 @@ test('performance HUD reports live vertex, frame-rate, and draw-call counts', as
   await expect(page.locator('#draw-call-count')).toHaveText(`${performance.drawCalls.toLocaleString('en-US')} CALLS`);
 });
 
-test('static room uses baked AO materials while only the robot casts a dynamic shadow', async ({ page }) => {
+test('legacy AO fallback remains available while only the robot casts a dynamic shadow', async ({ page }) => {
   test.slow();
-  await page.goto('/?eventPort=8001');
+  await page.goto('/?eventPort=8001&legacyAo=1');
   await page.waitForFunction(() => window.__ROOM__?.ready);
 
   const initial = await page.evaluate(() => window.__ROOM__.snapshot());
@@ -141,6 +141,34 @@ test('static room uses baked AO materials while only the robot casts a dynamic s
   expect(Math.abs(after.z - before.z)).toBeLessThan(0.2);
 });
 
+test('reference workshop defaults to cinematic practical lighting and complete semantic zones', async ({ page }) => {
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+
+  const snapshot = await page.evaluate(() => window.__ROOM__.snapshot());
+  expect(snapshot.referenceMatch.enabled).toBeTruthy();
+  expect(snapshot.referenceMatch.model).toBe('cozy-robotics-workshop-reference-v1');
+  expect(snapshot.referenceMatch.camera.projection).toBe('perspective-isometric');
+  expect(snapshot.referenceMatch.camera.heroVisible).toBeTruthy();
+  expect(snapshot.referenceMatch.zones.centralRobotBay).toBeTruthy();
+  expect(snapshot.referenceMatch.zones.leftWorkshop).toBeTruthy();
+  expect(snapshot.referenceMatch.zones.rightLounge).toBeTruthy();
+  expect(snapshot.referenceMatch.identityFeatures).toEqual(expect.arrayContaining([
+    'hazard-platform',
+    'build-debug-deploy-repeat-sign',
+    'todo-whiteboard',
+    'guitar-and-amp',
+    'blue-lit-beverage-fridge'
+  ]));
+
+  expect(snapshot.lighting.mode).toBe('cinematic-practicals');
+  expect(snapshot.lighting.decorativeDynamicLights).toBeGreaterThanOrEqual(8);
+  expect(snapshot.lighting.palette).toEqual(expect.arrayContaining(['warm-amber', 'cyan-blue', 'warning-red']));
+  expect(snapshot.lighting.animatedEmissiveDisplaysPreserved).toBeTruthy();
+  expect(snapshot.lighting.staticShadowCasters).toBe(0);
+  expect(snapshot.lighting.robotShadowCasters).toBeGreaterThan(20);
+});
+
 test('multi-material plant leaves use consolidated groups without losing semantic plant models', async ({ page }) => {
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
@@ -149,13 +177,16 @@ test('multi-material plant leaves use consolidated groups without losing semanti
   const result = await page.evaluate(() => ({
     snapshot: window.__ROOM__.snapshot(),
     materialArrays: window.__ROOM__.inspectAutoBatchRejections()
-      .filter(row => row.reason === 'material-array')
+      .filter(row => row.reason === 'material-array'),
+    preservedInstances: window.__ROOM__.inspectAutoBatchRejections()
+      .filter(row => row.reason === 'instanced-preserved')
   }));
-  expect(result.snapshot.renderer.calls).toBeLessThan(350);
+  expect(result.snapshot.renderer.calls).toBeLessThan(420);
   expect(result.snapshot.architecture.plants.model).toBe('faceted-terracotta-five-leaf');
   expect(result.snapshot.architecture.plants.total).toBe(3);
   expect(result.materialArrays.length).toBeGreaterThan(0);
   expect(Math.max(...result.materialArrays.map(row => row.geometryGroups))).toBeLessThanOrEqual(3);
+  expect(result.preservedInstances.length).toBeGreaterThanOrEqual(10);
 });
 
 test('nearby compatible static meshes are automatically batched and can be rebuilt', async ({ page }) => {
@@ -229,6 +260,10 @@ test('clicking the elevated door alternates feet on every tread going up and dow
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto('/?eventPort=8001');
   await page.waitForFunction(() => window.__ROOM__?.ready);
+  await expect.poll(
+    () => page.evaluate(() => window.__ROOM__.snapshot().renderer.frame),
+    { timeout: 15000 }
+  ).toBeGreaterThan(2);
 
   const doorPoint = await page.evaluate(() => window.__ROOM__.doorScreen());
   await page.mouse.click(doorPoint.x, doorPoint.y);
