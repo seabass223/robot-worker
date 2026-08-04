@@ -38,6 +38,28 @@ const layoutExport = document.querySelector('#layout-export');
 const layoutJson = document.querySelector('#layout-json');
 const copyLayoutJsonButton = document.querySelector('#copy-layout-json');
 const closeLayoutExportButton = document.querySelector('#close-layout-export');
+const editorChat = document.querySelector('#editor-chat');
+const editorChatSelection = document.querySelector('#editor-chat-selection');
+const editorChatState = document.querySelector('#editor-chat-state');
+const editorChatHistory = document.querySelector('#editor-chat-history');
+const editorChatResult = document.querySelector('#editor-chat-result');
+const editorChatForm = document.querySelector('#editor-chat-form');
+const editorChatInput = document.querySelector('#editor-chat-input');
+const editorChatReference = document.querySelector('#editor-chat-reference');
+const editorChatSend = document.querySelector('#editor-chat-send');
+const editorChatCancel = document.querySelector('#editor-chat-cancel');
+const editorChatApply = document.querySelector('#editor-chat-apply');
+const editorChatUndo = document.querySelector('#editor-chat-undo');
+
+function randomUuid() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  if (typeof globalThis.crypto?.getRandomValues !== 'function') throw new Error('Secure randomness unavailable');
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2, '0'));
+  return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
+}
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0d12);
@@ -3766,7 +3788,9 @@ function cancelGameplayForEditing() {
   networkEventState.workAnimation = false;
 }
 
-const configuredEventPort = new URLSearchParams(window.location.search).get('eventPort') || '8000';
+const configuredEventPort = pageParams.get('eventPort') || '8000';
+const configuredEditorPort = pageParams.get('editorPort')
+  || (configuredEventPort === '8000' ? '8014' : configuredEventPort);
 const eventApiUrl = `${window.location.protocol}//${window.location.hostname}:${configuredEventPort}/event`;
 ledMatrixState.endpoint = eventApiUrl;
 const networkDestinations = {
@@ -4488,7 +4512,20 @@ function createSceneEditor() {
     uniformScaleDrag: null,
     explodedBatches: 0,
     manualBatchRoots: new Map(),
-    changed: new Map()
+    changed: new Map(),
+    deleted: new Map(),
+    sceneRevision: 0,
+    selectionRevision: 0,
+    selectionToken: null,
+    ai: {
+      session: null,
+      sessionPromise: null,
+      activeJob: null,
+      pending: null,
+      lastApplied: null,
+      conversations: new Map(),
+      undo: []
+    }
   };
 
   const objectLabel = object => object?.name || `Object-${object?.id ?? 'unknown'}`;
@@ -4546,9 +4583,555 @@ function createSceneEditor() {
   } : null;
   const originalTransforms = new Map(roots.map(object => [object, transformFor(object)]));
   const transformsEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+  const editorApiBase = `${window.location.protocol}//${window.location.hostname}:${configuredEditorPort}`;
+  const editorSessionStorageKey = `room-editor-session:${editorApiBase}`;
+  const conversationFor = object => {
+    const id = objectLabel(object);
+    if (!state.ai.conversations.has(id)) state.ai.conversations.set(id, { id: randomUuid(), messages: [] });
+    return state.ai.conversations.get(id);
+  };
+  const setChatState = (label, busy = false) => {
+    editorChatState.textContent = label;
+    editorChatState.classList.toggle('is-busy', busy);
+  };
+  const appendChatMessage = (role, text, object = state.selected) => {
+    if (!object || !text) return;
+    conversationFor(object).messages.push({ role, text: String(text).slice(0, 4000) });
+    renderChatHistory(object);
+  };
+  const renderChatHistory = object => {
+    editorChatHistory.replaceChildren();
+    if (!object) return;
+    for (const message of conversationFor(object).messages) {
+      const row = document.createElement('div');
+      row.className = `editor-chat__message editor-chat__message--${message.role}`;
+      row.textContent = `${message.role === 'user' ? 'YOU' : 'HERMES'} · ${message.text}`;
+      editorChatHistory.append(row);
+    }
+    editorChatHistory.scrollTop = editorChatHistory.scrollHeight;
+  };
+  const refreshChatUi = () => {
+    const selected = state.active ? state.selected : null;
+    editorChat.hidden = !selected;
+    if (!selected) return;
+    editorChatSelection.textContent = objectLabel(selected);
+    renderChatHistory(selected);
+    const active = Boolean(state.ai.activeJob);
+    editorChatInput.disabled = active;
+    editorChatReference.disabled = active;
+    editorChatSend.disabled = active;
+    editorChatCancel.hidden = !active;
+    const pendingKind = state.ai.pending?.result?.kind;
+    editorChatApply.hidden = !['editor-plan', 'skill-proposal', 'asset-revision'].includes(pendingKind);
+    editorChatApply.textContent = pendingKind === 'skill-proposal'
+      ? `START ${state.ai.pending.result.skill.toUpperCase()}`
+      : pendingKind === 'asset-revision' ? 'APPLY REPLACEMENT' : 'APPLY PLAN';
+    editorChatUndo.hidden = state.ai.undo.length === 0;
+  };
+  const selectionContext = object => {
+    object.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const materials = new Map();
+    let meshCount = 0;
+    let vertexCount = 0;
+    object.traverse(child => {
+      if (!child.isMesh) return;
+      meshCount += 1;
+      vertexCount += child.geometry?.attributes?.position?.count || 0;
+      for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+        if (!material || materials.has(material.uuid)) continue;
+        materials.set(material.uuid, {
+          name: material.name || null,
+          type: material.type,
+          color: material.color ? `#${material.color.getHexString()}` : null,
+          roughness: Number.isFinite(material.roughness) ? material.roughness : null,
+          metalness: Number.isFinite(material.metalness) ? material.metalness : null
+        });
+      }
+    });
+    return {
+      semanticId: objectLabel(object),
+      selectionToken: state.selectionToken,
+      selectionRevision: state.selectionRevision,
+      sceneRevision: state.sceneRevision,
+      transform: transformFor(object),
+      bounds: { size: vectorPayload(size) },
+      metadata: {
+        kind: 'semantic-threejs-root',
+        parent: object.parent?.name || null,
+        meshCount,
+        vertexCount,
+        materials: [...materials.values()].slice(0, 32),
+        editorDescriptor: object.userData.editDescriptor || null
+      }
+    };
+  };
+  const editorSession = async () => {
+    if (state.ai.session) return state.ai.session;
+    if (!state.ai.sessionPromise) {
+      state.ai.sessionPromise = (async () => {
+        try {
+          const stored = JSON.parse(sessionStorage.getItem(editorSessionStorageKey) || 'null');
+          if (stored?.token && Number(stored.expiresAt) > Date.now() + 5_000) return stored;
+        } catch { sessionStorage.removeItem(editorSessionStorageKey); }
+        const requestSession = pairing => fetch(`${editorApiBase}/editor/session`, {
+          cache: 'no-store',
+          headers: pairing ? { 'X-Room-Editor-Pairing': pairing } : {}
+        });
+        let response = await requestSession('');
+        if (response.status === 401) {
+          const payload = await response.clone().json().catch(() => null);
+          if (payload?.code === 'PAIRING_REQUIRED') {
+            const pairing = window.prompt('Enter the temporary Hermes editor pairing code:');
+            if (!pairing) throw new Error('Editor bridge pairing cancelled');
+            response = await requestSession(pairing.trim());
+          }
+        }
+        if (!response.ok) throw new Error(`Editor bridge session failed (${response.status})`);
+        return response.json();
+      })()
+        .then(session => {
+          if (!session?.token) throw new Error('Editor bridge returned no session token');
+          state.ai.session = session;
+          sessionStorage.setItem(editorSessionStorageKey, JSON.stringify(session));
+          return session;
+        })
+        .finally(() => { state.ai.sessionPromise = null; });
+    }
+    return state.ai.sessionPromise;
+  };
+  const editorFetch = async (path, options = {}) => {
+    const send = async session => fetch(`${editorApiBase}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Room-Editor-Session': session.token,
+        ...(options.headers || {})
+      }
+    });
+    let response = await send(await editorSession());
+    if (response.status === 401 && !/^\/editor\/jobs\/[^/]+/.test(path)) {
+      state.ai.session = null;
+      sessionStorage.removeItem(editorSessionStorageKey);
+      response = await send(await editorSession());
+    }
+    return response;
+  };
+  const renderJobResult = result => {
+    editorChatResult.hidden = !result;
+    editorChatResult.textContent = result
+      ? `${result.route.toUpperCase()} · ${result.summary}${result.kind === 'skill-proposal' ? `\nSPECIALIST: ${result.skill}` : ''}${result.kind === 'clarification' ? `\n${result.question}` : ''}`
+      : '';
+  };
+  const pendingIsCurrent = pending => Boolean(pending?.object)
+    && pending.object === state.selected
+    && objectLabel(state.selected) === pending.context.semanticId
+    && state.selectionToken === pending.context.selectionToken
+    && state.selectionRevision === pending.context.selectionRevision
+    && state.sceneRevision === pending.context.sceneRevision;
+  const rejectStalePending = pending => {
+    if (pendingIsCurrent(pending)) return false;
+    state.ai.pending = null;
+    renderJobResult(null);
+    setChatState('STALE RESULT');
+    appendChatMessage('assistant', 'This result was not applied because the object or scene changed after routing.', pending?.object);
+    refreshChatUi();
+    return true;
+  };
+  const consumeJob = job => {
+    const active = state.ai.activeJob;
+    if (!active || active.jobId !== job.jobId) return;
+    if (!['ready', 'failed', 'cancelled'].includes(job.state)) {
+      setChatState((job.message || job.phase || 'WORKING').toUpperCase(), true);
+      return;
+    }
+    state.ai.activeJob = null;
+    const stale = active.selectionToken !== state.selectionToken
+      || active.selectionRevision !== state.selectionRevision
+      || active.sceneRevision !== state.sceneRevision
+      || objectLabel(state.selected) !== job.semanticId;
+    if (stale && job.state === 'ready') {
+      setChatState('STALE RESULT');
+      appendChatMessage('assistant', 'Result kept detached because the selection or scene changed while Hermes was working.', active.object);
+      refreshChatUi();
+      return;
+    }
+    if (job.state === 'ready') {
+      state.ai.pending = {
+        job,
+        result: job.result,
+        object: active.object,
+        context: {
+          semanticId: job.semanticId,
+          selectionToken: active.selectionToken,
+          selectionRevision: active.selectionRevision,
+          sceneRevision: active.sceneRevision
+        }
+      };
+      renderJobResult(job.result);
+      appendChatMessage('assistant', job.result.kind === 'clarification' ? job.result.question : job.result.summary, active.object);
+      const applyReady = ['editor-plan', 'asset-revision'].includes(job.result.kind);
+      setChatState(applyReady ? 'READY TO APPLY' : `ROUTED TO ${job.result.skill || job.result.route}`.toUpperCase());
+    } else {
+      renderJobResult(null);
+      setChatState(job.state === 'cancelled' ? 'CANCELLED' : 'FAILED');
+      appendChatMessage('assistant', job.error?.message || job.message || 'The editor job failed.', active.object);
+    }
+    refreshChatUi();
+  };
+  const pollJob = async jobId => {
+    while (state.ai.activeJob?.jobId === jobId) {
+      try {
+        const response = await editorFetch(`/editor/jobs/${jobId}`);
+        if (!response.ok) throw new Error(`Editor job poll failed (${response.status})`);
+        const job = await response.json();
+        consumeJob(job);
+        if (['ready', 'failed', 'cancelled'].includes(job.state)) return;
+        await new Promise(resolve => window.setTimeout(resolve, 250));
+      } catch (error) {
+        if (state.ai.activeJob?.jobId !== jobId) return;
+        state.ai.activeJob = null;
+        setChatState('CONNECTION ERROR');
+        appendChatMessage('assistant', error.message);
+        refreshChatUi();
+      }
+    }
+  };
+  const submitChat = async event => {
+    event?.preventDefault();
+    const object = state.selected;
+    const message = editorChatInput.value.trim();
+    if (!state.active || !object || !message || state.ai.activeJob) return;
+    const conversation = conversationFor(object);
+    appendChatMessage('user', message, object);
+    editorChatInput.value = '';
+    state.ai.pending = null;
+    renderJobResult(null);
+    setChatState('CONNECTING TO HERMES', true);
+    try {
+      const reference = editorChatReference.value.trim();
+      const attachments = [];
+      if (reference) {
+        const parsed = new URL(reference);
+        if (parsed.protocol !== 'https:' || parsed.username || parsed.password) throw new Error('Reference image must use a public HTTPS URL without embedded credentials');
+        attachments.push({ kind: 'reference-image', url: parsed.href });
+      }
+      const selection = selectionContext(object);
+      const payload = {
+        schemaVersion: 1,
+        requestId: randomUuid(),
+        conversationId: conversation.id,
+        message,
+        selection,
+        capabilities: ['material-patch', 'transform-patch', 'geometry-replacement', 'source-patch', 'image-reconstruction', 'generated-reference'],
+        attachments
+      };
+      const response = await editorFetch('/editor/jobs', { method: 'POST', body: JSON.stringify(payload) });
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({}));
+        throw new Error(detail.error || `Editor job rejected (${response.status})`);
+      }
+      const job = await response.json();
+      editorChatReference.value = '';
+      state.ai.activeJob = {
+        jobId: job.jobId,
+        object,
+        selectionToken: selection.selectionToken,
+        selectionRevision: selection.selectionRevision,
+        sceneRevision: selection.sceneRevision
+      };
+      setChatState('ROUTING REQUEST', true);
+      refreshChatUi();
+      pollJob(job.jobId);
+    } catch (error) {
+      state.ai.activeJob = null;
+      setChatState('CONNECTION ERROR');
+      appendChatMessage('assistant', error.message, object);
+      refreshChatUi();
+    }
+  };
+  const disposalProbe = { geometries: 0, materials: 0 };
+  const disposeGeneratedVisual = visual => {
+    visual.traverse(node => {
+      node.geometry?.dispose?.();
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) material?.dispose?.();
+    });
+  };
+  const disposeGeneratedMaterial = material => {
+    const materials = Array.isArray(material) ? material : [material];
+    for (const item of materials) {
+      if (item?.userData?.roomEditorGeneratedMaterial) item.dispose?.();
+    }
+  };
+  const watchGeneratedDisposal = name => {
+    disposalProbe.geometries = 0;
+    disposalProbe.materials = 0;
+    const object = roots.find(candidate => candidate.name === name);
+    if (!object) return false;
+    const geometries = new Set();
+    const materials = new Set();
+    object.traverse(node => {
+      if (node.geometry && !geometries.has(node.geometry)) {
+        geometries.add(node.geometry);
+        node.geometry.addEventListener('dispose', () => { disposalProbe.geometries += 1; });
+      }
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+        if (!material || materials.has(material)) continue;
+        materials.add(material);
+        material.addEventListener('dispose', () => { disposalProbe.materials += 1; });
+      }
+    });
+    return true;
+  };
+  const captureUndo = object => {
+    const materials = new Map();
+    const visibility = new Map();
+    object.traverse(child => {
+      visibility.set(child, child.visible);
+      if (child.isMesh) materials.set(child, child.material);
+    });
+    return {
+      object,
+      transform: transformFor(object),
+      materials,
+      visibility,
+      generatedVisuals: object.children.filter(child => child.userData.roomEditorGeneratedVisual)
+    };
+  };
+  const pushUndo = undo => {
+    state.ai.undo.push(undo);
+    while (state.ai.undo.length > 20) {
+      const discarded = state.ai.undo.shift();
+      const disposedWithVisuals = new Set();
+      for (const visual of discarded.generatedVisuals) {
+        if (visual.parent) continue;
+        visual.traverse(node => {
+          for (const material of Array.isArray(node.material) ? node.material : [node.material]) if (material) disposedWithVisuals.add(material);
+        });
+        disposeGeneratedVisual(visual);
+      }
+      const retained = new Set();
+      scene.traverse(node => {
+        for (const material of Array.isArray(node.material) ? node.material : [node.material]) if (material) retained.add(material);
+      });
+      for (const entry of state.ai.undo) {
+        for (const material of entry.materials.values()) {
+          for (const item of Array.isArray(material) ? material : [material]) if (item) retained.add(item);
+        }
+      }
+      for (const material of discarded.materials.values()) {
+        for (const item of Array.isArray(material) ? material : [material]) {
+          if (item && !retained.has(item) && !disposedWithVisuals.has(item)) disposeGeneratedMaterial(item);
+        }
+      }
+    }
+  };
+  const cloneObjectMaterials = object => {
+    const cloneMaterial = material => {
+      const clone = material?.clone();
+      if (clone) clone.userData.roomEditorGeneratedMaterial = true;
+      return clone;
+    };
+    object.traverse(child => {
+      if (!child.isMesh) return;
+      child.material = Array.isArray(child.material)
+        ? child.material.map(cloneMaterial)
+        : cloneMaterial(child.material);
+    });
+  };
+  const applyAssetTransform = (object, transform = {}) => {
+    if (transform.position) object.position.set(transform.position.x, transform.position.y, transform.position.z);
+    if (transform.rotation) object.rotation.set(transform.rotation.x, transform.rotation.y, transform.rotation.z);
+    if (transform.scale) object.scale.set(transform.scale.x, transform.scale.y, transform.scale.z);
+  };
+  const geometryFromAsset = spec => {
+    const params = spec.params || {};
+    if (spec.kind === 'box') return new THREE.BoxGeometry(params.width || 1, params.height || 1, params.depth || 1, params.widthSegments || 1, params.heightSegments || 1, params.depthSegments || 1);
+    if (spec.kind === 'sphere') return new THREE.SphereGeometry(params.radius || 0.5, params.widthSegments || 24, params.heightSegments || 16);
+    if (spec.kind === 'cylinder') return new THREE.CylinderGeometry(params.radiusTop ?? 0.5, params.radiusBottom ?? 0.5, params.height || 1, params.radialSegments || 24, params.heightSegments || 1, params.openEnded === true);
+    if (spec.kind === 'cone') return new THREE.ConeGeometry(params.radius || 0.5, params.height || 1, params.radialSegments || 24, params.heightSegments || 1, params.openEnded === true);
+    if (spec.kind === 'torus') return new THREE.TorusGeometry(params.radius || 0.5, params.tube || 0.16, params.radialSegments || 12, params.tubularSegments || 32);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(spec.positions, 3));
+    if (spec.normals) geometry.setAttribute('normal', new THREE.Float32BufferAttribute(spec.normals, 3));
+    if (spec.uvs) geometry.setAttribute('uv', new THREE.Float32BufferAttribute(spec.uvs, 2));
+    if (spec.indices) geometry.setIndex(spec.indices);
+    if (!spec.normals) geometry.computeVertexNormals();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+    return geometry;
+  };
+  const nodeFromAsset = spec => {
+    const object = spec.kind === 'mesh'
+      ? new THREE.Mesh(geometryFromAsset(spec.geometry), new THREE.MeshStandardMaterial({
+          color: spec.material.color,
+          roughness: spec.material.roughness ?? 0.6,
+          metalness: spec.material.metalness ?? 0,
+          emissive: spec.material.emissive || '#000000',
+          emissiveIntensity: spec.material.emissiveIntensity ?? 0,
+          opacity: spec.material.opacity ?? 1,
+          transparent: (spec.material.opacity ?? 1) < 1
+        }))
+      : new THREE.Group();
+    object.name = spec.name || (spec.kind === 'mesh' ? 'GeneratedMesh' : 'GeneratedGroup');
+    applyAssetTransform(object, spec.transform);
+    for (const child of spec.children || []) object.add(nodeFromAsset(child));
+    return object;
+  };
+  const startPendingSpecialist = async pending => {
+    const object = pending.object;
+    const response = await editorFetch(`/editor/jobs/${pending.job.jobId}/execute`, { method: 'POST', body: '{}' });
+    if (!response.ok) throw new Error(`Specialist start failed (${response.status})`);
+    state.ai.activeJob = {
+      jobId: pending.job.jobId,
+      object,
+      selectionToken: pending.context.selectionToken,
+      selectionRevision: pending.context.selectionRevision,
+      sceneRevision: pending.context.sceneRevision
+    };
+    state.ai.pending = null;
+    renderJobResult(null);
+    setChatState(`STARTING ${pending.result.skill.toUpperCase()}`, true);
+    refreshChatUi();
+    pollJob(pending.job.jobId);
+  };
+  const applyAssetRevision = pending => {
+    if (rejectStalePending(pending)) return false;
+    const object = pending.object;
+    if (!object || object !== state.selected) return false;
+    const generated = new THREE.Group();
+    generated.name = `${objectLabel(object)}GeneratedVisual`;
+    generated.userData.roomEditorGeneratedVisual = true;
+    try {
+      for (const node of pending.result.asset.nodes) generated.add(nodeFromAsset(node));
+    } catch (error) {
+      disposeGeneratedVisual(generated);
+      setChatState('ASSET BUILD FAILED');
+      appendChatMessage('assistant', `Replacement was not applied: ${error.message}`, object);
+      refreshChatUi();
+      return false;
+    }
+    const undo = captureUndo(object);
+    for (const previous of undo.generatedVisuals) object.remove(previous);
+    object.traverse(child => {
+      if (child !== object && child.isMesh && !child.userData.editorCollider) child.visible = false;
+    });
+    object.add(generated);
+    object.updateMatrixWorld(true);
+    selectionBox.setFromObject(object);
+    state.sceneRevision += 1;
+    pushUndo(undo);
+    state.ai.lastApplied = { semanticId: objectLabel(object), route: pending.result.route, jobId: pending.job.jobId };
+    state.ai.pending = null;
+    renderJobResult(null);
+    setChatState('REPLACEMENT APPLIED');
+    appendChatMessage('assistant', 'Applied the generated visual revision in place. The previous visual remains available through Undo.', object);
+    refreshChatUi();
+    return true;
+  };
+  const activatePendingResult = async () => {
+    const pending = state.ai.pending;
+    if (!pending || rejectStalePending(pending)) return false;
+    try {
+      if (pending.result.kind === 'skill-proposal') { await startPendingSpecialist(pending); return true; }
+      if (pending.result.kind === 'asset-revision') return applyAssetRevision(pending);
+      return applyPendingPlan();
+    } catch (error) {
+      setChatState('SPECIALIST ERROR');
+      appendChatMessage('assistant', error.message, pending.object);
+      refreshChatUi();
+      return false;
+    }
+  };
+
+  const applyPendingPlan = () => {
+    const pending = state.ai.pending;
+    if (!pending || pending.result.kind !== 'editor-plan' || rejectStalePending(pending)) return false;
+    const object = pending.object;
+    const undo = captureUndo(object);
+    const materialOperations = pending.result.operations.filter(operation => operation.type.startsWith('set-material'));
+    if (materialOperations.length) cloneObjectMaterials(object);
+    for (const operation of pending.result.operations) {
+      if (operation.type === 'set-material-color' || operation.type === 'set-material-properties') {
+        object.traverse(child => {
+          if (!child.isMesh) return;
+          for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+            if (operation.color && material?.color) material.color.set(operation.color);
+            if (operation.roughness !== undefined && 'roughness' in material) material.roughness = operation.roughness;
+            if (operation.metalness !== undefined && 'metalness' in material) material.metalness = operation.metalness;
+            if (material) material.needsUpdate = true;
+          }
+        });
+      } else if (operation.type === 'translate') object.position.add(new THREE.Vector3(operation.delta.x, operation.delta.y, operation.delta.z));
+      else if (operation.type === 'rotate') {
+        object.rotation.x += operation.delta.x;
+        object.rotation.y += operation.delta.y;
+        object.rotation.z += operation.delta.z;
+      } else if (operation.type === 'set-uniform-scale') object.scale.setScalar(operation.scale);
+    }
+    object.updateMatrixWorld(true);
+    selectionBox.setFromObject(object);
+    rememberTransform(object);
+    if (materialOperations.length) state.sceneRevision += 1;
+    pushUndo(undo);
+    state.ai.lastApplied = { semanticId: objectLabel(object), route: pending.result.route, jobId: pending.job.jobId };
+    state.ai.pending = null;
+    renderJobResult(null);
+    setChatState('APPLIED');
+    appendChatMessage('assistant', 'Applied. You can continue refining this object or undo the change.', object);
+    refreshChatUi();
+    return true;
+  };
+  const undoAiEdit = () => {
+    const undo = state.ai.undo.pop();
+    if (!undo) return false;
+    const { object, transform, materials, visibility, generatedVisuals } = undo;
+    for (const child of [...object.children]) {
+      if (child.userData.roomEditorGeneratedVisual && !generatedVisuals.includes(child)) {
+        object.remove(child);
+        disposeGeneratedVisual(child);
+      }
+    }
+    for (const child of generatedVisuals) if (child.parent !== object) object.add(child);
+    object.position.set(transform.position.x, transform.position.y, transform.position.z);
+    object.rotation.set(transform.rotation.x, transform.rotation.y, transform.rotation.z);
+    object.scale.set(transform.scale.x, transform.scale.y, transform.scale.z);
+    for (const [node, visible] of visibility) node.visible = visible;
+    for (const [mesh, material] of materials) {
+      if (mesh.material !== material) disposeGeneratedMaterial(mesh.material);
+      mesh.material = material;
+    }
+    object.updateMatrixWorld(true);
+    rebuildExplodedManualBatches();
+    rebatchStaticMeshes();
+    state.explodedBatches = 0;
+    if (state.selected) {
+      explodeAutoBatchesFor(state.selected);
+      explodeManualBatchesFor(state.selected);
+    }
+    if (object === state.selected) selectionBox.setFromObject(object);
+    rememberTransform(object);
+    state.sceneRevision += 1;
+    state.ai.lastApplied = null;
+    setChatState('UNDONE');
+    appendChatMessage('assistant', 'Restored the previous object revision.', object);
+    refreshChatUi();
+    return true;
+  };
+  const cancelAiJob = async () => {
+    const job = state.ai.activeJob;
+    if (!job) return;
+    try { await editorFetch(`/editor/jobs/${job.jobId}/cancel`, { method: 'POST', body: '{}' }); }
+    catch { /* polling/SSE will surface connectivity state */ }
+  };
+
   const rememberTransform = object => {
     if (!object) return;
     const current = transformFor(object);
+    const previous = state.changed.get(object) || originalTransforms.get(object);
+    if (previous && !transformsEqual(current, previous)) state.sceneRevision += 1;
     if (transformsEqual(current, originalTransforms.get(object))) state.changed.delete(object);
     else state.changed.set(object, current);
   };
@@ -4589,7 +5172,7 @@ function createSceneEditor() {
         },
         scale: transform.scale
       };
-    })
+    }).concat([...state.deleted.values()].map(deletion => ({ ...deletion, deleted: true })))
   });
   const refreshUi = () => {
     editModeToggle.setAttribute('aria-pressed', String(state.active));
@@ -4603,6 +5186,7 @@ function createSceneEditor() {
       button.classList.toggle('is-active', button.dataset.editorMode === state.mode);
     }
     document.body.classList.toggle('editor-active', state.active);
+    refreshChatUi();
   };
   const applyScaleHandleVisibility = () => {
     if (state.mode !== 'scale') return;
@@ -4626,6 +5210,10 @@ function createSceneEditor() {
       rebuildExplodedManualBatches();
       rebatchStaticMeshes();
       state.explodedBatches = 0;
+      state.selectionRevision += 1;
+      state.selectionToken = object ? randomUuid() : null;
+      state.ai.pending = null;
+      renderJobResult(null);
     }
     state.selected = object;
     if (object) {
@@ -4707,6 +5295,28 @@ function createSceneEditor() {
     }
     return false;
   };
+  const deleteSelected = () => {
+    if (!state.active || !state.selected) return false;
+    finishActiveDrag(null, true);
+    const object = state.selected;
+    const deletion = {
+      name: objectLabel(object),
+      parent: object.parent?.name || null
+    };
+    const removedRoots = roots.filter(candidate => candidate === object || hasAncestor(candidate, object));
+    for (const removedRoot of removedRoots) {
+      rootSet.delete(removedRoot);
+      state.changed.delete(removedRoot);
+      const index = roots.indexOf(removedRoot);
+      if (index >= 0) roots.splice(index, 1);
+    }
+    state.deleted.set(object, deletion);
+    object.parent?.remove(object);
+    state.sceneRevision += 1;
+    select(null);
+    setStatus(`DELETED ${deletion.name.toUpperCase()}`);
+    return true;
+  };
   const pointerDown = event => {
     const controlPointer = controlPointerFor(event);
     transformControls.pointerHover(controlPointer);
@@ -4738,7 +5348,9 @@ function createSceneEditor() {
     updatePointer(event);
     const hits = raycaster.intersectObjects(roots, true);
     const hit = hits.find(candidate => semanticRootFor(candidate.object));
-    select(hit ? semanticRootFor(hit.object) : null);
+    const selectedRoot = hit ? semanticRootFor(hit.object) : null;
+    select(selectedRoot);
+    if (!selectedRoot) setStatus('NO EDITABLE OBJECT AT POINTER');
   };
   const pointerMove = event => {
     if (state.uniformScaleDrag && state.selected) {
@@ -4803,6 +5415,13 @@ function createSceneEditor() {
     const button = event.target.closest('[data-editor-mode]');
     if (button) setMode(button.dataset.editorMode);
   });
+  editorChatForm.addEventListener('submit', submitChat);
+  editorChatCancel.addEventListener('click', cancelAiJob);
+  editorChatApply.addEventListener('click', activatePendingResult);
+  editorChatUndo.addEventListener('click', undoAiEdit);
+  editorChatInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) submitChat(event);
+  });
   saveLayoutButton.addEventListener('click', () => {
     layoutJson.value = JSON.stringify(serialize(), null, 2);
     layoutExport.hidden = false;
@@ -4830,6 +5449,12 @@ function createSceneEditor() {
       return;
     }
     if (!state.active || !state.selected) return;
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      deleteSelected();
+      return;
+    }
     const mode = { m: 'translate', r: 'rotate', s: 'scale' }[event.key.toLowerCase()];
     if (mode) {
       event.preventDefault();
@@ -4844,6 +5469,7 @@ function createSceneEditor() {
     pointerDown,
     pointerMove,
     pointerUp,
+    handleJobEvent: consumeJob,
     enter,
     exit,
     select,
@@ -4872,6 +5498,44 @@ function createSceneEditor() {
       return { origin: project(origin), endpoint: project(endpoint) };
     },
     transformFor: name => transformFor(roots.find(candidate => candidate.name === name)),
+    selectByName: name => {
+      const object = roots.find(candidate => candidate.name === name);
+      if (!object) return false;
+      select(object);
+      return state.selected === object;
+    },
+    materialColors: name => {
+      const object = roots.find(candidate => candidate.name === name);
+      if (!object) return [];
+      const colors = new Set();
+      object.traverse(child => {
+        if (!child.isMesh) return;
+        for (const material of Array.isArray(child.material) ? child.material : [child.material]) {
+          if (material?.color) colors.add(`#${material.color.getHexString()}`);
+        }
+      });
+      return [...colors];
+    },
+    renderedMaterialColors: name => {
+      const object = roots.find(candidate => candidate.name === name);
+      if (!object) return [];
+      const sources = new Set();
+      object.traverse(child => { if (child.isMesh) sources.add(child); });
+      const rendered = [];
+      for (const source of sources) if (source.visible) rendered.push(source);
+      for (const batch of staticBatchRoot.children) {
+        if (batch.visible && batch.userData.sourceMeshes?.some(source => sources.has(source))) rendered.push(batch);
+      }
+      const colors = new Set();
+      for (const mesh of rendered) {
+        for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          if (material?.color) colors.add(`#${material.color.getHexString()}`);
+        }
+      }
+      return [...colors];
+    },
+    watchGeneratedDisposal,
+    disposalStats: () => ({ ...disposalProbe }),
     applyDelta,
     serialize,
     snapshot: () => ({
@@ -4886,7 +5550,16 @@ function createSceneEditor() {
       explodedBatches: state.explodedBatches,
       batchingStrategy: 'selective-source-explode',
       editableObjects: roots.map(objectLabel),
-      changedObjects: [...state.changed.keys()].map(objectLabel)
+      changedObjects: [...state.changed.keys()].map(objectLabel),
+      deletedObjects: [...state.deleted.values()].map(deletion => deletion.name),
+      sceneRevision: state.sceneRevision,
+      selectionRevision: state.selectionRevision,
+      ai: {
+        activeJob: state.ai.activeJob?.jobId || null,
+        pending: state.ai.pending ? { kind: state.ai.pending.result.kind, route: state.ai.pending.result.route } : null,
+        lastApplied: state.ai.lastApplied,
+        undoDepth: state.ai.undo.length
+      }
     })
   };
 }
@@ -5048,6 +5721,11 @@ window.__ROOM__ = {
   editorGizmoOriginScreen: () => editorController.originScreen(),
   editorAxisGuideScreen: axis => editorController.axisGuideScreen(axis),
   editorTransform: name => editorController.transformFor(name),
+  selectEditorObject: name => editorController.selectByName(name),
+  editorMaterialColors: name => editorController.materialColors(name),
+  editorRenderedMaterialColors: name => editorController.renderedMaterialColors(name),
+  watchEditorGeneratedDisposal: name => editorController.watchGeneratedDisposal(name),
+  editorDisposalStats: () => editorController.disposalStats(),
   applyEditorDelta: (mode, axis, amount) => editorController.applyDelta(mode, axis, amount),
   serializeEditorLayout: () => editorController.serialize(),
   moveTo: (x, z) => { if (!task.active) beginMove(x, z, { kind: 'floor' }); },

@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { createEditorBridge } from './editor-bridge.mjs';
 
 const HOST = process.env.EVENT_API_HOST || '0.0.0.0';
 const portFlagIndex = process.argv.indexOf('--port');
@@ -134,8 +135,13 @@ function readJsonBody(request) {
   });
 }
 
+const handleEditorRequest = process.env.ROOM_EDITOR_ENABLED === '1'
+  ? createEditorBridge()
+  : async () => false;
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+  if (await handleEditorRequest(request, response, url)) return;
   const isEventEndpoint = url.pathname === '/event';
   const isActivityStreamEndpoint = url.pathname === '/activityStream';
   if (!isEventEndpoint && !isActivityStreamEndpoint) {

@@ -53,6 +53,24 @@
         </div>
         <div id="editor-selection" class="editor-selection" hidden>SELECT AN OBJECT</div>
       </div>
+      <section id="editor-chat" class="editor-chat" hidden aria-label="Chat with selected object">
+        <div class="editor-chat__header">
+          <div><span>HERMES OBJECT LINK</span><strong id="editor-chat-selection">NO SELECTION</strong></div>
+          <span id="editor-chat-state" class="editor-chat__state">IDLE</span>
+        </div>
+        <div id="editor-chat-history" class="editor-chat__history" aria-live="polite"></div>
+        <div id="editor-chat-result" class="editor-chat__result" hidden></div>
+        <form id="editor-chat-form" class="editor-chat__form">
+          <textarea id="editor-chat-input" maxlength="4000" rows="3" placeholder="Describe any change to this object…" aria-label="Object edit prompt"></textarea>
+          <input id="editor-chat-reference" type="url" inputmode="url" maxlength="2048" placeholder="Optional reference image URL (https://…)" aria-label="Optional reference image URL">
+          <div class="editor-chat__actions">
+            <button id="editor-chat-send" class="editor-button" type="submit">SEND TO HERMES</button>
+            <button id="editor-chat-cancel" class="editor-button" type="button" hidden>CANCEL</button>
+            <button id="editor-chat-apply" class="editor-button editor-button--apply" type="button" hidden>APPLY</button>
+            <button id="editor-chat-undo" class="editor-button" type="button" hidden>UNDO</button>
+          </div>
+        </form>
+      </section>
       <section id="layout-export" class="layout-export" hidden aria-label="Layout JSON export">
         <div class="layout-export__header"><strong>LAYOUT OVERRIDES</strong><button id="close-layout-export" type="button" aria-label="Close layout export">×</button></div>
         <textarea id="layout-json" readonly spellcheck="false" aria-label="Serialized layout changes"></textarea>

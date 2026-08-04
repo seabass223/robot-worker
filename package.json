@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "api": "node server/event-api.mjs",
+    "api:room-editor": "node server/event-api-room-editor.mjs --port 8001",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "playwright test"
+    "test:contracts": "node --test tests/editor-contract.test.mjs tests/bridge-hardening.test.mjs",
+    "test:browser": "playwright test",
+    "test": "npm run test:contracts && npm run test:browser"
   },
   "dependencies": {
     "three": "^0.180.0",

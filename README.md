@@ -33,7 +33,44 @@ To enable external agent-status events, run the API in a second terminal:
 npm run api
 ```
 
-The event API listens on port `8000` by default.
+The event API listens on port `8000` by default and exposes only gameplay/status events; it does not install room-editor routes.
+
+## Chat with a selected room object
+
+The Edit Mode object-chat bridge uses two isolated Hermes profiles:
+
+- `roomeditorrouter` on loopback port `8643` classifies arbitrary requests and has no API-server tools.
+- `roomeditorworker` on loopback port `8644` has no generic API-server toolsets and exposes only the scoped `room-editor-reference-vision` MCP tool, which accepts an opaque attachment ID rather than a path or URL. It runs the fixed reconstruction contract only after the user confirms a specialist proposal.
+
+Start the profiles and bridge in separate terminals:
+
+```bash
+hermes -p roomeditorrouter gateway run
+hermes -p roomeditorworker gateway run
+npm run api:room-editor
+```
+
+For production preview, run:
+
+```bash
+npm run build
+npm run preview -- --port 4173
+```
+
+Then open <http://localhost:4173/?eventPort=8001>, enter Edit Mode, select any semantic object, and use **Hermes Object Link**. Development port `5173` is also allowed; open <http://localhost:5173/?eventPort=8001> after `npm run dev`.
+
+The browser receives an expiring, per-client room-editor session token; active jobs retain their owner session until terminal, jobs are owner-scoped, and they are never broadcast on the public `/event` stream. By default the room-editor launcher binds the Node bridge to `127.0.0.1` and accepts only explicitly configured loopback frontend origins. Remote LAN editing is opt-in: set `ROOM_EDITOR_LAN_ENABLED=1`, an explicit `ROOM_EDITOR_ALLOWED_ORIGINS`, and a high-entropy `ROOM_EDITOR_PAIRING_CODE` of at least 20 characters; only session issuance requires the pairing code, and the browser retains the resulting expiring owner token in `sessionStorage`. The router and specialist remain loopback-only. The launcher refuses to start unless both Hermes API profiles expose zero generic toolsets and the worker profile contains exactly the scoped reference-vision MCP server; dedicated Hermes credentials remain server-side in the isolated profiles. Direct transform/material plans and generated `room-asset/v1` revisions require confirmation before application. Specialist results are declarative, schema-validated geometry rather than executable JavaScript, and applied revisions support bounded Undo with generated GPU-resource disposal. Cancellation or timeout during Hermes run creation waits for the server-assigned run ID and then stops the materialized run. If the upstream Hermes server creates a run but its loopback response is permanently lost, the bridge cannot recover the unknown server-assigned ID; the deterministic session ID aids diagnosis but cannot eliminate that upstream protocol limitation.
+
+With the normal gameplay API on port `8000`, the frontend sends editor traffic to port `8014` by default. Override it with `?editorPort=<port>` when required. Example paired LAN bridge startup:
+
+```bash
+ROOM_EDITOR_LAN_ENABLED=1 \
+ROOM_EDITOR_ALLOWED_ORIGINS='http://192.168.1.87:5173' \
+ROOM_EDITOR_PAIRING_CODE='<high-entropy-temporary-code>' \
+npm run api:room-editor -- --port 8014
+```
+
+Reference images must use HTTPS and a trusted host. Built-in hosts include Unsplash, GitHub media, Discord CDN, Imgur, and FAL media. To trust an additional image host you control, add its exact hostname to `ROOM_EDITOR_REFERENCE_IMAGE_HOSTS` as a comma-separated value before starting `api:room-editor`. The bridge resolves and pins a public IPv4 address, revalidates every redirect, accepts only PNG and JPEG, enforces byte, dimension, and pixel limits, validates container structure, and fully decoder-verifies the localized image before exposing it to the worker. It stores a random temporary artifact, passes only its opaque attachment ID to the scoped worker tool, and deletes it after the run; arbitrary hosts, paths, URLs at the worker boundary, malformed images, format mismatches, and private/reserved addresses are rejected.
 
 ## Send a robot phase
 
@@ -91,6 +128,7 @@ Accepted activity events are sent through the existing `/event` SSE connection a
 ```bash
 npm run dev      # Vite development server
 npm run api      # Agent event API on port 8000
+npm run api:room-editor # Authenticated Hermes object bridge on port 8001
 npm run build    # Production build
 npm run preview  # Preview the production build
 npm test         # Playwright test suite

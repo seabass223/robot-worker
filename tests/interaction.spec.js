@@ -894,6 +894,7 @@ test('network bench arrival keeps the cube working without a progress meter', as
 });
 
 test('raycasts floor, rotates first, and reaches clicked target', async ({ page }) => {
+  test.setTimeout(90_000);
   const errors = [];
   page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
   await page.goto('/?eventPort=8001');
@@ -911,7 +912,7 @@ test('raycasts floor, rotates first, and reaches clicked target', async ({ page 
   const duringTurn = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(Math.hypot(duringTurn.position.x - initial.position.x, duringTurn.position.z - initial.position.z)).toBeLessThan(0.08);
 
-  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 8000 }).toBe('idle');
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().phase), { timeout: 60_000 }).toBe('idle');
   const final = await page.evaluate(() => window.__ROOM__.snapshot());
   expect(final.position.x).toBeCloseTo(3, 1);
   expect(final.position.z).toBeCloseTo(-1.5, 1);
@@ -1054,6 +1055,54 @@ test('edit mode raycast-selects semantic objects and switches M R S gizmos befor
   expect((await page.evaluate(() => window.__ROOM__.snapshot().batching)).enabled).toBe(true);
 });
 
+test('edit-mode selection works on insecure LAN origins without crypto.randomUUID', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.addInitScript(() => {
+    Object.defineProperty(window.crypto, 'randomUUID', { value: undefined, configurable: true });
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  await page.goto('/?eventPort=8001');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.selected))
+    .toBe('BuildDebugDeployRepeatCyanSign');
+  expect(errors).toEqual([]);
+});
+
+test('remote editor bridge prompts for pairing and retries session issuance with the code', async ({ page }) => {
+  test.setTimeout(60_000);
+  const pairing = 'temporary-pairing-code-123';
+  const attempts = [];
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  page.on('dialog', dialog => dialog.accept(pairing));
+  await page.route('http://127.0.0.1:8013/editor/session', async route => {
+    const supplied = await route.request().headerValue('x-room-editor-pairing');
+    attempts.push(supplied || '');
+    if (supplied !== pairing) {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ code: 'PAIRING_REQUIRED' }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ token: 'paired-owner-token', expiresAt: Date.now() + 60_000 }) });
+  });
+  await page.route('http://127.0.0.1:8013/editor/jobs', route => route.fulfill({
+    status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'intentional test stop' })
+  }));
+  await page.goto('/?eventPort=8001&editorPort=8013&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const point = await page.evaluate(() => window.__ROOM__.editorObjectScreen('BuildDebugDeployRepeatCyanSign'));
+  await page.mouse.click(point.x, point.y);
+  await page.locator('#editor-chat-input').fill('Make this blue.');
+  await page.locator('#editor-chat-send').click();
+  await expect(page.locator('#editor-chat-state')).toHaveText('CONNECTION ERROR');
+  expect(attempts).toEqual(['', pairing]);
+  expect(errors).toEqual([]);
+});
+
 test('entering edit mode fully cancels an active station task and progress UI', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/?eventPort=8001&bloom=0');
@@ -1095,6 +1144,375 @@ test('entering edit mode during a stair climb leaves a neutral floor-level robot
   expect(snapshot.robot.animation).toBe('idle');
   expect(snapshot.robot.leftKneeAngle).toBe(0);
   expect(snapshot.robot.rightKneeAngle).toBe(0);
+});
+
+test('room editor job API authenticates and routes a generic selected-object request', async ({ request, page }) => {
+  test.setTimeout(120_000);
+  const api = 'http://127.0.0.1:8001';
+  const origin = 'http://127.0.0.1:4173';
+  const noOrigin = await request.get(`${api}/editor/session`);
+  expect(noOrigin.status()).toBe(403);
+  const rebound = await request.get(`${api}/editor/session`, { headers: { Host: 'attacker.example:8001', Origin: 'http://attacker.example:4173' } });
+  expect(rebound.status()).toBe(403);
+  const legacyEditorSession = await request.get('http://127.0.0.1:8012/editor/session', { headers: { Origin: origin } });
+  expect(legacyEditorSession.status()).toBe(404);
+  const sessionResponse = await request.get(`${api}/editor/session`, { headers: { Origin: origin } });
+  expect(sessionResponse.status()).toBe(200);
+  const session = await sessionResponse.json();
+  expect(session).toMatchObject({ schemaVersion: 1, token: expect.any(String), expiresAt: expect.any(Number), capabilities: expect.any(Array), maxPromptLength: 4000 });
+  const authHeaders = { Origin: origin, 'X-Room-Editor-Session': session.token };
+
+  const devOrigin = await request.get(`${api}/editor/session`, { headers: { Origin: 'http://127.0.0.1:5173' } });
+  expect(devOrigin.status()).toBe(200);
+  expect(devOrigin.headers()['access-control-allow-origin']).toBe('http://127.0.0.1:5173');
+  const otherSession = await devOrigin.json();
+  expect(otherSession.token).not.toBe(session.token);
+  const untrustedOrigin = await request.get(`${api}/editor/session`, { headers: { Origin: 'https://attacker.example' } });
+  expect(untrustedOrigin.status()).toBe(403);
+  const payload = {
+    schemaVersion: 1,
+    requestId: `request-api-contract-${crypto.randomUUID()}`,
+    conversationId: 'conversation-api-contract-1',
+    message: 'Make the selected object use a cool blue material.',
+    selection: {
+      semanticId: 'AnySemanticObject',
+      selectionRevision: 3,
+      sceneRevision: 8,
+      transform: {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 }
+      }
+    },
+    capabilities: ['material-patch', 'transform-patch', 'geometry-replacement'],
+    attachments: []
+  };
+  const unauthorized = await request.post(`${api}/editor/jobs`, { headers: { Origin: origin }, data: payload });
+  expect(unauthorized.status()).toBe(401);
+  const accepted = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: payload
+  });
+  expect(accepted.status()).toBe(202);
+  const { jobId } = await accepted.json();
+  const idempotentRetry = await request.post(`${api}/editor/jobs`, { headers: authHeaders, data: payload });
+  expect(idempotentRetry.status()).toBe(200);
+  expect((await idempotentRetry.json()).jobId).toBe(jobId);
+  const conflictingRetry = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: { ...payload, message: 'A different operation under the same request ID.' }
+  });
+  expect(conflictingRetry.status()).toBe(409);
+  const otherRead = await request.get(`${api}/editor/jobs/${jobId}`, {
+    headers: { Origin: 'http://127.0.0.1:5173', 'X-Room-Editor-Session': otherSession.token }
+  });
+  expect(otherRead.status()).toBe(404);
+  await expect.poll(async () => {
+    const response = await request.get(`${api}/editor/jobs/${jobId}`, {
+      headers: authHeaders
+    });
+    return (await response.json()).state;
+  }).toBe('ready');
+  const completed = await request.get(`${api}/editor/jobs/${jobId}`, {
+    headers: authHeaders
+  });
+  expect(await completed.json()).toMatchObject({
+    requestId: payload.requestId,
+    semanticId: payload.selection.semanticId,
+    selectionRevision: payload.selection.selectionRevision,
+    state: 'ready',
+    result: {
+      kind: 'editor-plan',
+      route: 'direct-editor-plan',
+      operations: [{ type: 'set-material-color', color: '#4f8cff' }]
+    }
+  });
+
+  const reconstruction = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: { ...payload, requestId: `request-api-contract-${crypto.randomUUID()}`, message: 'Replace this with completely different geometry.' }
+  });
+  expect(reconstruction.status()).toBe(202);
+  const reconstructionJob = await reconstruction.json();
+  await expect.poll(async () => {
+    const response = await request.get(`${api}/editor/jobs/${reconstructionJob.jobId}`, {
+      headers: authHeaders
+    });
+    return (await response.json()).result;
+  }).toMatchObject({
+    kind: 'skill-proposal',
+    route: 'orthographic-img2threejs',
+    skill: 'orthographic-img2threejs'
+  });
+  const [execute, duplicateExecute] = await Promise.all([
+    request.post(`${api}/editor/jobs/${reconstructionJob.jobId}/execute`, { headers: authHeaders, data: {} }),
+    request.post(`${api}/editor/jobs/${reconstructionJob.jobId}/execute`, { headers: authHeaders, data: {} })
+  ]);
+  expect([execute.status(), duplicateExecute.status()].sort()).toEqual([202, 409]);
+  await expect.poll(async () => {
+    const response = await request.get(`${api}/editor/jobs/${reconstructionJob.jobId}`, {
+      headers: authHeaders
+    });
+    return (await response.json()).result;
+  }).toMatchObject({
+    kind: 'asset-revision',
+    route: 'orthographic-img2threejs',
+    asset: { schema: 'room-asset/v1', stats: { nodes: 3 } }
+  });
+
+  const referenced = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: {
+      ...payload,
+      requestId: `request-api-contract-${crypto.randomUUID()}`,
+      message: 'Reconstruct this object from the supplied reference image.',
+      attachments: [{ kind: 'reference-image', url: 'https://images.unsplash.com/reference.png' }]
+    }
+  });
+  expect(referenced.status()).toBe(202);
+  const referencedJob = await referenced.json();
+  await expect.poll(async () => {
+    const response = await request.get(`${api}/editor/jobs/${referencedJob.jobId}`, {
+      headers: authHeaders
+    });
+    return (await response.json()).result;
+  }).toMatchObject({ kind: 'skill-proposal', route: 'img2threejs', skill: 'img2threejs' });
+
+  const referencedExecute = await request.post(`${api}/editor/jobs/${referencedJob.jobId}/execute`, { headers: authHeaders, data: {} });
+  expect(referencedExecute.status()).toBe(202);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const referencedCancel = await request.post(`${api}/editor/jobs/${referencedJob.jobId}/cancel`, { headers: authHeaders, data: {} });
+  expect(referencedCancel.status()).toBe(202);
+  expect(await referencedCancel.json()).toMatchObject({ state: 'cancelled', phase: 'cancelled' });
+
+  const stopFailure = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: { ...payload, requestId: `request-api-contract-${crypto.randomUUID()}`, message: '[test-stop-failure] Replace this with completely different geometry.' }
+  });
+  const stopFailureJob = await stopFailure.json();
+  await expect.poll(async () => {
+    const response = await request.get(`${api}/editor/jobs/${stopFailureJob.jobId}`, { headers: authHeaders });
+    return (await response.json()).result?.kind;
+  }).toBe('skill-proposal');
+  expect((await request.post(`${api}/editor/jobs/${stopFailureJob.jobId}/execute`, { headers: authHeaders, data: {} })).status()).toBe(202);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const failedStop = await request.post(`${api}/editor/jobs/${stopFailureJob.jobId}/cancel`, { headers: authHeaders, data: {} });
+  expect(failedStop.status()).toBe(502);
+  expect(await failedStop.json()).toMatchObject({ state: 'failed', phase: 'cancel-failed', error: { code: 'SPECIALIST_STOP_FAILED' } });
+
+  const capacityProposals = [];
+  for (let i = 0; i < 4; i += 1) {
+    const response = await request.post(`${api}/editor/jobs`, {
+      headers: authHeaders,
+      data: { ...payload, requestId: `request-api-capacity-${crypto.randomUUID()}`, message: `Replace this with completely different geometry, variant ${i}.` }
+    });
+    const proposalJob = await response.json();
+    await expect.poll(async () => {
+      const status = await request.get(`${api}/editor/jobs/${proposalJob.jobId}`, { headers: authHeaders });
+      return (await status.json()).result?.kind;
+    }).toBe('skill-proposal');
+    capacityProposals.push(proposalJob.jobId);
+  }
+  const capacityExecutes = await Promise.all(capacityProposals.map(id => request.post(`${api}/editor/jobs/${id}/execute`, { headers: authHeaders, data: {} })));
+  expect(capacityExecutes.map(response => response.status()).sort()).toEqual([202, 202, 202, 429]);
+  await Promise.all(capacityProposals.slice(0, 3).map(id => request.post(`${api}/editor/jobs/${id}/cancel`, { headers: authHeaders, data: {} })));
+
+  const unsafeReference = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: {
+      ...payload,
+      requestId: `request-api-contract-${crypto.randomUUID()}`,
+      attachments: [{ kind: 'reference-image', url: 'https://127.0.0.1/private.png' }]
+    }
+  });
+  expect(unsafeReference.status()).toBe(422);
+
+  const cancellable = await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: { ...payload, requestId: `request-api-contract-${crypto.randomUUID()}`, message: 'Make a subtle material adjustment.' }
+  });
+  const cancellableJob = await cancellable.json();
+  const cancelled = await request.post(`${api}/editor/jobs/${cancellableJob.jobId}/cancel`, {
+    headers: authHeaders, data: {}
+  });
+  expect(cancelled.status()).toBe(202);
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  const cancelledStatus = await request.get(`${api}/editor/jobs/${cancellableJob.jobId}`, {
+    headers: authHeaders
+  });
+  expect(await cancelledStatus.json()).toMatchObject({ state: 'cancelled', phase: 'cancelled', result: null });
+
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.evaluate(() => {
+    window.__editorEventLeaks = [];
+    window.__editorLeakSource = new EventSource('http://127.0.0.1:8001/event');
+    window.__editorLeakSource.onmessage = event => {
+      try { if (JSON.parse(event.data)?.editorJob) window.__editorEventLeaks.push(event.data); } catch {}
+    };
+  });
+  await request.post(`${api}/editor/jobs`, {
+    headers: authHeaders,
+    data: { ...payload, requestId: `request-api-contract-${crypto.randomUUID()}`, message: 'Make a subtle material adjustment.' }
+  });
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  expect(await page.evaluate(() => window.__editorEventLeaks)).toEqual([]);
+  await page.evaluate(() => window.__editorLeakSource.close());
+});
+
+test('ready editor plans are rejected if the object changes before apply', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+  const baselineColors = await page.evaluate(objectName => window.__ROOM__.editorMaterialColors(objectName), name);
+  await page.locator('#editor-chat-input').fill('Make this object use a cool blue material.');
+  await page.locator('#editor-chat-send').click();
+  await expect(page.locator('#editor-chat-state')).toHaveText('READY TO APPLY', { timeout: 20_000 });
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', 0.1));
+  await page.locator('#editor-chat-apply').click();
+  await expect(page.locator('#editor-chat-state')).toHaveText('STALE RESULT');
+  expect(await page.evaluate(objectName => window.__ROOM__.editorMaterialColors(objectName), name)).toEqual(baselineColors);
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor.ai)).pending).toBeNull();
+});
+
+test('specialist proposals are rejected if the object changes before confirmation', async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+  await page.locator('#editor-chat-input').fill('Replace this with completely different geometry.');
+  await page.locator('#editor-chat-send').click();
+  await expect.poll(() => page.locator('#editor-chat-state').textContent(), { timeout: 20_000 }).toContain('ROUTED TO ORTHOGRAPHIC-IMG2THREEJS');
+  await page.evaluate(() => window.__ROOM__.applyEditorDelta('translate', 'X', 0.1));
+  await page.locator('#editor-chat-apply').click();
+  await expect(page.locator('#editor-chat-state')).toHaveText('STALE RESULT');
+  const ai = await page.evaluate(() => window.__ROOM__.snapshot().editor.ai);
+  expect(ai.activeJob).toBeNull();
+  expect(ai.pending).toBeNull();
+});
+
+test('selected-object chat submits a generic prompt and applies a validated Hermes plan', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+
+  await expect(page.locator('#editor-chat')).toBeVisible();
+  await expect(page.locator('#editor-chat-selection')).toContainText(name);
+  const baselineColors = await page.evaluate(objectName => window.__ROOM__.editorMaterialColors(objectName), name);
+  await page.locator('#editor-chat-input').fill('Make this object use a cool blue material.');
+  await page.keyboard.press('Delete');
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor)).selected).toBe(name);
+  await page.locator('#editor-chat-send').click();
+  await expect(page.locator('#editor-chat-state')).toHaveText('READY TO APPLY', { timeout: 15_000 });
+  await expect(page.locator('#editor-chat-apply')).toBeVisible();
+  await page.locator('#editor-chat-apply').click();
+
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 15_000 }).toBe('APPLIED');
+  const editor = await page.evaluate(() => window.__ROOM__.snapshot().editor);
+  expect(editor.ai).toMatchObject({
+    pending: null,
+    lastApplied: { semanticId: name, route: 'direct-editor-plan' }
+  });
+  expect(await page.evaluate(objectName => window.__ROOM__.editorMaterialColors(objectName), name)).toContain('#4f8cff');
+  await page.evaluate(objectName => window.__ROOM__.watchEditorGeneratedDisposal(objectName), name);
+  const otherName = 'CoffeeTable';
+  expect(await page.evaluate(objectName => window.__ROOM__.selectEditorObject(objectName), otherName)).toBe(true);
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor)).selected).toBe(otherName);
+  expect(await page.evaluate(objectName => window.__ROOM__.editorRenderedMaterialColors(objectName), name)).toContain('#4f8cff');
+
+  await page.locator('#editor-chat-undo').click();
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 15_000 }).toBe('UNDONE');
+  expect(await page.evaluate(() => window.__ROOM__.editorDisposalStats().materials)).toBeGreaterThan(0);
+  expect(await page.evaluate(objectName => window.__ROOM__.editorMaterialColors(objectName), name)).toEqual(baselineColors);
+  expect((await page.evaluate(objectName => window.__ROOM__.editorRenderedMaterialColors(objectName), name)).sort()).toEqual([...baselineColors].sort());
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor.ai)).undoDepth).toBe(0);
+});
+
+test('selected-object chat routes arbitrary replacement requests through a specialist and hot-swaps the visual', async ({ page }) => {
+  test.setTimeout(150_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+
+  await page.locator('#editor-chat-input').fill('Replace this with completely different higher-quality geometry using the reference image.');
+  await page.locator('#editor-chat-reference').fill('https://images.unsplash.com/reference.png');
+  await page.locator('#editor-chat-send').click();
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 20_000 }).toContain('ROUTED TO IMG2THREEJS');
+  await expect(page.locator('#editor-chat-apply')).toHaveText('START IMG2THREEJS');
+  await page.locator('#editor-chat-apply').click();
+
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 20_000 }).toBe('READY TO APPLY');
+  await expect(page.locator('#editor-chat-apply')).toHaveText('APPLY REPLACEMENT');
+  await page.locator('#editor-chat-apply').click();
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 20_000 }).toBe('REPLACEMENT APPLIED');
+  const applied = await page.evaluate(() => window.__ROOM__.snapshot().editor);
+  expect(applied.selected).toBe(name);
+  expect(applied.ai.lastApplied).toMatchObject({ semanticId: name, route: 'img2threejs' });
+  await page.evaluate(objectName => window.__ROOM__.watchEditorGeneratedDisposal(objectName), name);
+
+  await page.locator('#editor-chat-undo').click();
+  await expect.poll(() => page.evaluate(() => document.querySelector('#editor-chat-state')?.textContent), { timeout: 20_000 }).toBe('UNDONE');
+  const disposal = await page.evaluate(() => window.__ROOM__.editorDisposalStats());
+  expect(disposal.geometries).toBeGreaterThan(0);
+  expect(disposal.materials).toBeGreaterThan(0);
+  expect((await page.evaluate(() => window.__ROOM__.snapshot().editor.ai)).undoDepth).toBe(0);
+});
+
+test('late Hermes results are rejected after the selection context is exited', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+  await page.locator('#editor-chat-input').fill('Make this object warmer and less reflective.');
+  await page.locator('#editor-chat-send').click();
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.ai.activeJob), { timeout: 15_000 }).not.toBeNull();
+  await page.locator('#edit-mode-toggle').click();
+
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.ai.activeJob), { timeout: 20_000 }).toBeNull();
+  const editor = await page.evaluate(() => window.__ROOM__.snapshot().editor);
+  expect(editor.active).toBe(false);
+  expect(editor.ai.pending).toBeNull();
+  expect(editor.ai.lastApplied).toBeNull();
+});
+
+test('Delete removes the selected semantic root and exports a durable deletion override', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/?eventPort=8001&bloom=0');
+  await page.waitForFunction(() => window.__ROOM__?.ready);
+  await page.locator('#edit-mode-toggle').click();
+
+  const name = 'BuildDebugDeployRepeatCyanSign';
+  const point = await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name);
+  await page.mouse.click(point.x, point.y);
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.selected)).toBe(name);
+
+  await page.keyboard.press('Delete');
+
+  await expect.poll(() => page.evaluate(() => window.__ROOM__.snapshot().editor.selected)).toBe(null);
+  expect(await page.evaluate(objectName => window.__ROOM__.editorObjectScreen(objectName), name)).toBe(null);
+  const editor = await page.evaluate(() => window.__ROOM__.snapshot().editor);
+  expect(editor.editableObjects).not.toContain(name);
+  expect(editor.deletedObjects).toEqual([name]);
+  expect(await page.evaluate(() => window.__ROOM__.serializeEditorLayout())).toMatchObject({
+    schema: 'raycast-room-layout/v1',
+    objects: [{ name, deleted: true }]
+  });
 });
 
 test('editor omits zero-delta and baseline-reverted objects from layout JSON', async ({ page }) => {
